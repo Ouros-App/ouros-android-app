@@ -3,13 +3,13 @@ plugins {
 }
 
 android {
-    namespace = "{{PACKAGE_NAME}}"
+    namespace = "com.ourosapp.ourosandroidapp"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "{{PACKAGE_NAME}}"
+        applicationId = "com.ourosapp.ourosandroidapp"
         minSdk = 33
         targetSdk = 36
         versionCode = 1
