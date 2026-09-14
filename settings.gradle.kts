@@ -1,2 +1,2 @@
-rootProject.name = "{{PROJECT_NAME}}"
+rootProject.name = "ouros-android-app"
 include(":app")
