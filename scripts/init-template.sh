@@ -51,14 +51,14 @@ find "$work_dir" -type f \( -name '*.kt' -o -name '*.kts' -o -name '*.xml' -o -n
   perl -0pi -e "s/\{\{PROJECT_NAME\}\}/$(esc_perl "$project_name")/g; s/\{\{APP_LABEL\}\}/$(esc_perl "$app_label")/g; s/\{\{PACKAGE_NAME\}\}/$(esc_perl "$package_name")/g; s/\{\{PACKAGE_PATH\}\}/$(esc_perl "$package_path")/g; s/\{\{APPLICATION_CLASS_NAME\}\}/$(esc_perl "$app_class")/g" "$f"
 done
 
-old_pkg_dir="$work_dir/app/src/main/java/{{PACKAGE_PATH}}"
+old_pkg_dir="$work_dir/app/src/main/java/com/ourosapp/ourosandroidapp"
 new_pkg_dir="$work_dir/app/src/main/java/$package_path"
 if [[ -d "$old_pkg_dir" ]]; then
   mkdir -p "$(dirname "$new_pkg_dir")"
   mv "$old_pkg_dir" "$new_pkg_dir"
 fi
 
-old_app="$new_pkg_dir/{{APPLICATION_CLASS_NAME}}.kt"
+old_app="$new_pkg_dir/OurosAndroidAppApplication.kt"
 new_app="$new_pkg_dir/$app_class.kt"
 if [[ -f "$old_app" ]]; then
   mv "$old_app" "$new_app"
