@@ -16,7 +16,7 @@ Template de aplicativo Android nativo em Kotlin e XML, preparado para gerar novo
 
 ## Status e escopo
 
-Este repositório é um template parametrizado. Os arquivos usam placeholders como {{PROJECT_NAME}}, {{APP_LABEL}}, {{PACKAGE_NAME}}, {{PACKAGE_PATH}} e {{APPLICATION_CLASS_NAME}}; o script de inicialização substitui esses valores em uma cópia de saída.
+Este repositório é um template parametrizado. Os arquivos usam placeholders como ouros-android-app, ouros android app, com.ourosapp.ourosandroidapp, com/ourosapp/ourosandroidapp e OurosAndroidAppApplication; o script de inicialização substitui esses valores em uma cópia de saída.
 
 ## Principais componentes
 
@@ -87,7 +87,7 @@ Há um teste unitário de exemplo em app/src/test e um teste instrumentado de ex
 app/
   src/main/
     AndroidManifest.xml
-    java/{{PACKAGE_PATH}}/
+    java/com/ourosapp/ourosandroidapp/
     res/
   src/test/
   src/androidTest/
