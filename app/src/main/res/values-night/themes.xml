@@ -1,8 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Base.Theme.Mobiletemplate" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/brand_primary</item>
-        <item name="colorSecondary">@color/brand_secondary</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
+    <!-- Base application theme. -->
+    <style name="Base.Theme.Ouros" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your dark theme here. -->
+        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
     </style>
 </resources>
