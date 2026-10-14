@@ -397,7 +397,7 @@ class DashboardRepository(
         farmId: Long?
     ): DashboardResult {
         val cachedDashboard =
-            farmId?.let(cache::read)
+            farmId?.let { cache.read(it) }
         return if (cachedDashboard != null) {
             DashboardResult.Success(
                 dashboard =
