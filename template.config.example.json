@@ -1,6 +1,0 @@
-{
-  "projectName": "mob-github-manager",
-  "appLabel": "GitHub Manager",
-  "packageName": "com.ouros.githubmanager",
-  "applicationClassName": "GithubManagerApplication"
-}

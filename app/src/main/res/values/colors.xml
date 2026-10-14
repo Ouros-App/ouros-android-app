@@ -1,6 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="brand_primary">#0F766E</color>
-    <color name="brand_secondary">#1D4ED8</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="black">#010B13</color>
+    <color name="white">#F2F5F7</color>
+    <color name="gold">#D8A23A</color>
+    <color name="blue">#171438</color>
+
+    <color name="warning_red">#EA2323</color>
+    <color name="warning_yellow">#FFC916</color>
+    <color name="success_green">#19E84A</color>
 </resources>

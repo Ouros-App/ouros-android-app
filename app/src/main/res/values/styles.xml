@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="text">
+        <item name="android:fontFamily">@font/poppins_regular</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:letterSpacing">-0.05</item>
+        <item name="android:lineHeight">20dp</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="text_button">
+        <item name="android:fontFamily">@font/poppins_semibold</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:lineHeight">25dp</item>
+        <item name="android:letterSpacing">-0.05</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="subtitle">
+        <item name="android:fontFamily">@font/poppins_semibold</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:lineHeight">25dp</item>
+        <item name="android:letterSpacing">-0.06</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="title">
+        <item name="android:fontFamily">@font/poppins_bold</item>
+        <item name="android:textSize">50sp</item>
+        <item name="android:letterSpacing">-0.08</item>
+        <item name="android:lineHeight">25dp</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+
+
+    <style name="header_title">
+        <item name="android:fontFamily">@font/poppins_regular</item>
+        <item name="android:textSize">25sp</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="header_subtitle" parent="header_title">
+        <item name="android:fontFamily">@font/poppins_semibold</item>
+    </style>
+
+    <style name="footer_text">
+        <item name="android:fontFamily">@font/poppins_regular</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:lineHeight">25dp</item>
+        <item name="android:letterSpacing">-0.05</item>
+        <item name="android:textColor">#8B8B8B</item>
+    </style>
+
+    <style name="footer_text_on" parent="footer_text">
+        <item name="android:fontFamily">@font/poppins_semibold</item>
+        <item name="android:textColor">@color/blue</item>
+    </style>
+
+
+
+
+    <style name="TopRoundedCard" parent="ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerSizeTopLeft">60dp</item>
+        <item name="cornerSizeTopRight">60dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
+
+    <style name="CircleImage" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+
+    <style name="Widget.App.TextInputLayout.Gold" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/gold</item>
+        <item name="hintTextColor">@color/gold</item>
+        <item name="cursorColor">@color/gold</item>
+
+        <item name="android:layout_marginTop">5dp</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="boxCornerRadiusTopStart">12dp</item>
+        <item name="boxCornerRadiusTopEnd">12dp</item>
+        <item name="boxCornerRadiusBottomStart">12dp</item>
+        <item name="boxCornerRadiusBottomEnd">12dp</item>
+    </style>
+
+    <style name="Widget.Ouros.VerificationCodeBox" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/gold</item>
+        <item name="hintTextColor">@color/gold</item>
+        <item name="cursorColor">@color/gold</item>
+
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginHorizontal">4dp</item>
+        <item name="hintEnabled">false</item>
+        <item name="boxBackgroundColor">@android:color/transparent</item>
+        <item name="boxStrokeWidth">1dp</item>
+        <item name="boxCornerRadiusTopStart">12dp</item>
+        <item name="boxCornerRadiusTopEnd">12dp</item>
+        <item name="boxCornerRadiusBottomStart">12dp</item>
+        <item name="boxCornerRadiusBottomEnd">12dp</item>
+    </style>
+
+    <style name="Widget.Ouros.VerificationCodeInput" parent="@android:style/Widget.EditText">
+        <item name="android:layout_width">48dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:background">@null</item>
+        <item name="android:gravity">center</item>
+        <item name="android:padding">0dp</item>
+        <item name="android:inputType">number</item>
+        <item name="android:digits">0123456789</item>
+        <item name="android:maxLength">1</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:fontFamily">@font/poppins_semibold</item>
+        <item name="android:selectAllOnFocus">true</item>
+    </style>
+</resources>
