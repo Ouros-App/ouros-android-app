@@ -3,13 +3,22 @@ package com.ouros.app.feature.secondary.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ouros.app.data.auth.AuthResult
+import com.ouros.app.data.cloudinary.CloudinaryRepository
 import com.ouros.app.data.farmowner.FarmOwnerRepository
 import com.ouros.app.data.farmowner.FarmOwnerResponse
 import com.ouros.app.data.farmowner.FarmOwnerUpdateRequest
+import java.io.File
 import kotlinx.coroutines.launch
 
+sealed class ProfilePhotoChange {
+    object KeepCurrent : ProfilePhotoChange()
+    data class UploadNew(val file: File) : ProfilePhotoChange()
+    object Remove : ProfilePhotoChange()
+}
+
 class ProfileViewModel(
-    private val farmOwnerRepository: FarmOwnerRepository
+    private val farmOwnerRepository: FarmOwnerRepository,
+    private val cloudinaryRepository: CloudinaryRepository = CloudinaryRepository()
 ) : ViewModel() {
 
     interface Listener {
@@ -98,7 +107,8 @@ class ProfileViewModel(
         email: String,
         password: String,
         cpf: String,
-        telephone: String
+        telephone: String,
+        photoChange: ProfilePhotoChange = ProfilePhotoChange.KeepCurrent
     ) {
         if (isLoading) {
             return
@@ -125,22 +135,47 @@ class ProfileViewModel(
             return
         }
 
-        val request = FarmOwnerUpdateRequest(
-            name = name.trim(),
-            email = email.trim().lowercase(),
-            documentNumber =
-                cpf.filter(Char::isDigit),
-            telephone =
-                telephone.filter(Char::isDigit),
-            password = password.takeIf {
-                it.isNotBlank()
-            }
-        )
-
         viewModelScope.launch {
             setLoading(true)
 
             try {
+                var resolvedPhotoUrl: String? = profile?.photoUrl
+
+                when (photoChange) {
+                    is ProfilePhotoChange.UploadNew -> {
+                        val uploadResult = cloudinaryRepository.uploadImage(photoChange.file)
+                        if (uploadResult.isFailure) {
+                            val error = uploadResult.exceptionOrNull()
+                            listener?.onProfileError(
+                                error?.message ?: "Falha ao enviar a foto de perfil. As alterações não foram salvas."
+                            )
+                            return@launch
+                        }
+                        resolvedPhotoUrl = uploadResult.getOrNull()
+                    }
+
+                    is ProfilePhotoChange.Remove -> {
+                        resolvedPhotoUrl = ""
+                    }
+
+                    is ProfilePhotoChange.KeepCurrent -> {
+                        // Mantém resolvedPhotoUrl como profile?.photoUrl
+                    }
+                }
+
+                val request = FarmOwnerUpdateRequest(
+                    name = name.trim(),
+                    email = email.trim().lowercase(),
+                    documentNumber =
+                        cpf.filter(Char::isDigit),
+                    telephone =
+                        telephone.filter(Char::isDigit),
+                    password = password.takeIf {
+                        it.isNotBlank()
+                    },
+                    photoUrl = resolvedPhotoUrl
+                )
+
                 when (
                     val result =
                         farmOwnerRepository.update(

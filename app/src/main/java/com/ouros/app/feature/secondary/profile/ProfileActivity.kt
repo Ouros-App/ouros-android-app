@@ -23,6 +23,7 @@ import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository
 import com.ouros.app.data.auth.SecureRefreshTokenStore
+import com.ouros.app.data.cloudinary.CloudinaryRepository
 import com.ouros.app.data.farmowner.FarmOwnerNetwork
 import com.ouros.app.data.farmowner.FarmOwnerRepository
 import com.ouros.app.data.farmowner.FarmOwnerResponse
@@ -68,6 +69,7 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     private val photoRequestSequence = AtomicInteger(0)
     private var pendingCameraUri: Uri? = null
     private var pendingCropOutputFile: File? = null
+    private var pendingPhotoChange: ProfilePhotoChange = ProfilePhotoChange.KeepCurrent
 
     private val takePhotoLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) {
         wasSaved ->
@@ -181,7 +183,8 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         )
 
         val factory = ProfileViewModelFactory(
-            farmOwnerRepository = farmOwnerRepository
+            farmOwnerRepository = farmOwnerRepository,
+            cloudinaryRepository = CloudinaryRepository()
         )
 
         viewModel = ViewModelProvider(this,factory)[ProfileViewModel::class.java]
@@ -199,12 +202,22 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         btnSave.setOnClickListener {
             clearErrors()
 
+            val photoChange = when {
+                pendingPhotoChange !is ProfilePhotoChange.KeepCurrent -> pendingPhotoChange
+                photoStore?.isPhotoPendingUpload() == true -> {
+                    photoStore?.localPhotoFile()?.let { ProfilePhotoChange.UploadNew(it) }
+                        ?: ProfilePhotoChange.KeepCurrent
+                }
+                else -> ProfilePhotoChange.KeepCurrent
+            }
+
             viewModel.saveProfile(
-                name = editName.text ?.toString().orEmpty(),
-                email = editEmail.text ?.toString().orEmpty(),
-                password = editPassword.text ?.toString().orEmpty(),
-                cpf = editCpf.text ?.toString().orEmpty(),
-                telephone = editTelephone.text ?.toString().orEmpty()
+                name = editName.text?.toString().orEmpty(),
+                email = editEmail.text?.toString().orEmpty(),
+                password = editPassword.text?.toString().orEmpty(),
+                cpf = editCpf.text?.toString().orEmpty(),
+                telephone = editTelephone.text?.toString().orEmpty(),
+                photoChange = photoChange
             )
         }
     }
@@ -271,8 +284,7 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
 
         val options = UCrop.Options().apply {
             setCompressionFormat(Bitmap.CompressFormat.JPEG)
-
-            setCompressionQuality(90)
+            setCompressionQuality(80)
             setFreeStyleCropEnabled(false)
             setHideBottomControls(false)
             setToolbarTitle("Ajustar foto")
@@ -280,7 +292,7 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
 
         UCrop.of(sourceUri, destinationUri)
             .withAspectRatio(1f, 1f)
-            .withMaxResultSize(1600, 1600)
+            .withMaxResultSize(720, 720)
             .withOptions(options)
             .start(this, cropPhotoLauncher)
     }
@@ -291,6 +303,10 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         clearPendingCrop()
 
         if (saved) {
+            val localFile = store.localPhotoFile()
+            if (localFile != null) {
+                pendingPhotoChange = ProfilePhotoChange.UploadNew(localFile)
+            }
             showLocalPhoto(store)
             Toast.makeText(this, "Foto salva.", Toast.LENGTH_SHORT).show()
         } else {
@@ -326,6 +342,7 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
             return
         }
 
+        pendingPhotoChange = ProfilePhotoChange.Remove
         showAvatarColor(avatarResource)
 
         Toast.makeText(this, "Foto removida.", Toast.LENGTH_SHORT).show()
@@ -376,6 +393,8 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     override fun onProfileSaved(profile: FarmOwnerResponse) {
+        pendingPhotoChange = ProfilePhotoChange.KeepCurrent
+        photoStore?.markPhotoUploadCompleted()
         renderProfile(profile)
         editPassword.text?.clear()
 

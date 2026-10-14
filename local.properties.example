@@ -1,0 +1,25 @@
+## ====================================================================
+## Infisical - Autenticação Universal (Machine Identity)
+## Preencha com os dados da Machine Identity do seu projeto no Infisical
+## para sincronizar automaticamente executando: ./gradlew syncInfisical
+## ====================================================================
+INFISICAL_CLIENT_ID=
+INFISICAL_CLIENT_SECRET=
+INFISICAL_PROJECT_ID=
+INFISICAL_ENVIRONMENT=dev
+INFISICAL_SECRET_PATH=/
+# INFISICAL_URL=https://app.infisical.com
+
+## ====================================================================
+## Variáveis de Configuração do App (geradas ou manuais)
+## ====================================================================
+
+## Cloudinary (Unsigned Upload)
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_UPLOAD_PRESET=
+CLOUDINARY_FOLDER=ouros/profiles
+
+## API Base URLs
+OUROS_API_BASE_URL=
+AUTH_API_BASE_URL=
+DASHBOARD_BASE_URL=
