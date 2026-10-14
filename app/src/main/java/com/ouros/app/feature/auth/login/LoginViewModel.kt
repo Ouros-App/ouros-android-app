@@ -265,7 +265,7 @@ class LoginViewModel(
         )
     }
 
-    private suspend fun loadFarmOwnerProfile() {
+    internal suspend fun loadFarmOwnerProfile() {
         when (
             val result =
                 farmOwnerRepository.getMe()

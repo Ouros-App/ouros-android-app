@@ -12,13 +12,19 @@ import javax.crypto.spec.GCMParameterSpec
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 
-class SecureRefreshTokenStore(context: Context) {
+interface RefreshTokenStorage {
+    fun saveRefreshToken(token: String)
+    fun getRefreshToken(): String?
+    fun clear()
+}
+
+class SecureRefreshTokenStore(context: Context) : RefreshTokenStorage {
 
     private val preferences = context
         .applicationContext
         .getSharedPreferences(PREFERENCES_NAME,Context.MODE_PRIVATE)
 
-    fun saveRefreshToken(token: String) {
+    override fun saveRefreshToken(token: String) {
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey())
         val encrypted = cipher.doFinal(token.toByteArray(StandardCharsets.UTF_8))
@@ -29,7 +35,7 @@ class SecureRefreshTokenStore(context: Context) {
         }
     }
 
-    fun getRefreshToken(): String? {
+    override fun getRefreshToken(): String? {
         val encodedIv = preferences.getString(KEY_IV, null)
             ?: return null
 
@@ -58,7 +64,7 @@ class SecureRefreshTokenStore(context: Context) {
         }
     }
 
-    fun clear() {
+    override fun clear() {
         preferences.edit { clear() }
     }
 

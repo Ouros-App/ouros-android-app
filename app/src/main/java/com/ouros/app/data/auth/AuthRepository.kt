@@ -7,7 +7,7 @@ import retrofit2.Response
 
 class AuthRepository(
     private val api: AuthApi,
-    private val refreshTokenStore: SecureRefreshTokenStore,
+    private val refreshTokenStore: RefreshTokenStorage,
     private val sessionManager: SessionManager = AppSession.sessionManager
 ) {
 
