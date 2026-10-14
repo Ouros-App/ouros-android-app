@@ -71,9 +71,10 @@ class MainViewModel(
                         return@launch
                     }
 
-                    farmOwner.farmId?.let {
-                        farmSessionStore.saveFarmId(it)
-                    }
+                    farmSessionStore.saveAccount(
+                        ownerId = farmOwner.id,
+                        farmId = farmOwner.farmId
+                    )
 
                     val profile = MainProfileUiModel(
                         farmOwnerId = farmOwner.id,

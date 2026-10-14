@@ -20,6 +20,8 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.ouros.app.R
 import com.ouros.app.data.auth.AppSession
+import com.ouros.app.data.auth.AuthNetwork
+import com.ouros.app.data.auth.AuthRepository
 import com.ouros.app.data.auth.SecureRefreshTokenStore
 import com.ouros.app.data.farmowner.FarmOwnerNetwork
 import com.ouros.app.data.farmowner.FarmOwnerRepository
@@ -42,7 +44,10 @@ import java.io.File
 class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
 
     private lateinit var viewModel: ProfileViewModel
-    private lateinit var photoStore: ProfilePhotoStore
+    private var photoStore: ProfilePhotoStore? = null
+    private val farmSessionStore by lazy {
+        FarmSessionStore(applicationContext)
+    }
 
     private lateinit var inputName: TextInputLayout
     private lateinit var inputEmail: TextInputLayout
@@ -72,7 +77,7 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
             if (wasSaved && sourceUri != null) {
                 startPhotoCrop(sourceUri)
             } else {
-                photoStore.cancelPendingCameraPhoto()
+                photoStore?.cancelPendingCameraPhoto()
             }
         }
 
@@ -129,8 +134,9 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         enableEdgeToEdge()
         setContentView(R.layout.activity_profile)
 
-        photoStore = ProfilePhotoStore(applicationContext)
-
+        photoStore = farmSessionStore.ownerId()?.let {
+            ProfilePhotoStore(applicationContext, it)
+        }
         bindViews()
         configureViewModel()
         configureMasks()
@@ -157,9 +163,17 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     private fun configureViewModel() {
+        val authRepository = AuthRepository(
+            api = AuthNetwork.api,
+            refreshTokenStore = SecureRefreshTokenStore(applicationContext),
+            sessionManager = AppSession.sessionManager
+        )
+
         val farmOwnerRepository = FarmOwnerRepository(
             api = FarmOwnerNetwork.api,
-            sessionManager = AppSession.sessionManager
+            sessionManager = AppSession.sessionManager,
+            refreshSession = authRepository::refreshSession,
+            clearSession = authRepository::clearSession
         )
 
         val factory = ProfileViewModelFactory(
@@ -172,7 +186,10 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
 
     private fun configureActions() {
         findViewById<View>(R.id.btnBack).setOnClickListener { finish() }
-        findViewById<View>(R.id.btnEditPhoto).setOnClickListener { showPhotoPopup() }
+        findViewById<View>(R.id.btnEditPhoto).apply {
+            isEnabled = photoStore != null
+            setOnClickListener { showPhotoPopup() }
+        }
         findViewById<View>(R.id.txtLogout).setOnClickListener { logout() }
 
         btnSave.setOnClickListener {
@@ -224,8 +241,9 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     private fun openCamera() {
-        val cameraFile = photoStore.prepareCameraFile()
-        val cameraUri = FileProvider.getUriForFile(this,"$packageName.fileprovider", cameraFile)
+        val store = photoStore ?: return
+        val cameraFile = store.prepareCameraFile()
+        val cameraUri = FileProvider.getUriForFile(this, "$packageName.fileprovider", cameraFile)
 
         pendingCameraUri = cameraUri
         takePhotoLauncher.launch(cameraUri)
@@ -264,11 +282,12 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     private fun saveCroppedPhoto(croppedUri: Uri) {
-        val saved = photoStore.saveGalleryPhoto(croppedUri)
+        val store = photoStore ?: return
+        val saved = store.saveGalleryPhoto(croppedUri)
         clearPendingCrop()
 
         if (saved) {
-            showLocalPhoto()
+            showLocalPhoto(store)
             Toast.makeText(this, "Foto salva.", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(this, "Não foi possível salvar a foto.", Toast.LENGTH_LONG).show()
@@ -276,7 +295,7 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     private fun clearPendingCrop() {
-        photoStore.cancelPendingCameraPhoto()
+        photoStore?.cancelPendingCameraPhoto()
 
         pendingCropOutputFile
             ?.takeIf(File::exists)
@@ -287,7 +306,8 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     private fun deleteProfilePhoto() {
-        val avatarResource =photoStore.deletePhotoAndSelectRandomAvatar()
+        val store = photoStore ?: return
+        val avatarResource = store.deletePhotoAndSelectRandomAvatar()
 
         if (avatarResource == null) {
             Toast.makeText(this, "Nenhum avatar_ foi encontrado.", Toast.LENGTH_LONG).show()
@@ -374,6 +394,11 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     private fun renderProfile(profile: FarmOwnerResponse) {
+        photoStore = profile.id?.let { ownerId ->
+            farmSessionStore.saveAccount(ownerId, profile.farmId)
+            ProfilePhotoStore(applicationContext, ownerId)
+        }
+        findViewById<View>(R.id.btnEditPhoto).isEnabled = photoStore != null
         editName.setText(profile.name.orEmpty())
         editEmail.setText(profile.email.orEmpty())
 
@@ -396,11 +421,12 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     private fun renderProfilePhoto(remotePhotoUrl: String?) {
-        if (showLocalPhoto()) {
+        val store = photoStore
+        if (store != null && showLocalPhoto(store)) {
             return
         }
 
-        if (photoStore.shouldIgnoreRemotePhoto()) {
+        if (store?.shouldIgnoreRemotePhoto() == true) {
             showDefaultAvatar()
             return
         }
@@ -413,8 +439,8 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         showDefaultAvatar()
     }
 
-    private fun showLocalPhoto(): Boolean {
-        val localPhoto = photoStore.localPhotoFile()
+    private fun showLocalPhoto(store: ProfilePhotoStore): Boolean {
+        val localPhoto = store.localPhotoFile()
             ?: return false
 
         val bitmap = BitmapFactory.decodeFile(localPhoto.absolutePath)
@@ -430,8 +456,8 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     private fun showDefaultAvatar() {
-        val avatarResource = photoStore.selectedAvatarResource()
-            ?: return
+        val avatarResource = photoStore?.selectedAvatarResource()
+            ?: R.drawable.avatar_yellow
 
         showAvatarColor(avatarResource)
     }
@@ -506,9 +532,10 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     private fun logout() {
         AppSession.sessionManager.clear()
         SecureRefreshTokenStore(applicationContext).clear()
-        FarmSessionStore(applicationContext).clearFarmId()
+        farmSessionStore.clear()
+        photoStore = null
 
-        startActivity(Intent( this, WelcomeActivity::class.java).apply {
+        startActivity(Intent(this, WelcomeActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         })
         finish()

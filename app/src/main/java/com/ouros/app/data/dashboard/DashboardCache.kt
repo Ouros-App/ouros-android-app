@@ -7,25 +7,33 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 class DashboardCache(
-    context: Context,
+    private val cacheDirectory: File,
     private val gson: Gson = Gson()
 ) {
 
-    private val cacheFile =
-        File(
-            context.applicationContext.filesDir,
-            CACHE_FILE_NAME
-        )
+    constructor(
+        context: Context,
+        gson: Gson = Gson()
+    ) : this(
+        context.applicationContext.filesDir,
+        gson
+    )
+
+    init {
+        File(cacheDirectory, LEGACY_CACHE_FILE_NAME).delete()
+    }
 
     suspend fun save(
+        farmId: Long,
         dashboard: DashboardResponse
     ) {
         withContext(Dispatchers.IO) {
             runCatching {
+                val cacheFile = cacheFile(farmId)
                 val temporaryFile =
                     File(
-                        cacheFile.parentFile,
-                        TEMPORARY_FILE_NAME
+                        cacheDirectory,
+                        "dashboard_cache_$farmId.tmp"
                     )
 
                 temporaryFile.writeText(
@@ -37,47 +45,37 @@ class DashboardCache(
                     cacheFile.delete()
                 }
 
-                if (
-                    !temporaryFile.renameTo(
-                        cacheFile
-                    )
-                ) {
+                if (!temporaryFile.renameTo(cacheFile)) {
                     cacheFile.writeText(
-                        temporaryFile.readText(
-                            Charsets.UTF_8
-                        ),
+                        temporaryFile.readText(Charsets.UTF_8),
                         Charsets.UTF_8
                     )
-
                     temporaryFile.delete()
                 }
             }
         }
     }
 
-    suspend fun read():
-            DashboardResponse? {
+    suspend fun read(farmId: Long): DashboardResponse? {
         return withContext(Dispatchers.IO) {
             runCatching {
+                val cacheFile = cacheFile(farmId)
                 if (!cacheFile.exists()) {
                     return@runCatching null
                 }
 
                 gson.fromJson(
-                    cacheFile.readText(
-                        Charsets.UTF_8
-                    ),
+                    cacheFile.readText(Charsets.UTF_8),
                     DashboardResponse::class.java
                 )
             }.getOrNull()
         }
     }
 
-    private companion object {
-        const val CACHE_FILE_NAME =
-            "dashboard_cache.json"
+    private fun cacheFile(farmId: Long) =
+        File(cacheDirectory, "dashboard_cache_$farmId.json")
 
-        const val TEMPORARY_FILE_NAME =
-            "dashboard_cache.tmp"
+    private companion object {
+        const val LEGACY_CACHE_FILE_NAME = "dashboard_cache.json"
     }
 }

@@ -23,6 +23,7 @@ import com.ouros.app.data.dashboard.DashboardNetwork
 import com.ouros.app.data.dashboard.DashboardPeriod
 import com.ouros.app.data.dashboard.DashboardRepository
 import com.ouros.app.data.dashboard.DashboardUiState
+import com.ouros.app.data.session.FarmSessionStore
 import com.ouros.app.feature.main.MainActivity
 
 class DashboardFragment : Fragment() {
@@ -72,7 +73,8 @@ class DashboardFragment : Fragment() {
             api = DashboardNetwork.api,
             authRepository = authRepository,
             sessionManager = AppSession.sessionManager,
-            cache = DashboardCache(applicationContext)
+            cache = DashboardCache(applicationContext),
+            farmSessionStore = FarmSessionStore(applicationContext)
         )
 
         val factory = DashboardViewModelFactory(

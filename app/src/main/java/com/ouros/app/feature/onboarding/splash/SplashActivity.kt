@@ -54,7 +54,9 @@ class SplashActivity : AppCompatActivity() {
 
         farmOwnerRepository = FarmOwnerRepository(
             api = FarmOwnerNetwork.api,
-            sessionManager = AppSession.sessionManager
+            sessionManager = AppSession.sessionManager,
+            refreshSession = authRepository::refreshSession,
+            clearSession = authRepository::clearSession
         )
     }
 

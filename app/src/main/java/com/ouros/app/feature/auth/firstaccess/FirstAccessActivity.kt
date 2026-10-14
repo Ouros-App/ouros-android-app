@@ -15,6 +15,7 @@ import com.ouros.app.data.auth.AuthRepository
 import com.ouros.app.data.auth.SecureRefreshTokenStore
 import com.ouros.app.data.farmowner.FarmOwnerNetwork
 import com.ouros.app.data.farmowner.FarmOwnerRepository
+import com.ouros.app.data.session.FarmSessionStore
 import com.ouros.app.feature.main.MainActivity
 
 class FirstAccessActivity : AppCompatActivity(), FirstAccessViewModel.Listener {
@@ -43,7 +44,9 @@ class FirstAccessActivity : AppCompatActivity(), FirstAccessViewModel.Listener {
 
         val farmOwnerRepository = FarmOwnerRepository(
             api = FarmOwnerNetwork.api,
-            sessionManager = AppSession.sessionManager
+            sessionManager = AppSession.sessionManager,
+            refreshSession = authRepository::refreshSession,
+            clearSession = authRepository::clearSession
         )
 
         val factory = FirstAccessViewModelFactory(
@@ -185,6 +188,7 @@ class FirstAccessActivity : AppCompatActivity(), FirstAccessViewModel.Listener {
     }
 
     private fun openMain() {
+        FarmSessionStore(applicationContext).clear()
         startActivity(Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         })

@@ -7,23 +7,23 @@ import java.io.File
 import kotlin.random.Random
 
 class ProfilePhotoStore(
-    context: Context
+    context: Context,
+    ownerId: Long
 ) {
 
     private val appContext =
         context.applicationContext
 
+    private val scope =
+        ProfilePhotoScope.forOwner(appContext.filesDir, ownerId)
+
     private val preferences =
         appContext.getSharedPreferences(
-            PREFERENCES_NAME,
+            scope.preferencesName,
             Context.MODE_PRIVATE
         )
 
-    private val profileDirectory =
-        File(
-            appContext.filesDir,
-            PROFILE_DIRECTORY
-        )
+    private val profileDirectory = scope.directory
 
     private val profilePhoto =
         File(
@@ -36,6 +36,18 @@ class ProfilePhotoStore(
             profileDirectory,
             PENDING_CAMERA_PHOTO_NAME
         )
+
+    init {
+        File(
+            appContext.filesDir,
+            LEGACY_PROFILE_DIRECTORY
+        ).deleteRecursively()
+
+        appContext.getSharedPreferences(
+            ProfilePhotoScope.PREFERENCES_NAME,
+            Context.MODE_PRIVATE
+        ).edit().clear().apply()
+    }
 
     fun localPhotoFile(): File? {
         return profilePhoto.takeIf {
@@ -240,28 +252,28 @@ class ProfilePhotoStore(
     )
 
     private companion object {
-        const val PREFERENCES_NAME =
-            "ouros_profile_photo"
+        const val LEGACY_PROFILE_DIRECTORY = "profile"
+        const val PROFILE_PHOTO_NAME = "profile_photo.jpg"
+        const val PENDING_CAMERA_PHOTO_NAME = "pending_camera_photo.jpg"
+        const val TEMPORARY_GALLERY_PHOTO_NAME = "temporary_gallery_photo.jpg"
+        const val KEY_SELECTED_AVATAR = "selected_avatar"
+        const val KEY_REMOTE_PHOTO_REMOVED = "remote_photo_removed"
+        const val AVATAR_PREFIX = "avatar_"
+    }
+}
 
-        const val PROFILE_DIRECTORY =
-            "profile"
+internal data class ProfilePhotoScope(
+    val directory: File,
+    val preferencesName: String
+) {
+    companion object {
+        const val PREFERENCES_NAME = "ouros_profile_photo"
+        private const val PROFILE_DIRECTORY = "profile_accounts"
 
-        const val PROFILE_PHOTO_NAME =
-            "profile_photo.jpg"
-
-        const val PENDING_CAMERA_PHOTO_NAME =
-            "pending_camera_photo.jpg"
-
-        const val TEMPORARY_GALLERY_PHOTO_NAME =
-            "temporary_gallery_photo.jpg"
-
-        const val KEY_SELECTED_AVATAR =
-            "selected_avatar"
-
-        const val KEY_REMOTE_PHOTO_REMOVED =
-            "remote_photo_removed"
-
-        const val AVATAR_PREFIX =
-            "avatar_"
+        fun forOwner(filesDir: File, ownerId: Long) =
+            ProfilePhotoScope(
+                directory = File(filesDir, "$PROFILE_DIRECTORY/$ownerId"),
+                preferencesName = "$PREFERENCES_NAME-$ownerId"
+            )
     }
 }

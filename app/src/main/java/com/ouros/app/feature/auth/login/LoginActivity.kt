@@ -24,6 +24,7 @@ import com.ouros.app.data.auth.AuthRepository
 import com.ouros.app.data.auth.SecureRefreshTokenStore
 import com.ouros.app.data.farmowner.FarmOwnerNetwork
 import com.ouros.app.data.farmowner.FarmOwnerRepository
+import com.ouros.app.data.session.FarmSessionStore
 import com.ouros.app.feature.auth.firstaccess.FirstAccessActivity
 import com.ouros.app.feature.auth.forgotpassword.ForgotPasswordActivity
 import com.ouros.app.feature.error.ErrorActivity
@@ -98,7 +99,9 @@ class LoginActivity :
 
         val farmOwnerRepository = FarmOwnerRepository(
             api = FarmOwnerNetwork.api,
-            sessionManager = AppSession.sessionManager
+            sessionManager = AppSession.sessionManager,
+            refreshSession = authRepository::refreshSession,
+            clearSession = authRepository::clearSession
         )
 
         val factory =
@@ -577,6 +580,7 @@ class LoginActivity :
     }
 
     private fun openMain() {
+        FarmSessionStore(applicationContext).clear()
         startActivity(
             Intent(
                 this,

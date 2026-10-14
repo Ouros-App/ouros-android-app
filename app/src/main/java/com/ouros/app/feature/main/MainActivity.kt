@@ -18,6 +18,9 @@ import androidx.fragment.app.Fragment
 import coil.load
 import com.ouros.app.R
 import com.ouros.app.data.auth.AppSession
+import com.ouros.app.data.auth.AuthNetwork
+import com.ouros.app.data.auth.AuthRepository
+import com.ouros.app.data.auth.SecureRefreshTokenStore
 import com.ouros.app.data.farmowner.FarmOwnerNetwork
 import com.ouros.app.data.farmowner.FarmOwnerRepository
 import com.ouros.app.data.session.FarmSessionStore
@@ -55,19 +58,26 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
     private var currentProfile: MainProfileUiModel? = null
     private var mainLoading = false
 
-    private val profilePhotoStore:
-            ProfilePhotoStore by lazy {
-        ProfilePhotoStore(applicationContext)
-    }
+    private var profilePhotoStore: ProfilePhotoStore? = null
 
     private val farmSessionStore: FarmSessionStore by lazy {
         FarmSessionStore(this)
     }
 
+    private val authRepository: AuthRepository by lazy {
+        AuthRepository(
+            api = AuthNetwork.api,
+            refreshTokenStore = SecureRefreshTokenStore(applicationContext),
+            sessionManager = AppSession.sessionManager
+        )
+    }
+
     private val farmOwnerRepository: FarmOwnerRepository by lazy {
         FarmOwnerRepository(
             api = FarmOwnerNetwork.api,
-            sessionManager = AppSession.sessionManager
+            sessionManager = AppSession.sessionManager,
+            refreshSession = authRepository::refreshSession,
+            clearSession = authRepository::clearSession
         )
     }
 
@@ -135,6 +145,9 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
         profile: MainProfileUiModel
     ) {
         currentProfile = profile
+        profilePhotoStore = profile.farmOwnerId?.let {
+            ProfilePhotoStore(applicationContext, it)
+        }
         renderHeader()
 
         val fallbackAvatar =
@@ -165,7 +178,8 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
 
     override fun onMainSessionExpired() {
         AppSession.sessionManager.clear()
-        farmSessionStore.clearFarmId()
+        farmSessionStore.clear()
+        profilePhotoStore = null
 
         val intent = Intent(
             this,
@@ -325,8 +339,8 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
         remotePhotoUrl: String?,
         fallbackAvatar: Int
     ) {
-        val localPhoto =
-            profilePhotoStore.localPhotoFile()
+        val store = profilePhotoStore
+        val localPhoto = store?.localPhotoFile()
 
         if (localPhoto != null) {
             imgAvatar.load(localPhoto) {
@@ -339,14 +353,10 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
         }
 
         val selectedAvatar =
-            profilePhotoStore
-                .selectedAvatarResource()
+            store?.selectedAvatarResource()
                 ?: fallbackAvatar
 
-        if (
-            profilePhotoStore
-                .shouldIgnoreRemotePhoto()
-        ) {
+        if (store?.shouldIgnoreRemotePhoto() == true) {
             imgAvatar.setImageResource(
                 selectedAvatar
             )

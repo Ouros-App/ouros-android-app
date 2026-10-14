@@ -3,6 +3,7 @@ package com.ouros.app.data.dashboard
 import com.ouros.app.data.auth.AuthRepository
 import com.ouros.app.data.auth.AuthResult
 import com.ouros.app.data.auth.SessionManager
+import com.ouros.app.data.session.FarmSessionStore
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import retrofit2.Response
@@ -31,12 +32,14 @@ class DashboardRepository(
     private val api: DashboardApi,
     private val authRepository: AuthRepository,
     private val sessionManager: SessionManager,
-    private val cache: DashboardCache
+    private val cache: DashboardCache,
+    private val farmSessionStore: FarmSessionStore
 ) {
 
     suspend fun load(
         period: DashboardPeriod
     ): DashboardResult {
+        val farmId = farmSessionStore.farmId()
         return try {
             when (
                 val statusResult =
@@ -54,15 +57,16 @@ class DashboardRepository(
 
                 AuthenticatedCallResult.TemporaryFailure -> {
                     cachedResult(
-                        "Não foi possível atualizar os dados."
+                        "Não foi possível atualizar os dados.",
+                        farmId
                     )
                 }
 
                 is AuthenticatedCallResult.ResponseResult -> {
                     handleStatusResponse(
-                        response =
-                            statusResult.response,
-                        period = period
+                        response = statusResult.response,
+                        period = period,
+                        farmId = farmId
                     )
                 }
             }
@@ -70,18 +74,21 @@ class DashboardRepository(
             throw error
         } catch (_: IOException) {
             cachedResult(
-                "Sem conexão. Exibindo os últimos dados disponíveis."
+                "Sem conexão. Exibindo os últimos dados disponíveis.",
+                farmId
             )
         } catch (_: Exception) {
             cachedResult(
-                "Não foi possível atualizar os dados."
+                "Não foi possível atualizar os dados.",
+                farmId
             )
         }
     }
 
     private suspend fun handleStatusResponse(
         response: Response<DashboardStatusResponse>,
-        period: DashboardPeriod
+        period: DashboardPeriod,
+        farmId: Long?
     ): DashboardResult {
         return when {
             response.code() == 403 -> {
@@ -94,7 +101,8 @@ class DashboardRepository(
 
             response.code() == 503 -> {
                 cachedResult(
-                    "Dados de telemetria em atualização."
+                    "Dados de telemetria em atualização.",
+                    farmId
                 )
             }
 
@@ -113,18 +121,20 @@ class DashboardRepository(
                     ignoreCase = true
                 ) != true -> {
                 cachedResult(
-                    "Os dados ainda estão sendo atualizados."
+                    "Os dados ainda estão sendo atualizados.",
+                    farmId
                 )
             }
 
             else -> {
-                requestDashboard(period)
+                requestDashboard(period, farmId)
             }
         }
     }
 
     private suspend fun requestDashboard(
-        period: DashboardPeriod
+        period: DashboardPeriod,
+        farmId: Long?
     ): DashboardResult {
         val request =
             DashboardRequest(
@@ -169,20 +179,23 @@ class DashboardRepository(
 
             AuthenticatedCallResult.TemporaryFailure -> {
                 cachedResult(
-                    "Não foi possível atualizar os dados."
+                    "Não foi possível atualizar os dados.",
+                    farmId
                 )
             }
 
             is AuthenticatedCallResult.ResponseResult -> {
                 handleDashboardResponse(
-                    dashboardResult.response
+                    dashboardResult.response,
+                    farmId
                 )
             }
         }
     }
 
     private suspend fun handleDashboardResponse(
-        response: Response<DashboardResponse>
+        response: Response<DashboardResponse>,
+        farmId: Long?
     ): DashboardResult {
         return when {
             response.code() == 403 -> {
@@ -203,7 +216,8 @@ class DashboardRepository(
 
             response.code() == 503 -> {
                 cachedResult(
-                    "Serviço temporariamente indisponível."
+                    "Serviço temporariamente indisponível.",
+                    farmId
                 )
             }
 
@@ -223,7 +237,7 @@ class DashboardRepository(
                         canRetry = true
                     )
                 } else {
-                    cache.save(dashboard)
+                    farmId?.let { cache.save(it, dashboard) }
 
                     DashboardResult.Success(
                         dashboard = dashboard
@@ -379,11 +393,11 @@ class DashboardRepository(
     }
 
     private suspend fun cachedResult(
-        message: String
+        message: String,
+        farmId: Long?
     ): DashboardResult {
         val cachedDashboard =
-            cache.read()
-
+            farmId?.let(cache::read)
         return if (cachedDashboard != null) {
             DashboardResult.Success(
                 dashboard =
