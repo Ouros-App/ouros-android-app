@@ -271,8 +271,9 @@ class LoginViewModel(
                 farmOwnerRepository.getMe()
         ) {
             is AuthResult.Error -> {
-                authRepository.clearSession()
-
+                if (result.statusCode == 401) {
+                    authRepository.clearSession()
+                }
                 listener?.onLoginError(
                     result.message
                 )

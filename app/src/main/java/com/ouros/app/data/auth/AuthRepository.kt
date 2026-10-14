@@ -3,6 +3,11 @@ package com.ouros.app.data.auth
 import com.google.gson.Gson
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import retrofit2.Response
 
 class AuthRepository(
@@ -101,6 +106,47 @@ class AuthRepository(
     }
 
     suspend fun refreshSession(): AuthResult<TokenResponse> {
+        val (flight, shouldRunRefresh) = refreshMutex.withLock {
+            val currentFlight = inFlightRefresh
+            if (currentFlight != null) {
+                currentFlight to false
+            } else {
+                CompletableDeferred<AuthResult<TokenResponse>>().also {
+                    inFlightRefresh = it
+                } to true
+            }
+        }
+
+        if (!shouldRunRefresh) {
+            return flight.await()
+        }
+
+        try {
+            val result = try {
+                refreshSessionOnce()
+            } catch (error: CancellationException) {
+                flight.complete(
+                    AuthResult.Error("Não foi possível restaurar a sessão.")
+                )
+                throw error
+            } catch (_: Exception) {
+                AuthResult.Error("Não foi possível restaurar a sessão.")
+            }
+
+            flight.complete(result)
+            return result
+        } finally {
+            withContext(NonCancellable) {
+                refreshMutex.withLock {
+                    if (inFlightRefresh === flight) {
+                        inFlightRefresh = null
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun refreshSessionOnce(): AuthResult<TokenResponse> {
         val oldRefreshToken = refreshTokenStore.getRefreshToken()
             ?: return AuthResult.Error("Nenhuma sessão salva.")
 
@@ -298,4 +344,10 @@ class AuthRepository(
 
         return AuthResult.Error(message = message, statusCode = statusCode)
     }
+
+    private companion object {
+        val refreshMutex = Mutex()
+        var inFlightRefresh: CompletableDeferred<AuthResult<TokenResponse>>? = null
+    }
+
 }
