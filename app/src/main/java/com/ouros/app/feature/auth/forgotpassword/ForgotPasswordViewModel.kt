@@ -57,6 +57,8 @@ class ForgotPasswordViewModel(private val authRepository:AuthRepository) : ViewM
     private var resetToken = ""
     private var resetTokenExpiresAtMillis = 0L
 
+    private var pendingResetSuccess: String? = null
+
     private var isLoading = false
 
     private var countdownJob:
@@ -79,6 +81,8 @@ class ForgotPasswordViewModel(private val authRepository:AuthRepository) : ViewM
         ) {
             notifyChallengeChanged()
         }
+
+        dispatchPendingResetSuccess()
     }
 
     fun clearListener(
@@ -286,12 +290,12 @@ class ForgotPasswordViewModel(private val authRepository:AuthRepository) : ViewM
                             )
                 ) {
                     is AuthResult.Success -> {
+                        pendingResetSuccess =
+                            SUCCESS_MESSAGE
+
                         clearAllState()
 
-                        listener
-                            ?.onResetSucceeded(
-                                SUCCESS_MESSAGE
-                            )
+                        dispatchPendingResetSuccess()
                     }
 
                     is AuthResult.Error -> {
@@ -579,9 +583,19 @@ class ForgotPasswordViewModel(private val authRepository:AuthRepository) : ViewM
         challengeId = ""
         maskedEmail = ""
         challengeExpiresAtMillis = 0L
-
         resetToken = ""
         resetTokenExpiresAtMillis = 0L
+    }
+
+    private fun dispatchPendingResetSuccess() {
+        val currentListener =
+            listener ?: return
+        val message =
+            pendingResetSuccess ?: return
+
+        pendingResetSuccess = null
+
+        currentListener.onResetSucceeded(message)
     }
 
     private fun clearAllState() {

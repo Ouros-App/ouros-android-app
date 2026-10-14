@@ -40,6 +40,12 @@ class LoginViewModel(
     }
 
     private var listener: Listener? = null
+    private var terminalDestination: TerminalDestination? = null
+
+    private sealed interface TerminalDestination {
+        data class FirstAccess(val farmOwnerId: Long) : TerminalDestination
+        data object LoginSucceeded : TerminalDestination
+    }
 
     private var email = ""
     private var password = ""
@@ -63,6 +69,8 @@ class LoginViewModel(
         listener.onCodeLoadingChanged(
             isCodeLoading
         )
+
+        dispatchTerminalDestination()
     }
 
     fun clearListener(
@@ -70,6 +78,21 @@ class LoginViewModel(
     ) {
         if (this.listener === listener) {
             this.listener = null
+        }
+    }
+
+    private fun dispatchTerminalDestination() {
+        val destination = terminalDestination ?: return
+        val currentListener = listener ?: return
+        terminalDestination = null
+
+        when (destination) {
+            is TerminalDestination.FirstAccess ->
+                currentListener.onFirstAccessRequired(
+                    destination.farmOwnerId
+                )
+            TerminalDestination.LoginSucceeded ->
+                currentListener.onLoginSucceeded()
         }
     }
 
@@ -300,15 +323,12 @@ class LoginViewModel(
                     return
                 }
 
-                if (firstAccess) {
-                    listener
-                        ?.onFirstAccessRequired(
-                            id
-                        )
+                terminalDestination = if (firstAccess) {
+                    TerminalDestination.FirstAccess(id)
                 } else {
-                    listener
-                        ?.onLoginSucceeded()
+                    TerminalDestination.LoginSucceeded
                 }
+                dispatchTerminalDestination()
             }
         }
     }

@@ -70,6 +70,54 @@ class LoginViewModelTest {
         assertEquals(0, refreshTokenStorage.clearCalls)
     }
 
+    @Test
+    fun profileSuccessIsReplayedOnceWhenListenerAttaches() = runBlocking {
+        val sessionManager = SessionManager().apply {
+            setAccessToken("access-valid", expiresInSeconds = 3600)
+        }
+        val authRepository = AuthRepository(
+            api = UnusedAuthApi,
+            refreshTokenStore = MemoryRefreshTokenStorage("refresh-valid"),
+            sessionManager = sessionManager
+        )
+        val farmOwnerRepository = FarmOwnerRepository(
+            api = SuccessfulFarmOwnerApi,
+            sessionManager = sessionManager,
+            refreshSession = authRepository::refreshSession,
+            clearSession = authRepository::clearSession
+        )
+        val viewModel = LoginViewModel(authRepository, farmOwnerRepository)
+        val listener = RecordingListener()
+
+        viewModel.loadFarmOwnerProfile()
+        viewModel.setListener(listener)
+        viewModel.setListener(listener)
+
+        assertEquals(1, listener.loginSuccessCount)
+    }
+
+
+    private object SuccessfulFarmOwnerApi : FarmOwnerApi {
+        override suspend fun getMe(authorization: String): Response<FarmOwnerResponse> =
+            Response.success(
+                FarmOwnerResponse(
+                    id = 42,
+                    name = "Owner",
+                    documentNumber = null,
+                    email = null,
+                    telephone = null,
+                    farmId = null,
+                    firstAccess = false,
+                    photoUrl = null
+                )
+            )
+
+        override suspend fun update(
+            id: Long,
+            authorization: String,
+            request: FarmOwnerUpdateRequest
+        ): Response<FarmOwnerResponse> = error("Unused")
+    }
     private object OfflineFarmOwnerApi : FarmOwnerApi {
         override suspend fun getMe(authorization: String): Response<FarmOwnerResponse> {
             throw IOException("offline")
@@ -82,6 +130,24 @@ class LoginViewModelTest {
         ): Response<FarmOwnerResponse> = error("Unused")
     }
 
+
+    private class RecordingListener : LoginViewModel.Listener {
+        var loginSuccessCount = 0
+
+        override fun onLoginLoadingChanged(isLoading: Boolean) = Unit
+        override fun onCodeLoadingChanged(isLoading: Boolean) = Unit
+        override fun onEmailError(message: String?) = Unit
+        override fun onPasswordError(message: String?) = Unit
+        override fun onCodeError(message: String?) = Unit
+        override fun onInvalidCredentials() = Unit
+        override fun onLoginError(message: String) = Unit
+        override fun onCodeRequired(maskedEmail: String, expiresInSeconds: Long) = Unit
+        override fun onCodeResent() = Unit
+        override fun onFirstAccessRequired(farmOwnerId: Long) = Unit
+        override fun onLoginSucceeded() {
+            loginSuccessCount++
+        }
+    }
     private object UnusedAuthApi : AuthApi {
         override suspend fun startLogin(request: LoginStartRequest): Response<LoginStartResponse> = error("Unused")
         override suspend fun verifyLogin(request: LoginVerifyRequest): Response<TokenResponse> = error("Unused")

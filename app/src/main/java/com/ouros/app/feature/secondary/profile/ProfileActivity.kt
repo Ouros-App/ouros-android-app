@@ -142,6 +142,10 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         configureMasks()
         configureActions()
 
+        pendingCameraUri = savedInstanceState
+            ?.getString(STATE_PENDING_CAMERA_URI)
+            ?.let(Uri::parse)
+
         viewModel.loadProfile()
     }
 
@@ -304,6 +308,14 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         pendingCropOutputFile = null
         pendingCameraUri = null
     }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        pendingCameraUri?.let {
+            outState.putString(STATE_PENDING_CAMERA_URI, it.toString())
+        }
+        super.onSaveInstanceState(outState)
+    }
+
 
     private fun deleteProfilePhoto() {
         val store = photoStore ?: return
@@ -606,5 +618,6 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
 
     private companion object {
         const val PHOTO_TIMEOUT_MILLIS = 10_000
+        const val STATE_PENDING_CAMERA_URI = "pending_camera_uri"
     }
 }

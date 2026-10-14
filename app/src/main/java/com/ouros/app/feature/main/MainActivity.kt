@@ -14,6 +14,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import coil.load
 import com.ouros.app.R
@@ -92,6 +94,20 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+
+        ViewCompat.setOnApplyWindowInsetsListener(
+            findViewById(R.id.footer)
+        ) { view, insets ->
+            view.setPadding(
+                view.paddingLeft,
+                view.paddingTop,
+                view.paddingRight,
+                insets.getInsets(
+                    WindowInsetsCompat.Type.navigationBars()
+                ).bottom
+            )
+            insets
+        }
 
         bindHeaderViews()
         bindFooterViews()
