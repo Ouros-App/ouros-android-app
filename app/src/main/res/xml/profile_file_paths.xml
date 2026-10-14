@@ -3,7 +3,7 @@
 
     <files-path
         name="profile_photos"
-        path="profile/" />
+        path="profile_accounts/" />
 
     <cache-path
         name="profile_crops"

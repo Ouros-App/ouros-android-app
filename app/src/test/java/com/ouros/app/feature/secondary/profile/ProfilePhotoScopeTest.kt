@@ -1,6 +1,7 @@
 package com.ouros.app.feature.secondary.profile
 
 import java.io.File
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Rule
 import org.junit.Test
@@ -15,6 +16,10 @@ class ProfilePhotoScopeTest {
     fun differentOwnersUseSeparatePhotoFilesAndPreferences() {
         val filesDir = temporaryFolder.root
         val firstOwner = ProfilePhotoScope.forOwner(filesDir, 101L)
+        assertEquals(
+            File(filesDir, "profile_accounts/101"),
+            firstOwner.directory
+        )
         val secondOwner = ProfilePhotoScope.forOwner(filesDir, 202L)
         assertNotEquals(
             File(firstOwner.directory, "profile_photo.jpg"),

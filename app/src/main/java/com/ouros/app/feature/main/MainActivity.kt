@@ -326,6 +326,7 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
     private fun configureProfileNavigation() {
         findViewById<View>(R.id.imgAvatar)
             .setOnClickListener {
+                mainViewModel.clearProfileCache()
                 startActivity(
                     Intent(
                         this,
