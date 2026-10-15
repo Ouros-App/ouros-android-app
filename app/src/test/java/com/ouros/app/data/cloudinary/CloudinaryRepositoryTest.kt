@@ -189,4 +189,117 @@ class CloudinaryRepositoryTest {
             assertEquals(cancellation, actual)
         }
     }
+
+    @Test
+    fun uploadImage_emptyFile_returnsFailureWithoutCallingApi() = runBlocking {
+        val emptyFile = temporaryFolder.newFile("empty.jpg")
+        var apiCalled = false
+        val fakeApi = object : CloudinaryApi {
+            override suspend fun uploadImage(
+                cloudName: String,
+                file: MultipartBody.Part,
+                uploadPreset: RequestBody,
+                folder: RequestBody?
+            ): Response<CloudinaryUploadResponse> {
+                apiCalled = true
+                error("Should not be called")
+            }
+        }
+
+        val result = CloudinaryRepository(api = fakeApi).uploadImage(emptyFile)
+
+        assertTrue(result.isFailure)
+        assertEquals(IllegalArgumentException::class.java, result.exceptionOrNull()?.javaClass)
+        assertEquals(false, apiCalled)
+    }
+
+    @Test
+    fun uploadImage_successWithoutSecureUrl_returnsResponseMessageAndOmitsBlankFolder() = runBlocking {
+        val testFile = temporaryFolder.newFile("photo.jpg").apply {
+            writeBytes(byteArrayOf(1))
+        }
+        var capturedFolder: RequestBody? = null
+        val fakeApi = object : CloudinaryApi {
+            override suspend fun uploadImage(
+                cloudName: String,
+                file: MultipartBody.Part,
+                uploadPreset: RequestBody,
+                folder: RequestBody?
+            ): Response<CloudinaryUploadResponse> {
+                capturedFolder = folder
+                return Response.success(
+                    CloudinaryUploadResponse(error = CloudinaryErrorResponse("Missing secure URL"))
+                )
+            }
+        }
+
+        val result = CloudinaryRepository(api = fakeApi, folder = " ").uploadImage(testFile)
+
+        assertTrue(result.isFailure)
+        assertEquals("Missing secure URL", result.exceptionOrNull()?.message)
+        assertEquals(null, capturedFolder)
+    }
+
+    @Test
+    fun uploadImage_successWithoutBody_usesFallbackMessage() = runBlocking {
+        val testFile = temporaryFolder.newFile("photo.jpg").apply {
+            writeBytes(byteArrayOf(1))
+        }
+        val fakeApi = object : CloudinaryApi {
+            override suspend fun uploadImage(
+                cloudName: String,
+                file: MultipartBody.Part,
+                uploadPreset: RequestBody,
+                folder: RequestBody?
+            ): Response<CloudinaryUploadResponse> = Response.success(null)
+        }
+
+        val result = CloudinaryRepository(api = fakeApi).uploadImage(testFile)
+
+        assertTrue(result.isFailure)
+        assertEquals("Falha ao obter URL da imagem enviada.", result.exceptionOrNull()?.message)
+    }
+
+    @Test
+    fun uploadImage_errorResponseWithEmptyBody_usesStatusFallback() = runBlocking {
+        val testFile = temporaryFolder.newFile("photo.jpg").apply {
+            writeBytes(byteArrayOf(1))
+        }
+        val fakeApi = object : CloudinaryApi {
+            override suspend fun uploadImage(
+                cloudName: String,
+                file: MultipartBody.Part,
+                uploadPreset: RequestBody,
+                folder: RequestBody?
+            ): Response<CloudinaryUploadResponse> =
+                Response.error(503, byteArrayOf().toResponseBody())
+        }
+
+        val result = CloudinaryRepository(api = fakeApi).uploadImage(testFile)
+
+        assertTrue(result.isFailure)
+        assertEquals("Erro no upload da foto (código 503).", result.exceptionOrNull()?.message)
+    }
+
+    @Test
+    fun uploadImage_successWithoutUrlOrApiError_usesFallbackMessage() = runBlocking {
+        val testFile = temporaryFolder.newFile("photo.jpg").apply {
+            writeBytes(byteArrayOf(1))
+        }
+        val fakeApi = object : CloudinaryApi {
+            override suspend fun uploadImage(
+                cloudName: String,
+                file: MultipartBody.Part,
+                uploadPreset: RequestBody,
+                folder: RequestBody?
+            ): Response<CloudinaryUploadResponse> =
+                Response.success(CloudinaryUploadResponse())
+        }
+
+        val result = CloudinaryRepository(api = fakeApi).uploadImage(testFile)
+
+        assertTrue(result.isFailure)
+        assertEquals("Falha ao obter URL da imagem enviada.", result.exceptionOrNull()?.message)
+    }
+
 }
