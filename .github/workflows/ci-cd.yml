@@ -74,23 +74,36 @@ jobs:
         with:
           gradle-version: 9.1.0
 
-      - name: Build and test
-        run: gradle :app:assembleDebug :app:testDebugUnitTest --no-daemon
+      - name: Build and test with coverage
+        run: gradle :app:assembleDebug :app:createDebugUnitTestCoverageReport --no-daemon
+
+      - name: Upload SonarCloud coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonar-coverage
+          path: app/build/reports/coverage/test/debug/report.xml
+          if-no-files-found: error
 
   sonarcloud:
     name: sonarcloud
     runs-on: ubuntu-latest
     needs: ci
-    # The initial import is the baseline; full Sonar analysis runs on main after merge.
+    # The baseline label skips Sonar; rerun-ci explicitly overrides it for a PR scan.
     if: >-
       github.event_name != 'pull_request' ||
-      !contains(github.event.pull_request.labels.*.name, 'sonar-baseline')
-
+      !contains(github.event.pull_request.labels.*.name, 'sonar-baseline') ||
+      contains(github.event.pull_request.labels.*.name, 'rerun-ci')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Download SonarCloud coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: sonar-coverage
+          path: coverage
 
       - name: Configure SonarCloud
         env:
@@ -105,6 +118,7 @@ jobs:
             echo "sonar.sources=app/src/main"
             echo "sonar.tests=app/src/test,app/src/androidTest"
             echo "sonar.exclusions=.git/**,.github/**,**/build/**"
+            echo "sonar.coverage.jacoco.xmlReportPaths=coverage/report.xml"
             echo "sonar.sourceEncoding=UTF-8"
             if [ "$GITHUB_EVENT_NAME" != "pull_request" ]; then
               echo "sonar.branch.name=main"
