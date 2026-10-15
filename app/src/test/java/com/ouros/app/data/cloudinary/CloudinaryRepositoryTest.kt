@@ -125,4 +125,68 @@ class CloudinaryRepositoryTest {
         assertTrue(result.isFailure)
         assertEquals("Sem conexão ao enviar foto. Verifique sua internet.", result.exceptionOrNull()?.message)
     }
+
+    @Test
+    fun uploadImage_malformedErrorResponse_usesStatusFallback() = runBlocking {
+        val testFile = temporaryFolder.newFile("photo.jpg").apply {
+            writeBytes(byteArrayOf(1, 2, 3, 4))
+        }
+        val fakeApi = object : CloudinaryApi {
+            override suspend fun uploadImage(
+                cloudName: String,
+                file: MultipartBody.Part,
+                uploadPreset: RequestBody,
+                folder: RequestBody?
+            ): Response<CloudinaryUploadResponse> =
+                Response.error(502, "not-json".toResponseBody())
+        }
+
+        val result = CloudinaryRepository(api = fakeApi).uploadImage(testFile)
+
+        assertTrue(result.isFailure)
+        assertEquals("Erro no upload da foto (código 502).", result.exceptionOrNull()?.message)
+    }
+
+    @Test
+    fun uploadImage_unexpectedExceptionWithoutMessage_usesFallback() = runBlocking {
+        val testFile = temporaryFolder.newFile("photo.jpg").apply {
+            writeBytes(byteArrayOf(1, 2, 3, 4))
+        }
+        val fakeApi = object : CloudinaryApi {
+            override suspend fun uploadImage(
+                cloudName: String,
+                file: MultipartBody.Part,
+                uploadPreset: RequestBody,
+                folder: RequestBody?
+            ): Response<CloudinaryUploadResponse> = throw Exception()
+        }
+
+        val result = CloudinaryRepository(api = fakeApi).uploadImage(testFile)
+
+        assertTrue(result.isFailure)
+        assertEquals("Erro inesperado ao enviar foto.", result.exceptionOrNull()?.message)
+    }
+
+    @Test
+    fun uploadImage_cancellationIsPropagated() = runBlocking {
+        val testFile = temporaryFolder.newFile("photo.jpg").apply {
+            writeBytes(byteArrayOf(1, 2, 3, 4))
+        }
+        val cancellation = kotlinx.coroutines.CancellationException("cancelled")
+        val fakeApi = object : CloudinaryApi {
+            override suspend fun uploadImage(
+                cloudName: String,
+                file: MultipartBody.Part,
+                uploadPreset: RequestBody,
+                folder: RequestBody?
+            ): Response<CloudinaryUploadResponse> = throw cancellation
+        }
+
+        try {
+            CloudinaryRepository(api = fakeApi).uploadImage(testFile)
+            throw AssertionError("Cancellation must propagate")
+        } catch (actual: kotlinx.coroutines.CancellationException) {
+            assertEquals(cancellation, actual)
+        }
+    }
 }
