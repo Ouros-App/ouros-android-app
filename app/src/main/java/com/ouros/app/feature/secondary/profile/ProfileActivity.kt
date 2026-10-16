@@ -561,6 +561,16 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     private fun logout() {
+        val fcmToken = com.ouros.app.core.fcm.FcmTokenStore(applicationContext).getToken()
+        if (!fcmToken.isNullOrBlank()) {
+            Executors.newSingleThreadExecutor().execute {
+                kotlinx.coroutines.runBlocking {
+                    com.ouros.app.data.notification.NotificationRepository().deleteDeviceToken(fcmToken)
+                }
+            }
+        }
+        com.ouros.app.core.fcm.FcmTokenStore(applicationContext).clear()
+
         AppSession.sessionManager.clear()
         SecureRefreshTokenStore(applicationContext).clear()
         farmSessionStore.clear()

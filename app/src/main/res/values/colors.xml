@@ -8,4 +8,10 @@
     <color name="warning_red">#EA2323</color>
     <color name="warning_yellow">#FFC916</color>
     <color name="success_green">#19E84A</color>
+
+    <color name="notification_dark">#1E1A34</color>
+    <color name="gold_gradient_start">#D4A017</color>
+    <color name="gold_gradient_end">#8B6508</color>
+    <color name="notification_text_secondary">#B0AFC5</color>
+    <color name="star_gold">#FFB800</color>
 </resources>

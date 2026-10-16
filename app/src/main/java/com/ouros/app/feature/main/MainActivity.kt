@@ -1,9 +1,11 @@
 package com.ouros.app.feature.main
 
+import android.Manifest
 import android.content.Intent
-import com.ouros.app.feature.secondary.profile.ProfileActivity
+import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
@@ -11,29 +13,40 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import coil.load
+import com.google.firebase.messaging.FirebaseMessaging
 import com.ouros.app.R
+import com.ouros.app.core.fcm.FcmTokenStore
+import com.ouros.app.core.fcm.OurosFirebaseMessagingService
 import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository
 import com.ouros.app.data.auth.SecureRefreshTokenStore
 import com.ouros.app.data.farmowner.FarmOwnerNetwork
 import com.ouros.app.data.farmowner.FarmOwnerRepository
+import com.ouros.app.data.notification.NotificationRepository
 import com.ouros.app.data.session.FarmSessionStore
 import com.ouros.app.feature.auth.login.LoginActivity
 import com.ouros.app.feature.main.dashboard.DashboardFragment
 import com.ouros.app.feature.main.goals.GoalsFragment
 import com.ouros.app.feature.main.rank.RankFragment
 import com.ouros.app.feature.main.record.RecordFragment
+import com.ouros.app.feature.notification.NotificationActivity
+import com.ouros.app.feature.notification.NotificationTestActivity
 import com.ouros.app.feature.secondary.chatbot.ChatbotActivity
+import com.ouros.app.feature.secondary.profile.ProfileActivity
 import com.ouros.app.feature.secondary.profile.ProfilePhotoStore
+import com.ouros.app.feature.tip.TipDetailActivity
 import java.util.Calendar
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity(), MainViewModel.Listener {
 
@@ -50,6 +63,22 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
     private lateinit var txtGreeting: TextView
     private lateinit var txtUserName: TextView
     private lateinit var btnNotifications: ImageView
+    private lateinit var badgeNotificationCount: TextView
+
+    private val notificationRepository: NotificationRepository by lazy {
+        NotificationRepository()
+    }
+
+    private val fcmTokenStore: FcmTokenStore by lazy {
+        FcmTokenStore(applicationContext)
+    }
+
+    private val requestNotificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                registerFcmToken()
+            }
+        }
 
     private lateinit var navMidas: View
     private lateinit var footerItems: List<FooterItem>
@@ -120,7 +149,21 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
         configureBackButton()
         configureProfileNavigation()
 
+        checkNotificationPermissionAndRegisterFcm()
+        handleIncomingIntent(intent)
+
         showDestination(currentDestination)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        loadUnreadNotificationsCount()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIncomingIntent(intent)
     }
 
     override fun onStart() {
@@ -196,6 +239,7 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
         AppSession.sessionManager.clear()
         farmSessionStore.clear()
         profilePhotoStore = null
+        fcmTokenStore.clear()
 
         val intent = Intent(
             this,
@@ -216,6 +260,9 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
         txtUserName = findViewById(R.id.txtUserName)
         btnNotifications = findViewById(
             R.id.btnNotifications
+        )
+        badgeNotificationCount = findViewById(
+            R.id.badgeNotificationCount
         )
     }
 
@@ -290,11 +337,91 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
         )
 
         btnNotifications.setOnClickListener {
-            Toast.makeText(
-                this,
-                "Tela de notificações ainda não implementada.",
-                Toast.LENGTH_SHORT
-            ).show()
+            startActivity(
+                Intent(this, NotificationActivity::class.java)
+            )
+        }
+
+        btnNotifications.setOnLongClickListener {
+            startActivity(
+                Intent(this, NotificationTestActivity::class.java)
+            )
+            true
+        }
+    }
+
+    private fun loadUnreadNotificationsCount() {
+        if (!AppSession.sessionManager.hasValidAccessToken()) {
+            badgeNotificationCount.visibility = View.GONE
+            return
+        }
+
+        lifecycleScope.launch {
+            val result = notificationRepository.getUnreadCount()
+            result.onSuccess { count ->
+                if (count > 0) {
+                    badgeNotificationCount.visibility = View.VISIBLE
+                    badgeNotificationCount.text = if (count > 99) "99+" else count.toString()
+                } else {
+                    badgeNotificationCount.visibility = View.GONE
+                }
+            }.onFailure {
+                badgeNotificationCount.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun checkNotificationPermissionAndRegisterFcm() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val permission = Manifest.permission.POST_NOTIFICATIONS
+            if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
+                registerFcmToken()
+            } else {
+                requestNotificationPermissionLauncher.launch(permission)
+            }
+        } else {
+            registerFcmToken()
+        }
+    }
+
+    private fun registerFcmToken() {
+        runCatching {
+            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val token = task.result
+                    if (!token.isNullOrBlank()) {
+                        fcmTokenStore.saveToken(token)
+                        if (AppSession.sessionManager.hasValidAccessToken()) {
+                            lifecycleScope.launch {
+                                notificationRepository.registerDeviceToken(token)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun handleIncomingIntent(intent: Intent?) {
+        if (intent == null) return
+
+        val type = intent.getStringExtra(OurosFirebaseMessagingService.EXTRA_TYPE)
+        val tipId = intent.getLongExtra(OurosFirebaseMessagingService.EXTRA_TIP_ID, -1L)
+        val goalId = intent.getLongExtra(OurosFirebaseMessagingService.EXTRA_GOAL_ID, -1L)
+
+        when {
+            type?.equals("TIP_CREATED", ignoreCase = true) == true || tipId > 0 -> {
+                val targetTipId = if (tipId > 0) tipId else 1L
+                startActivity(TipDetailActivity.createIntent(this, targetTipId))
+            }
+            type?.equals("GOAL_ASSIGNED", ignoreCase = true) == true ||
+            type?.equals("TASK_ASSIGNED", ignoreCase = true) == true ||
+            goalId > 0 -> {
+                showDestination(MainDestination.GOALS)
+            }
+            type?.equals("RANK_UPDATE", ignoreCase = true) == true -> {
+                showDestination(MainDestination.RANK)
+            }
         }
     }
 

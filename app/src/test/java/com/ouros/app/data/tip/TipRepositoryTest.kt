@@ -1,0 +1,118 @@
+package com.ouros.app.data.tip
+
+import kotlinx.coroutines.runBlocking
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.ResponseBody.Companion.toResponseBody
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import retrofit2.Response
+
+class TipRepositoryTest {
+
+    @Test
+    fun getTipById_success() = runBlocking {
+        val fakeApi = object : TipApi {
+            override suspend fun getTipById(id: Long): Response<TipDetailResponse> {
+                val tip = TipDetailResponse(
+                    id = id,
+                    title = "Como diminuir a conta de água",
+                    tip = "Dica completa de manejo hídrico",
+                    totalReviews = 10,
+                    averageRating = 4.9
+                )
+                return Response.success(tip)
+            }
+
+            override suspend fun createReview(
+                tipId: Long,
+                request: ReviewRequest
+            ): Response<ReviewResponse> = error("unused")
+        }
+
+        val repository = TipRepository(api = fakeApi, enableMockFallback = false)
+        val result = repository.getTipById(12L)
+
+        assertTrue(result.isSuccess)
+        val tip = result.getOrNull()
+        assertEquals(12L, tip?.id)
+        assertEquals("Como diminuir a conta de água", tip?.title)
+        assertEquals(4.9, tip?.averageRating ?: 0.0, 0.01)
+    }
+
+    @Test
+    fun createReview_success() = runBlocking {
+        var submittedTipId: Long? = null
+        var submittedScore: Int? = null
+
+        val fakeApi = object : TipApi {
+            override suspend fun getTipById(id: Long): Response<TipDetailResponse> = error("unused")
+
+            override suspend fun createReview(
+                tipId: Long,
+                request: ReviewRequest
+            ): Response<ReviewResponse> {
+                submittedTipId = tipId
+                submittedScore = request.score
+                return Response.success(
+                    ReviewResponse(
+                        id = 1L,
+                        idTip = tipId,
+                        idFarmOwner = 5L,
+                        score = request.score,
+                        comment = request.comment,
+                        createdAt = "2026-10-16"
+                    )
+                )
+            }
+        }
+
+        val repository = TipRepository(api = fakeApi, enableMockFallback = false)
+        val result = repository.createReview(tipId = 7L, score = 5, comment = "Muito boa!")
+
+        assertTrue(result.isSuccess)
+        assertEquals(7L, submittedTipId)
+        assertEquals(5, submittedScore)
+    }
+
+    @Test
+    fun getTipById_failure_returnsFailureWhenFallbackDisabled() = runBlocking {
+        val fakeApi = object : TipApi {
+            override suspend fun getTipById(id: Long): Response<TipDetailResponse> {
+                return Response.error(404, "Not Found".toResponseBody("application/json".toMediaTypeOrNull()))
+            }
+
+            override suspend fun createReview(
+                tipId: Long,
+                request: ReviewRequest
+            ): Response<ReviewResponse> = error("unused")
+        }
+
+        val repository = TipRepository(api = fakeApi, enableMockFallback = false)
+        val result = repository.getTipById(999L)
+
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun getTipById_withMockFallback_returnsFallbackTip() = runBlocking {
+        val fakeApi = object : TipApi {
+            override suspend fun getTipById(id: Long): Response<TipDetailResponse> {
+                return Response.error(404, "Not Found".toResponseBody("application/json".toMediaTypeOrNull()))
+            }
+
+            override suspend fun createReview(
+                tipId: Long,
+                request: ReviewRequest
+            ): Response<ReviewResponse> = error("unused")
+        }
+
+        val repository = TipRepository(api = fakeApi, enableMockFallback = true)
+        val result = repository.getTipById(1L)
+
+        assertTrue(result.isSuccess)
+        val tip = result.getOrNull()
+        assertEquals("Como diminuir a conta de água", tip?.title)
+        assertEquals(4.8, tip?.effectiveAverageRating ?: 0.0, 0.01)
+    }
+}
