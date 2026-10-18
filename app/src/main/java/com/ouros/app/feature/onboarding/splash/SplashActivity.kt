@@ -39,6 +39,10 @@ class SplashActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_splash)
 
+        AppSession.initialize(
+            applicationContext
+        )
+
         configureRepositories()
         restoreSession()
     }
