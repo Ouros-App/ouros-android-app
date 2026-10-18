@@ -39,5 +39,8 @@ data class FarmOwnerUpdateRequest(
     val photoUrl: String? = null,
 
     @SerializedName("id_farm")
-    val farmId: Long? = null
+    val farmId: Long? = null,
+
+    val latitude: Double? = null,
+    val longitude: Double? = null
 )

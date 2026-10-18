@@ -10,8 +10,10 @@ import com.ouros.app.data.farmowner.FarmOwnerUpdateRequest
 import kotlinx.coroutines.launch
 
 class FirstAccessViewModel(
-    private val authRepository: AuthRepository,
-    private val farmOwnerRepository: FarmOwnerRepository
+    private val authRepository:
+    AuthRepository,
+    private val farmOwnerRepository:
+    FarmOwnerRepository
 ) : ViewModel() {
 
     interface Listener {
@@ -31,7 +33,9 @@ class FirstAccessViewModel(
 
         fun onInvalidCredentials()
 
-        fun onCodeError(message: String?)
+        fun onCodeError(
+            message: String?
+        )
 
         fun onCodeChallengeChanged(
             maskedEmail: String,
@@ -44,11 +48,19 @@ class FirstAccessViewModel(
             telephoneMessage: String?
         )
 
-        fun onNewPasswordError(message: String?)
+        fun onNewPasswordError(
+            message: String?
+        )
 
-        fun onFirstAccessMessage(message: String)
+        fun onLocationPermissionRequired()
 
-        fun onFirstAccessError(message: String)
+        fun onFirstAccessMessage(
+            message: String
+        )
+
+        fun onFirstAccessError(
+            message: String
+        )
 
         fun onNormalAccessDetected()
 
@@ -57,38 +69,74 @@ class FirstAccessViewModel(
         fun onFirstAccessCloseRequested()
     }
 
-    private var listener: Listener? = null
+    private var listener:
+            Listener? = null
 
-    private var initialized = false
-    private var alreadyAuthenticated = false
-    private var isLoading = false
+    private var initialized =
+        false
+
+    private var alreadyAuthenticated =
+        false
+
+    private var isLoading =
+        false
+
+    private var waitingForLocation =
+        false
 
     private var currentStep =
         FirstAccessStep.WELCOME
 
-    private var farmOwnerId: Long? = null
+    private var farmOwnerId:
+            Long? = null
 
-    private var email = ""
-    private var initialPassword = ""
+    private var email =
+        ""
 
-    private var verificationCode = ""
-    private var maskedEmail = ""
-    private var codeExpiresInSeconds = 0L
+    private var initialPassword =
+        ""
 
-    private var name = ""
-    private var cpf = ""
-    private var telephone = ""
-    private var newPassword = ""
+    private var verificationCode =
+        ""
 
-    fun setListener(listener: Listener) {
-        this.listener = listener
+    private var maskedEmail =
+        ""
+
+    private var codeExpiresInSeconds =
+        0L
+
+    private var name =
+        ""
+
+    private var cpf =
+        ""
+
+    private var telephone =
+        ""
+
+    private var newPassword =
+        ""
+
+    private var latitude:
+            Double? = null
+
+    private var longitude:
+            Double? = null
+
+    fun setListener(
+        listener: Listener
+    ) {
+        this.listener =
+            listener
 
         if (initialized) {
             refreshUi()
         }
     }
 
-    fun clearListener(listener: Listener) {
+    fun clearListener(
+        listener: Listener
+    ) {
         if (this.listener === listener) {
             this.listener = null
         }
@@ -107,63 +155,78 @@ class FirstAccessViewModel(
         this.alreadyAuthenticated =
             alreadyAuthenticated
 
-        this.farmOwnerId = farmOwnerId
+        this.farmOwnerId =
+            farmOwnerId
 
         if (alreadyAuthenticated) {
             loadAuthenticatedProfile()
         } else {
-            changeStep(FirstAccessStep.WELCOME)
-        }
-    }
-
-    fun refreshUi() {
-        listener?.onFirstAccessStepChanged(
-            currentStep
-        )
-
-        listener?.onFirstAccessLoadingChanged(
-            isLoading
-        )
-
-        if (
-            currentStep == FirstAccessStep.CODE &&
-            maskedEmail.isNotBlank()
-        ) {
-            listener?.onCodeChallengeChanged(
-                maskedEmail = maskedEmail,
-                expiresInSeconds =
-                    codeExpiresInSeconds
+            changeStep(
+                FirstAccessStep.WELCOME
             )
         }
     }
 
-    fun currentEmail(): String = email
+    fun refreshUi() {
+        listener
+            ?.onFirstAccessStepChanged(
+                currentStep
+            )
 
-    fun currentVerificationCode(): String {
-        return verificationCode
+        listener
+            ?.onFirstAccessLoadingChanged(
+                isLoading
+            )
+
+        if (
+            currentStep ==
+            FirstAccessStep.CODE &&
+            maskedEmail.isNotBlank()
+        ) {
+            listener
+                ?.onCodeChallengeChanged(
+                    maskedEmail =
+                        maskedEmail,
+                    expiresInSeconds =
+                        codeExpiresInSeconds
+                )
+        }
     }
 
-    fun currentMaskedEmail(): String {
-        return maskedEmail
-    }
+    fun currentEmail():
+            String = email
 
-    fun currentName(): String = name
+    fun currentVerificationCode():
+            String = verificationCode
 
-    fun currentDocument(): String = cpf
+    fun currentMaskedEmail():
+            String = maskedEmail
 
-    fun currentTelephone(): String = telephone
+    fun currentName():
+            String = name
 
-    fun isLoading(): Boolean = isLoading
+    fun currentDocument():
+            String = cpf
+
+    fun currentTelephone():
+            String = telephone
+
+    fun isLoading():
+            Boolean = isLoading
 
     fun onStartClicked() {
         if (isLoading) {
             return
         }
 
-        changeStep(FirstAccessStep.CREDENTIALS)
+        changeStep(
+            FirstAccessStep.CREDENTIALS
+        )
     }
 
-    fun onEmailChanged(value: String) {
+    fun onEmailChanged(
+        value: String
+    ) {
         email = value
 
         listener?.onCredentialsErrors(
@@ -172,7 +235,9 @@ class FirstAccessViewModel(
         )
     }
 
-    fun onInitialPasswordChanged(value: String) {
+    fun onInitialPasswordChanged(
+        value: String
+    ) {
         initialPassword = value
 
         listener?.onCredentialsErrors(
@@ -189,9 +254,10 @@ class FirstAccessViewModel(
             return
         }
 
-        email = email
-            .trim()
-            .lowercase()
+        email =
+            email
+                .trim()
+                .lowercase()
 
         viewModelScope.launch {
             setLoading(true)
@@ -199,13 +265,18 @@ class FirstAccessViewModel(
             try {
                 when (
                     val result =
-                        authRepository.startLogin(
-                            email = email,
-                            password = initialPassword
-                        )
+                        authRepository
+                            .startLogin(
+                                email = email,
+                                password =
+                                    initialPassword
+                            )
                 ) {
                     is AuthResult.Error -> {
-                        if (result.statusCode == 401) {
+                        if (
+                            result.statusCode ==
+                            401
+                        ) {
                             listener
                                 ?.onInvalidCredentials()
                         } else {
@@ -218,12 +289,15 @@ class FirstAccessViewModel(
 
                     is AuthResult.Success -> {
                         maskedEmail =
-                            result.data.maskedEmail
+                            result.data
+                                .maskedEmail
 
                         codeExpiresInSeconds =
-                            result.data.expiresIn
+                            result.data
+                                .expiresIn
 
-                        verificationCode = ""
+                        verificationCode =
+                            ""
 
                         changeStep(
                             FirstAccessStep.CODE
@@ -248,7 +322,8 @@ class FirstAccessViewModel(
         value: String
     ) {
         verificationCode =
-            value.filter(Char::isDigit)
+            value
+                .filter(Char::isDigit)
                 .take(6)
 
         listener?.onCodeError(null)
@@ -265,29 +340,37 @@ class FirstAccessViewModel(
         viewModelScope.launch {
             setLoading(true)
 
-            when (
-                val verification =
-                    authRepository.verifyLogin(
-                        verificationCode
-                    )
-            ) {
-                is AuthResult.Error -> {
-                    listener?.onCodeError(
-                        verification.message
-                    )
+            try {
+                when (
+                    val verification =
+                        authRepository
+                            .verifyLogin(
+                                verificationCode
+                            )
+                ) {
+                    is AuthResult.Error -> {
+                        listener
+                            ?.onCodeError(
+                                verification.message
+                            )
+                    }
+
+                    is AuthResult.Success -> {
+                        alreadyAuthenticated =
+                            true
+
+                        initialPassword =
+                            ""
+
+                        verificationCode =
+                            ""
+
+                        loadProfileAfterAuthentication()
+                    }
                 }
-
-                is AuthResult.Success -> {
-                    alreadyAuthenticated = true
-
-                    initialPassword = ""
-                    verificationCode = ""
-
-                    loadProfileAfterAuthentication()
-                }
+            } finally {
+                setLoading(false)
             }
-
-            setLoading(false)
         }
     }
 
@@ -313,25 +396,31 @@ class FirstAccessViewModel(
             try {
                 when (
                     val result =
-                        authRepository.startLogin(
-                            email = email,
-                            password = initialPassword
-                        )
+                        authRepository
+                            .startLogin(
+                                email = email,
+                                password =
+                                    initialPassword
+                            )
                 ) {
                     is AuthResult.Error -> {
-                        listener?.onCodeError(
-                            result.message
-                        )
+                        listener
+                            ?.onCodeError(
+                                result.message
+                            )
                     }
 
                     is AuthResult.Success -> {
                         maskedEmail =
-                            result.data.maskedEmail
+                            result.data
+                                .maskedEmail
 
                         codeExpiresInSeconds =
-                            result.data.expiresIn
+                            result.data
+                                .expiresIn
 
-                        verificationCode = ""
+                        verificationCode =
+                            ""
 
                         listener
                             ?.onCodeChallengeChanged(
@@ -353,34 +442,37 @@ class FirstAccessViewModel(
         }
     }
 
-    fun onNameChanged(value: String) {
+    fun onNameChanged(
+        value: String
+    ) {
         name = value
 
-        listener?.onPersonalDataErrors(
-            nameMessage = null,
-            cpfMessage = null,
-            telephoneMessage = null
-        )
+        clearPersonalDataErrors()
     }
 
-    fun onCpfChanged(value: String) {
+    fun onCpfChanged(
+        value: String
+    ) {
         cpf = value
 
-        listener?.onPersonalDataErrors(
-            nameMessage = null,
-            cpfMessage = null,
-            telephoneMessage = null
-        )
+        clearPersonalDataErrors()
     }
 
-    fun onTelephoneChanged(value: String) {
+    fun onTelephoneChanged(
+        value: String
+    ) {
         telephone = value
 
-        listener?.onPersonalDataErrors(
-            nameMessage = null,
-            cpfMessage = null,
-            telephoneMessage = null
-        )
+        clearPersonalDataErrors()
+    }
+
+    private fun clearPersonalDataErrors() {
+        listener
+            ?.onPersonalDataErrors(
+                nameMessage = null,
+                cpfMessage = null,
+                telephoneMessage = null
+            )
     }
 
     fun onPersonalDataContinueClicked() {
@@ -391,51 +483,128 @@ class FirstAccessViewModel(
             return
         }
 
-        name = name.trim()
+        name =
+            name.trim()
 
-        cpf = cpf.filter(
-            Char::isDigit
-        )
+        cpf =
+            cpf.filter(
+                Char::isDigit
+            )
 
-        telephone = telephone.filter(
-            Char::isDigit
-        )
+        telephone =
+            telephone.filter(
+                Char::isDigit
+            )
 
         changeStep(
             FirstAccessStep.NEW_PASSWORD
         )
     }
 
-    fun onNewPasswordChanged(value: String) {
+    fun onNewPasswordChanged(
+        value: String
+    ) {
         newPassword = value
 
-        listener?.onNewPasswordError(null)
+        listener
+            ?.onNewPasswordError(null)
     }
 
     fun onFinishClicked() {
         if (
             isLoading ||
+            waitingForLocation ||
             !validateNewPassword()
         ) {
             return
         }
 
-        val profileId = farmOwnerId
+        val profileId =
+            farmOwnerId
 
         if (profileId == null) {
-            listener?.onFirstAccessError(
-                "Não foi possível identificar o usuário."
-            )
+            listener
+                ?.onFirstAccessError(
+                    "Não foi possível identificar o usuário."
+                )
 
             return
         }
 
+        if (
+            latitude == null ||
+            longitude == null
+        ) {
+            waitingForLocation =
+                true
+
+            listener
+                ?.onLocationPermissionRequired()
+
+            return
+        }
+
+        submitFirstAccess(profileId)
+    }
+
+    fun onLocationAvailable(
+        latitude: Double,
+        longitude: Double
+    ) {
+        waitingForLocation =
+            false
+
+        if (
+            latitude !in -90.0..90.0 ||
+            longitude !in -180.0..180.0
+        ) {
+            listener
+                ?.onFirstAccessError(
+                    "A localização obtida é inválida. Tente novamente."
+                )
+
+            return
+        }
+
+        this.latitude =
+            latitude
+
+        this.longitude =
+            longitude
+
+        onFinishClicked()
+    }
+
+    fun onLocationUnavailable(
+        message: String
+    ) {
+        waitingForLocation =
+            false
+
+        listener
+            ?.onFirstAccessError(
+                message
+            )
+    }
+
+    fun cancelLocationRequest() {
+        waitingForLocation =
+            false
+    }
+
+    private fun submitFirstAccess(
+        profileId: Long
+    ) {
         viewModelScope.launch {
             setLoading(true)
 
-            finishFirstAccess(profileId)
-
-            setLoading(false)
+            try {
+                finishFirstAccess(
+                    profileId
+                )
+            } finally {
+                setLoading(false)
+            }
         }
     }
 
@@ -446,16 +615,19 @@ class FirstAccessViewModel(
 
         when (currentStep) {
             FirstAccessStep.WELCOME -> {
-                authRepository.clearPendingLogin()
+                authRepository
+                    .clearPendingLogin()
 
                 listener
                     ?.onFirstAccessCloseRequested()
             }
 
             FirstAccessStep.CREDENTIALS -> {
-                authRepository.clearPendingLogin()
+                authRepository
+                    .clearPendingLogin()
 
-                initialPassword = ""
+                initialPassword =
+                    ""
 
                 changeStep(
                     FirstAccessStep.WELCOME
@@ -463,11 +635,17 @@ class FirstAccessViewModel(
             }
 
             FirstAccessStep.CODE -> {
-                authRepository.clearPendingLogin()
+                authRepository
+                    .clearPendingLogin()
 
-                verificationCode = ""
-                maskedEmail = ""
-                initialPassword = ""
+                verificationCode =
+                    ""
+
+                maskedEmail =
+                    ""
+
+                initialPassword =
+                    ""
 
                 changeStep(
                     FirstAccessStep.CREDENTIALS
@@ -479,10 +657,14 @@ class FirstAccessViewModel(
                     listener
                         ?.onFirstAccessCloseRequested()
                 } else {
-                    authRepository.clearSession()
+                    authRepository
+                        .clearSession()
 
-                    initialPassword = ""
-                    verificationCode = ""
+                    initialPassword =
+                        ""
+
+                    verificationCode =
+                        ""
 
                     changeStep(
                         FirstAccessStep.CREDENTIALS
@@ -502,38 +684,48 @@ class FirstAccessViewModel(
         viewModelScope.launch {
             setLoading(true)
 
-            when (
-                val result =
-                    farmOwnerRepository.getMe()
-            ) {
-                is AuthResult.Error -> {
-                    listener?.onFirstAccessError(
-                        result.message
-                    )
-                }
+            try {
+                when (
+                    val result =
+                        farmOwnerRepository
+                            .getMe()
+                ) {
+                    is AuthResult.Error -> {
+                        listener
+                            ?.onFirstAccessError(
+                                result.message
+                            )
+                    }
 
-                is AuthResult.Success -> {
-                    processProfile(result.data)
+                    is AuthResult.Success -> {
+                        processProfile(
+                            result.data
+                        )
+                    }
                 }
+            } finally {
+                setLoading(false)
             }
-
-            setLoading(false)
         }
     }
 
     private suspend fun loadProfileAfterAuthentication() {
         when (
             val result =
-                farmOwnerRepository.getMe()
+                farmOwnerRepository
+                    .getMe()
         ) {
             is AuthResult.Error -> {
-                listener?.onFirstAccessError(
-                    result.message
-                )
+                listener
+                    ?.onFirstAccessError(
+                        result.message
+                    )
             }
 
             is AuthResult.Success -> {
-                processProfile(result.data)
+                processProfile(
+                    result.data
+                )
             }
         }
     }
@@ -541,38 +733,48 @@ class FirstAccessViewModel(
     private fun processProfile(
         profile: FarmOwnerResponse
     ) {
-        val profileId = profile.id
-        val firstAccess = profile.firstAccess
+        val profileId =
+            profile.id
+
+        val firstAccess =
+            profile.firstAccess
 
         if (
             profileId == null ||
             firstAccess == null
         ) {
-            authRepository.clearSession()
+            authRepository
+                .clearSession()
 
-            listener?.onFirstAccessError(
-                "A API retornou um perfil inválido."
-            )
+            listener
+                ?.onFirstAccessError(
+                    "A API retornou um perfil inválido."
+                )
 
             return
         }
 
-        farmOwnerId = profileId
+        farmOwnerId =
+            profileId
 
         if (!firstAccess) {
-            listener?.onNormalAccessDetected()
+            listener
+                ?.onNormalAccessDetected()
+
             return
         }
 
-        name = profile.name.orEmpty()
+        name =
+            profile.name
+                .orEmpty()
 
-        cpf = profile
-            .documentNumber
-            .orEmpty()
+        cpf =
+            profile.documentNumber
+                .orEmpty()
 
-        telephone = profile
-            .telephone
-            .orEmpty()
+        telephone =
+            profile.telephone
+                .orEmpty()
 
         changeStep(
             FirstAccessStep.PERSONAL_DATA
@@ -582,56 +784,85 @@ class FirstAccessViewModel(
     private suspend fun finishFirstAccess(
         profileId: Long
     ) {
-        val request = FarmOwnerUpdateRequest(
-            name = name.trim(),
+        val request =
+            FarmOwnerUpdateRequest(
+                name =
+                    name.trim(),
 
-            documentNumber =
-                cpf.filter(Char::isDigit),
+                documentNumber =
+                    cpf.filter(
+                        Char::isDigit
+                    ),
 
-            telephone =
-                telephone.filter(Char::isDigit),
+                telephone =
+                    telephone.filter(
+                        Char::isDigit
+                    ),
 
-            password = newPassword,
+                password =
+                    newPassword,
 
-            firstAccess = false
-        )
+                firstAccess =
+                    false,
+
+                latitude =
+                    latitude,
+
+                longitude =
+                    longitude
+            )
 
         when (
             val result =
-                farmOwnerRepository.update(
-                    id = profileId,
-                    request = request
-                )
+                farmOwnerRepository
+                    .update(
+                        id = profileId,
+                        request = request
+                    )
         ) {
             is AuthResult.Error -> {
-                listener?.onFirstAccessError(
-                    result.message
-                )
+                listener
+                    ?.onFirstAccessError(
+                        result.message
+                    )
             }
 
             is AuthResult.Success -> {
                 if (
-                    result.data.firstAccess == false
+                    result.data
+                        .firstAccess == false
                 ) {
-                    newPassword = ""
+                    newPassword =
+                        ""
+
+                    latitude =
+                        null
+
+                    longitude =
+                        null
 
                     listener
                         ?.onFirstAccessCompleted()
                 } else {
-                    listener?.onFirstAccessError(
-                        "A API não confirmou a finalização do primeiro acesso."
-                    )
+                    listener
+                        ?.onFirstAccessError(
+                            "A API não confirmou a finalização do primeiro acesso."
+                        )
                 }
             }
         }
     }
 
-    private fun validateCredentials(): Boolean {
+    private fun validateCredentials():
+            Boolean {
         val normalizedEmail =
             email.trim()
 
-        var emailMessage: String? = null
-        var passwordMessage: String? = null
+        var emailMessage:
+                String? = null
+
+        var passwordMessage:
+                String? = null
 
         if (normalizedEmail.isBlank()) {
             emailMessage =
@@ -650,91 +881,109 @@ class FirstAccessViewModel(
                 "Informe a senha de acesso."
         }
 
-        listener?.onCredentialsErrors(
-            emailMessage = emailMessage,
-            passwordMessage = passwordMessage
-        )
+        listener
+            ?.onCredentialsErrors(
+                emailMessage =
+                    emailMessage,
+                passwordMessage =
+                    passwordMessage
+            )
 
         return emailMessage == null &&
                 passwordMessage == null
     }
 
-    private fun validateVerificationCode(): Boolean {
-        val message = if (
-            FirstAccessValidator
-                .isValidVerificationCode(
-                    verificationCode
-                )
-        ) {
-            null
-        } else {
-            "Informe os 6 números do código."
-        }
+    private fun validateVerificationCode():
+            Boolean {
+        val message =
+            if (
+                FirstAccessValidator
+                    .isValidVerificationCode(
+                        verificationCode
+                    )
+            ) {
+                null
+            } else {
+                "Informe os 6 números do código."
+            }
 
-        listener?.onCodeError(message)
+        listener
+            ?.onCodeError(message)
 
         return message == null
     }
 
-    private fun validatePersonalData(): Boolean {
-        val nameMessage = if (
-            FirstAccessValidator
-                .isValidName(name)
-        ) {
-            null
-        } else {
-            "Informe um nome válido."
-        }
+    private fun validatePersonalData():
+            Boolean {
+        val nameMessage =
+            if (
+                FirstAccessValidator
+                    .isValidName(name)
+            ) {
+                null
+            } else {
+                "Informe um nome válido."
+            }
 
-        val cpfMessage = if (
-            FirstAccessValidator
-                .isValidCpf(cpf)
-        ) {
-            null
-        } else {
-            "Informe um CPF válido."
-        }
+        val cpfMessage =
+            if (
+                FirstAccessValidator
+                    .isValidCpf(cpf)
+            ) {
+                null
+            } else {
+                "Informe um CPF válido."
+            }
 
-        val telephoneMessage = if (
-            FirstAccessValidator
-                .isValidTelephone(
-                    telephone
-                )
-        ) {
-            null
-        } else {
-            "Informe um telefone com 10 a 13 números."
-        }
+        val telephoneMessage =
+            if (
+                FirstAccessValidator
+                    .isValidTelephone(
+                        telephone
+                    )
+            ) {
+                null
+            } else {
+                "Informe um telefone com 10 a 13 números."
+            }
 
-        listener?.onPersonalDataErrors(
-            nameMessage = nameMessage,
-            cpfMessage = cpfMessage,
-            telephoneMessage =
-                telephoneMessage
-        )
+        listener
+            ?.onPersonalDataErrors(
+                nameMessage =
+                    nameMessage,
+                cpfMessage =
+                    cpfMessage,
+                telephoneMessage =
+                    telephoneMessage
+            )
 
         return nameMessage == null &&
                 cpfMessage == null &&
                 telephoneMessage == null
     }
 
-    private fun validateNewPassword(): Boolean {
-        val message = when {
-            newPassword.isBlank() -> {
-                "Informe a nova senha."
+    private fun validateNewPassword():
+            Boolean {
+        val message =
+            when {
+                newPassword.isBlank() -> {
+                    "Informe a nova senha."
+                }
+
+                !FirstAccessValidator
+                    .isValidPassword(
+                        newPassword
+                    ) -> {
+                    "Use de 8 a 20 caracteres, com letra maiúscula, minúscula, número e caractere especial."
+                }
+
+                else -> null
             }
 
-            !FirstAccessValidator
-                .isValidPassword(
-                    newPassword
-                ) -> {
-                "Use de 8 a 20 caracteres, com letra maiúscula, minúscula, número e caractere especial."
-            }
-
-            else -> null
-        }
-
-        listener?.onNewPasswordError(message)
+        listener
+            ?.onNewPasswordError(
+                message
+            )
 
         return message == null
     }
@@ -742,14 +991,20 @@ class FirstAccessViewModel(
     private fun changeStep(
         step: FirstAccessStep
     ) {
-        currentStep = step
+        currentStep =
+            step
 
         listener
-            ?.onFirstAccessStepChanged(step)
+            ?.onFirstAccessStepChanged(
+                step
+            )
     }
 
-    private fun setLoading(value: Boolean) {
-        isLoading = value
+    private fun setLoading(
+        value: Boolean
+    ) {
+        isLoading =
+            value
 
         listener
             ?.onFirstAccessLoadingChanged(
@@ -758,8 +1013,11 @@ class FirstAccessViewModel(
     }
 
     override fun onCleared() {
-        authRepository.clearPendingLogin()
-        listener = null
+        authRepository
+            .clearPendingLogin()
+
+        listener =
+            null
 
         super.onCleared()
     }
