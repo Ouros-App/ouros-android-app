@@ -2,145 +2,119 @@ package com.ouros.app.data.notification
 
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import retrofit2.Response
 
 class NotificationRepository(
     private val api: NotificationApi = NotificationNetwork.api,
-    private val enableMockFallback: Boolean = true
+    private val enableMockFallback: Boolean = true,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
 
     suspend fun registerDeviceToken(
         token: String,
         platform: String = "ANDROID"
-    ): Result<Unit> = withContext(Dispatchers.IO) {
+    ): Result<Unit> = withContext(ioDispatcher) {
         safeCall {
-            val response = try {
+            val response = callApiWithFallback {
                 api.registerDeviceToken(DeviceTokenRequest(token = token, platform = platform))
-            } catch (e: Exception) {
-                if (enableMockFallback) null else throw e
             }
-
-            if (response != null && response.isSuccessful) {
-                Result.success(Unit)
-            } else if (enableMockFallback) {
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception("Falha ao registrar token: HTTP ${response?.code()}"))
-            }
+            resolveUnitResponse(response, "Falha ao registrar token")
         }
     }
 
-    suspend fun deleteDeviceToken(token: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun deleteDeviceToken(token: String): Result<Unit> = withContext(ioDispatcher) {
         safeCall {
-            val response = try {
-                api.deleteDeviceToken(token)
-            } catch (e: Exception) {
-                if (enableMockFallback) null else throw e
-            }
-
-            if (response != null && response.isSuccessful) {
-                Result.success(Unit)
-            } else if (enableMockFallback) {
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception("Falha ao remover token: HTTP ${response?.code()}"))
-            }
+            val response = callApiWithFallback { api.deleteDeviceToken(token) }
+            resolveUnitResponse(response, "Falha ao remover token")
         }
     }
 
     suspend fun getNotifications(
         page: Int = 0,
         size: Int = 20
-    ): Result<NotificationPageResponse> = withContext(Dispatchers.IO) {
+    ): Result<NotificationPageResponse> = withContext(ioDispatcher) {
         safeCall {
-            val response = try {
-                api.getNotifications(page = page, size = size)
-            } catch (e: Exception) {
-                if (enableMockFallback) null else throw e
-            }
-
+            val response = callApiWithFallback { api.getNotifications(page = page, size = size) }
             val body = response?.body()
-            if (response != null && response.isSuccessful && body != null) {
-                Result.success(body)
-            } else if (enableMockFallback) {
-                Result.success(
-                    NotificationPageResponse(
-                        content = mockNotifications.toList(),
-                        totalElements = mockNotifications.size.toLong(),
-                        totalPages = 1,
-                        number = 0,
-                        last = true
-                    )
-                )
-            } else {
-                Result.failure(Exception("Falha ao carregar notificações: HTTP ${response?.code()}"))
+            when {
+                response?.isSuccessful == true && body != null -> Result.success(body)
+                enableMockFallback -> Result.success(createMockPageResponse())
+                else -> Result.failure(Exception("Falha ao carregar notificações: HTTP ${response?.code()}"))
             }
         }
     }
 
-    suspend fun getUnreadCount(): Result<Int> = withContext(Dispatchers.IO) {
+    suspend fun getUnreadCount(): Result<Int> = withContext(ioDispatcher) {
         safeCall {
-            val response = try {
-                api.getUnreadCount()
-            } catch (e: Exception) {
-                if (enableMockFallback) null else throw e
-            }
-
+            val response = callApiWithFallback { api.getUnreadCount() }
             val body = response?.body()
-            if (response != null && response.isSuccessful && body != null) {
-                Result.success(body.count)
-            } else if (enableMockFallback) {
-                Result.success(mockNotifications.count { !it.isRead })
-            } else {
-                Result.failure(Exception("Falha ao obter contador de não lidas: HTTP ${response?.code()}"))
+            when {
+                response?.isSuccessful == true && body != null -> Result.success(body.count)
+                enableMockFallback -> Result.success(mockNotifications.count { !it.isRead })
+                else -> Result.failure(Exception("Falha ao obter contador de não lidas: HTTP ${response?.code()}"))
             }
         }
     }
 
-    suspend fun markAsRead(id: Long): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun markAsRead(id: Long): Result<Unit> = withContext(ioDispatcher) {
         safeCall {
-            val response = try {
-                api.markAsRead(id)
-            } catch (e: Exception) {
-                if (enableMockFallback) null else throw e
-            }
-
-            val index = mockNotifications.indexOfFirst { it.id == id }
-            if (index != -1) {
-                mockNotifications[index] = mockNotifications[index].copy(isRead = true)
-            }
-
-            if (response != null && response.isSuccessful) {
-                Result.success(Unit)
-            } else if (enableMockFallback) {
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception("Falha ao marcar notificação como lida: HTTP ${response?.code()}"))
-            }
+            val response = callApiWithFallback { api.markAsRead(id) }
+            updateMockItemReadStatus(id)
+            resolveUnitResponse(response, "Falha ao marcar notificação como lida")
         }
     }
 
-    suspend fun markAllAsRead(): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun markAllAsRead(): Result<Unit> = withContext(ioDispatcher) {
         safeCall {
-            val response = try {
-                api.markAllAsRead()
-            } catch (e: Exception) {
-                if (enableMockFallback) null else throw e
-            }
-
-            mockNotifications.indices.forEach { index ->
-                mockNotifications[index] = mockNotifications[index].copy(isRead = true)
-            }
-
-            if (response != null && response.isSuccessful) {
-                Result.success(Unit)
-            } else if (enableMockFallback) {
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception("Falha ao marcar todas como lidas: HTTP ${response?.code()}"))
-            }
+            val response = callApiWithFallback { api.markAllAsRead() }
+            updateAllMockItemsReadStatus()
+            resolveUnitResponse(response, "Falha ao marcar todas como lidas")
         }
+    }
+
+    private suspend fun <T> callApiWithFallback(call: suspend () -> Response<T>): Response<T>? {
+        return try {
+            call()
+        } catch (e: Exception) {
+            if (enableMockFallback) null else throw e
+        }
+    }
+
+    private fun resolveUnitResponse(
+        response: Response<Unit>?,
+        errorMessage: String
+    ): Result<Unit> {
+        return when {
+            response?.isSuccessful == true -> Result.success(Unit)
+            enableMockFallback -> Result.success(Unit)
+            else -> Result.failure(Exception("$errorMessage: HTTP ${response?.code()}"))
+        }
+    }
+
+    private fun updateMockItemReadStatus(id: Long) {
+        val index = mockNotifications.indexOfFirst { it.id == id }
+        if (index != -1) {
+            mockNotifications[index] = mockNotifications[index].copy(isRead = true)
+        }
+    }
+
+    private fun updateAllMockItemsReadStatus() {
+        mockNotifications.indices.forEach { index ->
+            mockNotifications[index] = mockNotifications[index].copy(isRead = true)
+        }
+    }
+
+    private fun createMockPageResponse(): NotificationPageResponse {
+        return NotificationPageResponse(
+            content = mockNotifications.toList(),
+            totalElements = mockNotifications.size.toLong(),
+            totalPages = 1,
+            number = 0,
+            last = true
+        )
     }
 
     private inline fun <T> safeCall(block: () -> Result<T>): Result<T> {

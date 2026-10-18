@@ -2,15 +2,17 @@ package com.ouros.app.data.tip
 
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class TipRepository(
     private val api: TipApi = TipNetwork.api,
-    private val enableMockFallback: Boolean = true
+    private val enableMockFallback: Boolean = true,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
 
-    suspend fun getTipById(id: Long): Result<TipDetailResponse> = withContext(Dispatchers.IO) {
+    suspend fun getTipById(id: Long): Result<TipDetailResponse> = withContext(ioDispatcher) {
         safeCall {
             val response = try {
                 api.getTipById(id)
@@ -62,7 +64,7 @@ class TipRepository(
         tipId: Long,
         score: Int,
         comment: String? = null
-    ): Result<ReviewResponse> = withContext(Dispatchers.IO) {
+    ): Result<ReviewResponse> = withContext(ioDispatcher) {
         safeCall {
             val validComment = comment?.takeIf { it.isNotBlank() } ?: "Avaliação enviada pelo aplicativo"
             val response = try {

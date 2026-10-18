@@ -36,7 +36,7 @@
 
         <receiver
             android:name=".core.fcm.TestNotificationReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.ouros.app.TEST_NOTIFICATION" />
             </intent-filter>
