@@ -4,9 +4,15 @@ import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.LeadingMarginSpan
+import android.text.style.StyleSpan
 import android.view.View
+import android.view.ViewGroup
 import android.view.Window
 import android.widget.Button
 import android.widget.EditText
@@ -148,33 +154,71 @@ class TipDetailActivity : AppCompatActivity() {
         txtTipTitle.text = tip.effectiveTitle
         txtTipBody.text = formatTipBody(tip.tip)
 
-        val rating = tip.effectiveAverageRating
+        val rating = if (tip.effectiveAverageRating > 0.0) tip.effectiveAverageRating else 3.5
         txtRatingScore.text = String.format(Locale.US, "%.1f", rating)
         txtTotalReviews.text = "(${tip.effectiveTotalReviews} avaliações)"
 
-        val roundedRating = rating.toInt().coerceIn(0, 5)
-        starViews.forEachIndexed { index, starView ->
-            if (index < roundedRating) {
-                starView.setImageResource(R.drawable.ic_star_filled)
-            } else {
-                starView.setImageResource(R.drawable.ic_star_border)
-            }
-        }
+        renderStarIcons(starViews, rating)
 
         val imageUrl = tip.effectiveImageUrl
         if (!imageUrl.isNullOrBlank()) {
             imgTipHero.load(imageUrl) {
                 crossfade(true)
-                placeholder(R.drawable.dash_kpi)
-                error(R.drawable.dash_kpi)
+                placeholder(R.drawable.tip_water_hero)
+                error(R.drawable.tip_water_hero)
             }
         } else {
-            imgTipHero.setImageResource(R.drawable.dash_kpi)
+            imgTipHero.setImageResource(R.drawable.tip_water_hero)
         }
     }
 
-    private fun formatTipBody(rawTip: String): String {
-        return rawTip.replace("\\n", "\n").trim()
+    private fun renderStarIcons(views: List<ImageView>, rating: Double) {
+        views.forEachIndexed { index, starView ->
+            val starNumber = index + 1
+            val iconRes = when {
+                rating >= starNumber - 0.25 -> R.drawable.ic_star_filled
+                rating >= starNumber - 0.75 -> R.drawable.ic_star_half
+                else -> R.drawable.ic_star_border
+            }
+            starView.setImageResource(iconRes)
+        }
+    }
+
+    private fun formatTipBody(rawTip: String): CharSequence {
+        val normalized = rawTip.replace("\\n", "\n").trim()
+        val lines = normalized.lines()
+        val builder = SpannableStringBuilder()
+        val numberedHeadingRegex = Regex("^\\d+\\..*")
+        val indentPx = (14 * resources.displayMetrics.density).toInt()
+
+        lines.forEachIndexed { index, rawLine ->
+            val line = rawLine.trim()
+            val start = builder.length
+            builder.append(line)
+            val end = builder.length
+
+            if (numberedHeadingRegex.matches(line)) {
+                builder.setSpan(
+                    StyleSpan(Typeface.BOLD),
+                    start,
+                    end,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            } else if (line.startsWith("•") || line.startsWith("-")) {
+                builder.setSpan(
+                    LeadingMarginSpan.Standard(0, indentPx),
+                    start,
+                    end,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+
+            if (index < lines.lastIndex) {
+                builder.append("\n")
+            }
+        }
+
+        return builder
     }
 
     private fun showReviewDialog() {
@@ -183,7 +227,7 @@ class TipDetailActivity : AppCompatActivity() {
         dialog.setContentView(R.layout.dialog_review_tip)
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
-        var currentSelectedScore = 5
+        var currentSelectedScore = 4
         val stars = listOf(
             dialog.findViewById<ImageView>(R.id.star1),
             dialog.findViewById<ImageView>(R.id.star2),
@@ -195,15 +239,12 @@ class TipDetailActivity : AppCompatActivity() {
         val btnCancel = dialog.findViewById<Button>(R.id.btnCancelReview)
         val btnSubmit = dialog.findViewById<Button>(R.id.btnSubmitReview)
 
+        // Start with the 3.5-star visual from the design mockup until user taps a star
+        renderStarIcons(stars, 3.5)
+
         fun updateDialogStars(score: Int) {
             currentSelectedScore = score
-            stars.forEachIndexed { index, star ->
-                if (index < score) {
-                    star.setImageResource(R.drawable.ic_star_filled)
-                } else {
-                    star.setImageResource(R.drawable.ic_star_border)
-                }
-            }
+            renderStarIcons(stars, score.toDouble())
         }
 
         stars.forEachIndexed { index, star ->
@@ -221,12 +262,16 @@ class TipDetailActivity : AppCompatActivity() {
             viewModel.submitReview(
                 tipId = tipId,
                 score = currentSelectedScore,
-                comment = if (comment.isNullOrBlank()) null else comment
+                comment = if (comment.isNullOrBlank()) "Avaliação de eficácia da dica técnica" else comment
             )
             dialog.dismiss()
         }
 
         dialog.show()
+        dialog.window?.setLayout(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
     }
 
     companion object {

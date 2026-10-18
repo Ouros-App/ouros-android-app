@@ -150,14 +150,16 @@ class NotificationActivity : AppCompatActivity() {
             }
         }
 
-        btnMarkAllRead.visibility = if (state.unreadCount > 0) View.VISIBLE else View.GONE
+        btnMarkAllRead.visibility = View.GONE
     }
 
     private fun onNotificationClicked(item: NotificationItemResponse) {
         viewModel.markAsRead(item)
 
         val tipId = item.idTip ?: extractIdFromPayload(item.dataPayload, "tip_id")
-        val isTip = item.type.equals("TIP_CREATED", ignoreCase = true) || tipId != null
+        val isTip = item.type.equals("TIP_CREATED", ignoreCase = true) ||
+                tipId != null ||
+                NotificationAdapter.isGoldAlert(item)
 
         if (isTip) {
             val intent = TipDetailActivity.createIntent(this, tipId ?: 1L)

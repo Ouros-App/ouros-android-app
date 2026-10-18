@@ -39,7 +39,7 @@ class TipDtoTest {
     fun serializesReviewRequest() {
         val request = ReviewRequest(score = 5, comment = "Excelente recomendação!")
         val json = gson.toJson(request)
-        assertTrue(json.contains("\"score\":5"))
+        assertTrue(json.contains("\"rating\":5"))
         assertTrue(json.contains("Excelente recomendação!"))
     }
 
@@ -50,7 +50,7 @@ class TipDtoTest {
                 "id": 1,
                 "id_tip": 42,
                 "id_farm_owner": 99,
-                "score": 5,
+                "rating": 5,
                 "comment": "Muito útil",
                 "created_at": "2026-10-16T11:00:00Z"
             }
@@ -63,5 +63,22 @@ class TipDtoTest {
         assertEquals(99L, review.idFarmOwner)
         assertEquals(5, review.score)
         assertEquals("Muito útil", review.comment)
+    }
+
+    @Test
+    fun deserializesReviewResponse_withScoreAlternate() {
+        val json = """
+            {
+                "id": 1,
+                "id_tip": 42,
+                "id_farm_owner": 99,
+                "score": 5,
+                "comment": "Muito útil",
+                "created_at": "2026-10-16T11:00:00Z"
+            }
+        """.trimIndent()
+
+        val review = gson.fromJson(json, ReviewResponse::class.java)
+        assertEquals(5, review.score)
     }
 }

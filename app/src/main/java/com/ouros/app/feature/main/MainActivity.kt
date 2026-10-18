@@ -63,7 +63,6 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
     private lateinit var txtGreeting: TextView
     private lateinit var txtUserName: TextView
     private lateinit var btnNotifications: ImageView
-    private lateinit var badgeNotificationCount: TextView
 
     private val notificationRepository: NotificationRepository by lazy {
         NotificationRepository()
@@ -153,11 +152,6 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
         handleIncomingIntent(intent)
 
         showDestination(currentDestination)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        loadUnreadNotificationsCount()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -261,9 +255,6 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
         btnNotifications = findViewById(
             R.id.btnNotifications
         )
-        badgeNotificationCount = findViewById(
-            R.id.badgeNotificationCount
-        )
     }
 
     private fun bindFooterViews() {
@@ -350,27 +341,6 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
         }
     }
 
-    private fun loadUnreadNotificationsCount() {
-        if (!AppSession.sessionManager.hasValidAccessToken()) {
-            badgeNotificationCount.visibility = View.GONE
-            return
-        }
-
-        lifecycleScope.launch {
-            val result = notificationRepository.getUnreadCount()
-            result.onSuccess { count ->
-                if (count > 0) {
-                    badgeNotificationCount.visibility = View.VISIBLE
-                    badgeNotificationCount.text = if (count > 99) "99+" else count.toString()
-                } else {
-                    badgeNotificationCount.visibility = View.GONE
-                }
-            }.onFailure {
-                badgeNotificationCount.visibility = View.GONE
-            }
-        }
-    }
-
     private fun checkNotificationPermissionAndRegisterFcm() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val permission = Manifest.permission.POST_NOTIFICATIONS
@@ -419,7 +389,8 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
             goalId > 0 -> {
                 showDestination(MainDestination.GOALS)
             }
-            type?.equals("RANK_UPDATE", ignoreCase = true) == true -> {
+            type?.equals("RANK_UPDATE", ignoreCase = true) == true ||
+            type?.equals("RANKING_UPDATED", ignoreCase = true) == true -> {
                 showDestination(MainDestination.RANK)
             }
         }

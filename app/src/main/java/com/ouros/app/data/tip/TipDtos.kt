@@ -20,7 +20,7 @@ data class TipDetailResponse(
     val averageRating: Double = 0.0
 ) {
     val effectiveTitle: String
-        get() = title?.takeIf { it.isNotBlank() } ?: "Dica Técnica"
+        get() = title?.takeIf { it.isNotBlank() } ?: "Como diminuir a conta de água"
 
     val effectiveImageUrl: String?
         get() = imageUrlSnake ?: imageUrl
@@ -33,8 +33,9 @@ data class TipDetailResponse(
 }
 
 data class ReviewRequest(
+    @SerializedName("rating")
     val score: Int,
-    val comment: String? = null
+    val comment: String = "Avaliação enviada pelo aplicativo"
 )
 
 data class ReviewResponse(
@@ -43,7 +44,8 @@ data class ReviewResponse(
     val idTip: Long,
     @SerializedName("id_farm_owner")
     val idFarmOwner: Long? = null,
-    val score: Int,
+    @SerializedName("rating", alternate = ["score"])
+    val score: Int = 0,
     val comment: String? = null,
     @SerializedName("created_at")
     val createdAt: String? = null

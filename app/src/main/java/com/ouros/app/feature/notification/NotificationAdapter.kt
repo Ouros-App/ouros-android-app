@@ -40,25 +40,10 @@ class NotificationAdapter(
 
         private val txtTitle: TextView = itemView.findViewById(R.id.txtNotificationTitle)
         private val txtMessage: TextView = itemView.findViewById(R.id.txtNotificationMessage)
-        private val txtDate: TextView = itemView.findViewById(R.id.txtNotificationDate)
-        private val txtAction: TextView = itemView.findViewById(R.id.txtNotificationAction)
-        private val dotUnread: View = itemView.findViewById(R.id.dotUnread)
 
         fun bind(item: NotificationItemResponse) {
             txtTitle.text = item.title
             txtMessage.text = item.message
-            dotUnread.visibility = if (item.isRead) View.GONE else View.VISIBLE
-
-            txtDate.text = item.createdAt?.take(10) ?: "Recente"
-
-            txtAction.text = when {
-                isGoldAlert(item) -> "ALERTA PRIORITÁRIO ⚠"
-                item.type.equals("TIP_CREATED", ignoreCase = true) || item.idTip != null -> "Ver dica →"
-                item.type.contains("GOAL", ignoreCase = true) || item.type.contains("TASK", ignoreCase = true) -> "Ver meta →"
-                item.type.contains("RANK", ignoreCase = true) -> "Ver ranking →"
-                else -> "Ver detalhes →"
-            }
-
             itemView.setOnClickListener { onItemClick(item) }
         }
     }

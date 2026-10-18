@@ -3,80 +3,60 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="16dp"
-    android:layout_marginEnd="16dp"
-    android:layout_marginTop="6dp"
-    android:layout_marginBottom="6dp"
+    android:layout_marginStart="24dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginEnd="24dp"
+    android:layout_marginBottom="8dp"
     android:background="@drawable/bg_notification_dark"
     android:clickable="true"
-    android:elevation="2dp"
     android:focusable="true"
     android:foreground="?android:attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:minHeight="92dp"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:paddingHorizontal="24dp"
+    android:paddingVertical="20dp">
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/txtNotificationTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/txtNotificationTitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:fontFamily="@font/poppins_semibold"
-            android:textColor="@color/white"
-            android:textSize="15sp"
-            tools:text="Dê uma olhada," />
-
-        <View
-            android:id="@+id/dotUnread"
-            android:layout_width="8dp"
-            android:layout_height="8dp"
-            android:layout_marginStart="8dp"
-            android:background="@drawable/bg_notification_unread_dot" />
-
-    </LinearLayout>
+        android:fontFamily="@font/poppins_semibold"
+        android:includeFontPadding="false"
+        android:letterSpacing="-0.04"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        tools:text="Piiuu" />
 
     <TextView
         android:id="@+id/txtNotificationMessage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="2dp"
         android:fontFamily="@font/poppins_regular"
+        android:includeFontPadding="false"
+        android:letterSpacing="-0.03"
         android:lineHeight="18dp"
-        android:textColor="@color/notification_text_secondary"
+        android:textColor="@color/white"
         android:textSize="13sp"
-        tools:text="a nova posição do ranking saiu" />
+        tools:text="O midas está com saudade!!" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+    <View
+        android:id="@+id/dotUnread"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
 
-        <TextView
-            android:id="@+id/txtNotificationDate"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:fontFamily="@font/poppins_regular"
-            android:textColor="#707085"
-            android:textSize="11sp"
-            tools:text="Hoje às 10:30" />
+    <TextView
+        android:id="@+id/txtNotificationDate"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
 
-        <TextView
-            android:id="@+id/txtNotificationAction"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fontFamily="@font/poppins_semibold"
-            android:textColor="@color/gold"
-            android:textSize="11sp"
-            tools:text="Ver detalhes →" />
-
-    </LinearLayout>
+    <TextView
+        android:id="@+id/txtNotificationAction"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
 
 </LinearLayout>

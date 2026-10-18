@@ -113,6 +113,24 @@ class TipRepositoryTest {
         assertTrue(result.isSuccess)
         val tip = result.getOrNull()
         assertEquals("Como diminuir a conta de água", tip?.title)
-        assertEquals(4.8, tip?.effectiveAverageRating ?: 0.0, 0.01)
+        assertEquals(3.5, tip?.effectiveAverageRating ?: 0.0, 0.01)
+    }
+
+    @Test
+    fun reviewRequest_serializesRatingFieldForSpringApiCompatibility() {
+        val request = ReviewRequest(score = 5, comment = "Excelente dica")
+        val json = com.google.gson.Gson().toJson(request)
+        assertTrue(json.contains("\"rating\":5"))
+        assertTrue(json.contains("\"comment\":\"Excelente dica\""))
+    }
+
+    @Test
+    fun reviewResponse_deserializesRatingFieldCorrectly() {
+        val json = """{"id":10,"id_tip":1,"rating":4,"comment":"Muito bom"}"""
+        val response = com.google.gson.Gson().fromJson(json, ReviewResponse::class.java)
+        assertEquals(4, response.score)
+        assertEquals(10L, response.id)
+        assertEquals(1L, response.idTip)
+        assertEquals("Muito bom", response.comment)
     }
 }

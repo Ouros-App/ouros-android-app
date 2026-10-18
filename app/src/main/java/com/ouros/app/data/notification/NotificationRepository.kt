@@ -159,60 +159,54 @@ class NotificationRepository(
         private val mockNotifications = mutableListOf(
             NotificationItemResponse(
                 id = 1,
-                title = "Toma cuidado,",
-                message = "os seus pintos estão com sede!",
-                type = "ALERT_WATER",
-                isRead = false,
-                createdAt = "Hoje às 09:15"
-            ),
-            NotificationItemResponse(
-                id = 2,
-                title = "Vishh",
-                message = "vai alimentar os seus pintos direito!",
-                type = "ALERT_FEED",
-                isRead = false,
-                createdAt = "Hoje às 08:40"
-            ),
-            NotificationItemResponse(
-                id = 3,
-                title = "Como diminuir a conta de água",
-                message = "Veja a recomendação técnica operacional para reduzir em até 50% o consumo.",
-                type = "TIP_CREATED",
-                idTip = 1,
-                isRead = false,
-                createdAt = "Hoje às 08:00"
-            ),
-            NotificationItemResponse(
-                id = 4,
-                title = "Eii,",
-                message = "Uma nova tarefa foi atribuída a sua granja",
-                type = "GOAL_ASSIGNED",
-                isRead = false,
-                createdAt = "Ontem"
-            ),
-            NotificationItemResponse(
-                id = 5,
-                title = "Você viu?",
-                message = "Daqui a pouco o novo ranking sai!",
-                type = "RANK_UPDATE",
-                isRead = true,
-                createdAt = "Ontem"
-            ),
-            NotificationItemResponse(
-                id = 6,
                 title = "Piiuu",
                 message = "O midas está com saudade!!",
                 type = "MIDAS_INFO",
-                isRead = true,
-                createdAt = "14/10/2026"
+                isRead = false
             ),
             NotificationItemResponse(
-                id = 7,
+                id = 2,
+                title = "Oiiiiiiiiiii, é o Midas!",
+                message = "Você já testou o nosso incrível simulador?",
+                type = "MIDAS_INFO",
+                isRead = false
+            ),
+            NotificationItemResponse(
+                id = 3,
+                title = "Você viu?",
+                message = "Daqui a pouco o novo ranking sai!",
+                type = "RANK_UPDATE",
+                isRead = false
+            ),
+            NotificationItemResponse(
+                id = 4,
+                title = "Toma cuidado,",
+                message = "os seus pintos estão com sede!",
+                type = "ALERT_WATER",
+                idTip = 1L,
+                isRead = false
+            ),
+            NotificationItemResponse(
+                id = 5,
                 title = "Dê uma olhada,",
                 message = "a nova posição do ranking saiu",
                 type = "RANK_UPDATE",
-                isRead = true,
-                createdAt = "12/10/2026"
+                isRead = true
+            ),
+            NotificationItemResponse(
+                id = 6,
+                title = "Eii,",
+                message = "Uma nova tarefa foi atribuída a sua granja",
+                type = "GOAL_ASSIGNED",
+                isRead = true
+            ),
+            NotificationItemResponse(
+                id = 7,
+                title = "Vishh",
+                message = "vai alimentar os seus pintos direito!",
+                type = "ALERT_FEED",
+                idTip = 1L,
+                isRead = true
             )
         )
     }

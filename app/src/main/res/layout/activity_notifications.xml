@@ -11,11 +11,11 @@
         android:id="@+id/headerNotifications"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@drawable/header_background"
-        android:paddingStart="16dp"
-        android:paddingTop="50dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="24dp"
+        android:background="@android:color/transparent"
+        android:paddingStart="20dp"
+        android:paddingTop="48dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="12dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -26,69 +26,57 @@
             android:layout_height="40dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="Voltar"
-            android:padding="8dp"
+            android:padding="10dp"
             android:src="@drawable/ic_arrow_left"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toBottomOf="@id/titleContainer"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/white" />
+            app:layout_constraintTop_toTopOf="@id/titleContainer" />
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/titleContainer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <TextView
-                android:id="@+id/txtHeaderTitle"
+            <ImageView
+                android:id="@+id/imgHeaderWing"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/poppins_semibold"
-                android:text="Notificações"
-                android:textColor="@color/white"
-                android:textSize="20sp" />
-
-            <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="-18dp"
+                android:layout_marginTop="-4dp"
                 android:contentDescription="Asa Ouros"
-                android:src="@drawable/ouros_goldwings" />
+                android:src="@drawable/ouros_goldwings"
+                app:layout_constraintStart_toEndOf="@id/txtHeaderTitle"
+                app:layout_constraintTop_toTopOf="@id/txtHeaderTitle" />
 
-        </LinearLayout>
+            <TextView
+                android:id="@+id/txtHeaderTitle"
+                style="@style/subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Notificações"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <TextView
             android:id="@+id/btnOpenTestScreen"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:background="?android:attr/selectableItemBackground"
-            android:fontFamily="@font/poppins_regular"
-            android:padding="4dp"
-            android:text="🧪 Testes"
-            android:textColor="@color/white"
-            android:textSize="12sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/btnMarkAllRead"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/btnMarkAllRead"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="?android:attr/selectableItemBackground"
-            android:fontFamily="@font/poppins_regular"
-            android:padding="4dp"
-            android:text="Limpar"
-            android:textColor="@color/gold"
-            android:textSize="12sp"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -109,8 +97,10 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
-            android:paddingTop="12dp"
+            android:overScrollMode="never"
+            android:paddingTop="8dp"
             android:paddingBottom="24dp"
+            android:scrollbars="none"
             tools:listitem="@layout/item_notification_dark" />
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
@@ -127,8 +117,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/headerNotifications"
-        tools:visibility="visible">
+        app:layout_constraintTop_toBottomOf="@id/headerNotifications">
 
         <ImageView
             android:layout_width="110dp"
