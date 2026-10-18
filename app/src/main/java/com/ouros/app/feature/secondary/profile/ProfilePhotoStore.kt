@@ -154,6 +154,10 @@ class ProfilePhotoStore(
                 KEY_REMOTE_PHOTO_REMOVED,
                 true
             )
+            .putBoolean(
+                KEY_PHOTO_PENDING_UPLOAD,
+                false
+            )
             .putString(
                 KEY_SELECTED_AVATAR,
                 selectedAvatar.name
@@ -208,11 +212,25 @@ class ProfilePhotoStore(
         )
     }
 
+    fun isPhotoPendingUpload(): Boolean {
+        return preferences.getBoolean(KEY_PHOTO_PENDING_UPLOAD, false) && localPhotoFile() != null
+    }
+
+    fun markPhotoUploadCompleted() {
+        preferences.edit()
+            .putBoolean(KEY_PHOTO_PENDING_UPLOAD, false)
+            .apply()
+    }
+
     private fun markPhotoAsSelected() {
         preferences.edit()
             .putBoolean(
                 KEY_REMOTE_PHOTO_REMOVED,
                 false
+            )
+            .putBoolean(
+                KEY_PHOTO_PENDING_UPLOAD,
+                true
             )
             .apply()
     }
@@ -258,6 +276,7 @@ class ProfilePhotoStore(
         const val TEMPORARY_GALLERY_PHOTO_NAME = "temporary_gallery_photo.jpg"
         const val KEY_SELECTED_AVATAR = "selected_avatar"
         const val KEY_REMOTE_PHOTO_REMOVED = "remote_photo_removed"
+        const val KEY_PHOTO_PENDING_UPLOAD = "photo_pending_upload"
         const val AVATAR_PREFIX = "avatar_"
     }
 }

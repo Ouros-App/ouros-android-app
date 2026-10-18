@@ -268,7 +268,7 @@ class DashboardFragment : Fragment() {
     }
 
     private companion object {
-        const val DASHBOARD_BASE_URL = "https://ouros-dashboard.discloud.app/"
+        val DASHBOARD_BASE_URL: String = com.ouros.app.BuildConfig.DASHBOARD_BASE_URL
         const val MIME_TYPE_HTML = "text/html"
     }
 }
