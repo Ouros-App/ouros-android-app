@@ -9,17 +9,9 @@ import kotlinx.coroutines.CancellationException
 import retrofit2.Response
 
 sealed interface GoalsResult<out T> {
-    data class Success<T>(
-        val data: T
-    ) : GoalsResult<T>
-
-    data class Error(
-        val message: String,
-        val canRetry: Boolean
-    ) : GoalsResult<Nothing>
-
-    data object AuthenticationRequired :
-        GoalsResult<Nothing>
+    data class Success<T>(val data: T) : GoalsResult<T>
+    data class Error(val message: String, val canRetry: Boolean) : GoalsResult<Nothing>
+    data object AuthenticationRequired : GoalsResult<Nothing>
 }
 
 class GoalsRepository(
@@ -28,212 +20,179 @@ class GoalsRepository(
     private val sessionManager: SessionManager,
     private val farmSessionStore: FarmSessionStore
 ) {
+    suspend fun load(): GoalsResult<GoalsPayload> = safeRequest<GoalsPayload> {
+        when (val personalCall = authenticatedCall { api.getIndividualGoals(it) }) {
+            ApiCallResult.AuthenticationRequired -> GoalsResult.AuthenticationRequired
+            ApiCallResult.TemporaryFailure -> temporaryError()
+            is ApiCallResult.ResponseResult -> {
+                val personalResponse = personalCall.response
+                val personalGoals = personalResponse.body()
 
-    suspend fun load(): GoalsResult<GoalsPayload> =
-        safeRequest<GoalsPayload> {
-            when (
-                val personalCall =
-                    authenticatedCall {
-                            authorization ->
-
-                        api.getIndividualGoals(
-                            authorization
-                        )
-                    }
-            ) {
-                ApiCallResult.AuthenticationRequired -> {
-                    GoalsResult.AuthenticationRequired
+                if (!personalResponse.isSuccessful || personalGoals == null) {
+                    return@safeRequest responseError(
+                        personalResponse.code(),
+                        "Não foi possível carregar as metas pessoais."
+                    )
                 }
 
-                ApiCallResult.TemporaryFailure -> {
-                    temporaryError()
-                }
+                when (val stateCall = authenticatedCall { api.getStateGoals(it) }) {
+                    ApiCallResult.AuthenticationRequired -> GoalsResult.AuthenticationRequired
+                    ApiCallResult.TemporaryFailure -> temporaryError()
+                    is ApiCallResult.ResponseResult -> {
+                        val stateResponse = stateCall.response
+                        val stateGoals = stateResponse.body()
 
-                is ApiCallResult.ResponseResult -> {
-                    val personalResponse =
-                        personalCall.response
-
-                    val personalGoals =
-                        personalResponse.body()
-
-                    if (
-                        !personalResponse.isSuccessful ||
-                        personalGoals == null
-                    ) {
-                        return@safeRequest responseError(
-                            code =
-                                personalResponse.code(),
-                            fallback =
-                                "Não foi possível carregar as metas pessoais."
-                        )
-                    }
-
-                    when (
-                        val stateCall =
-                            authenticatedCall {
-                                    authorization ->
-
-                                api.getStateGoals(
-                                    authorization
-                                )
-                            }
-                    ) {
-                        ApiCallResult.AuthenticationRequired -> {
-                            GoalsResult.AuthenticationRequired
-                        }
-
-                        ApiCallResult.TemporaryFailure -> {
-                            temporaryError()
-                        }
-
-                        is ApiCallResult.ResponseResult -> {
-                            val stateResponse =
-                                stateCall.response
-
-                            val stateGoals =
-                                stateResponse.body()
-
-                            if (
-                                !stateResponse.isSuccessful ||
-                                stateGoals == null
-                            ) {
-                                return@safeRequest responseError(
-                                    code =
-                                        stateResponse.code(),
-                                    fallback =
-                                        "Não foi possível carregar as metas estaduais."
-                                )
-                            }
-
-                            GoalsResult.Success(
-                                GoalsPayload(
-                                    personalGoals =
-                                        personalGoals,
-                                    stateGoals =
-                                        stateGoals
-                                )
+                        if (!stateResponse.isSuccessful || stateGoals == null) {
+                            return@safeRequest responseError(
+                                stateResponse.code(),
+                                "Não foi possível carregar as metas estaduais."
                             )
                         }
+
+                        GoalsResult.Success(
+                            GoalsPayload(
+                                personalGoals = personalGoals,
+                                stateGoals = stateGoals
+                            )
+                        )
                     }
                 }
             }
         }
+    }
 
-    suspend fun update(
+    suspend fun updateStatus(
         origin: GoalOrigin,
-        id: Long,
+        goal: GoalResponse,
         completed: Boolean
-    ): GoalsResult<GoalResponse> =
-        safeRequest {
-            val request =
-                UpdateGoalStatusRequest(
-                    status =
-                        if (completed) {
-                            GoalResponse.COMPLETED
-                        } else {
-                            GoalResponse.PENDING
-                        }
+    ): GoalsResult<GoalResponse> = safeRequest<GoalResponse> {
+        val newStatus = if (completed) GoalResponse.COMPLETED else GoalResponse.PENDING
+
+        val result = when (origin) {
+            GoalOrigin.PERSONAL -> authenticatedCall {
+                api.updateIndividualGoal(
+                    id = goal.id,
+                    authorization = it,
+                    request = UpdateIndividualGoalRequest(status = newStatus)
                 )
+            }
 
-            val call:
-                    suspend (
-                        String
-                    ) -> Response<GoalResponse> =
-                when (origin) {
-                    GoalOrigin.PERSONAL -> {
-                            authorization ->
+            GoalOrigin.STATE -> authenticatedCall {
+                api.updateStateGoal(
+                    id = goal.id,
+                    authorization = it,
+                    request = UpdateGoalStatusRequest(status = newStatus)
+                )
+            }
+        }
 
-                        api.updateIndividualGoal(
-                            id = id,
-                            authorization =
-                                authorization,
-                            request = request
-                        )
-                    }
+        when (result) {
+            ApiCallResult.AuthenticationRequired -> GoalsResult.AuthenticationRequired
+            ApiCallResult.TemporaryFailure -> temporaryError()
+            is ApiCallResult.ResponseResult -> {
+                val response = result.response
 
-                    GoalOrigin.STATE -> {
-                            authorization ->
-
-                        api.updateStateGoal(
-                            id = id,
-                            authorization =
-                                authorization,
-                            request = request
-                        )
-                    }
-                }
-
-            when (
-                val result =
-                    authenticatedCall(call)
-            ) {
-                ApiCallResult.AuthenticationRequired -> {
-                    GoalsResult.AuthenticationRequired
-                }
-
-                ApiCallResult.TemporaryFailure -> {
-                    temporaryError()
-                }
-
-                is ApiCallResult.ResponseResult -> {
-                    readGoal(
-                        response =
-                            result.response,
-                        fallback =
-                            "Não foi possível atualizar a meta."
+                if (response.isSuccessful) {
+                    GoalsResult.Success(
+                        response.body() ?: goal.copy(status = newStatus)
+                    )
+                } else {
+                    responseError(
+                        response.code(),
+                        "Não foi possível atualizar a meta."
                     )
                 }
             }
         }
+    }
 
     suspend fun create(
-        title: String
-    ): GoalsResult<GoalResponse> =
-        safeRequest {
-            val farmId =
-                farmSessionStore.farmId()
-                    ?: return@safeRequest GoalsResult.Error(
-                        message =
-                            "Não foi possível identificar a granja. Tente novamente.",
-                        canRetry = true
-                    )
+        title: String,
+        description: String?
+    ): GoalsResult<GoalResponse> = safeRequest<GoalResponse> {
+        val farmId = farmSessionStore.farmId()
+            ?: return@safeRequest GoalsResult.Error(
+                message = "Não foi possível identificar a granja. Tente novamente.",
+                canRetry = true
+            )
 
-            val request =
-                CreateIndividualGoalRequest(
-                    title = title.trim(),
-                    farmId = farmId
-                )
+        val request = CreateIndividualGoalRequest(
+            title = title.trim(),
+            description = description?.trim()?.takeIf(String::isNotEmpty),
+            farmId = farmId
+        )
 
-            when (
-                val result =
-                    authenticatedCall {
-                            authorization ->
+        when (val result = authenticatedCall {
+            api.createIndividualGoal(it, request)
+        }) {
+            ApiCallResult.AuthenticationRequired -> GoalsResult.AuthenticationRequired
+            ApiCallResult.TemporaryFailure -> temporaryError()
+            is ApiCallResult.ResponseResult -> readGoal(
+                result.response,
+                "Não foi possível adicionar a meta."
+            )
+        }
+    }
 
-                        api.createIndividualGoal(
-                            authorization =
-                                authorization,
-                            request = request
+    suspend fun updateDetails(
+        goal: GoalResponse,
+        title: String,
+        description: String
+    ): GoalsResult<GoalResponse> = safeRequest<GoalResponse> {
+        val cleanTitle = title.trim()
+        val cleanDescription = description.trim()
+        val request = UpdateIndividualGoalRequest(
+            title = cleanTitle,
+            description = cleanDescription
+        )
+
+        when (val result = authenticatedCall {
+            api.updateIndividualGoal(
+                id = goal.id,
+                authorization = it,
+                request = request
+            )
+        }) {
+            ApiCallResult.AuthenticationRequired -> GoalsResult.AuthenticationRequired
+            ApiCallResult.TemporaryFailure -> temporaryError()
+            is ApiCallResult.ResponseResult -> {
+                val response = result.response
+
+                if (response.isSuccessful) {
+                    GoalsResult.Success(
+                        response.body() ?: goal.copy(
+                            title = cleanTitle,
+                            description = cleanDescription
                         )
-                    }
-            ) {
-                ApiCallResult.AuthenticationRequired -> {
-                    GoalsResult.AuthenticationRequired
-                }
-
-                ApiCallResult.TemporaryFailure -> {
-                    temporaryError()
-                }
-
-                is ApiCallResult.ResponseResult -> {
-                    readGoal(
-                        response =
-                            result.response,
-                        fallback =
-                            "Não foi possível adicionar a meta."
+                    )
+                } else {
+                    responseError(
+                        response.code(),
+                        "Não foi possível salvar a meta."
                     )
                 }
             }
         }
+    }
+
+    suspend fun delete(id: Long): GoalsResult<Unit> = safeRequest<Unit> {
+        when (val result = authenticatedCall {
+            api.deleteIndividualGoal(id, it)
+        }) {
+            ApiCallResult.AuthenticationRequired -> GoalsResult.AuthenticationRequired
+            ApiCallResult.TemporaryFailure -> temporaryError()
+            is ApiCallResult.ResponseResult -> {
+                if (result.response.isSuccessful) {
+                    GoalsResult.Success(Unit)
+                } else {
+                    responseError(
+                        result.response.code(),
+                        "Não foi possível excluir a meta."
+                    )
+                }
+            }
+        }
+    }
 
     private fun readGoal(
         response: Response<GoalResponse>,
@@ -241,235 +200,147 @@ class GoalsRepository(
     ): GoalsResult<GoalResponse> {
         val goal = response.body()
 
-        return if (
-            response.isSuccessful &&
-            goal != null
-        ) {
+        return if (response.isSuccessful && goal != null) {
             GoalsResult.Success(goal)
         } else {
-            responseError(
-                code = response.code(),
-                fallback = fallback
-            )
+            responseError(response.code(), fallback)
         }
     }
 
-    private fun responseError(
-        code: Int,
-        fallback: String
-    ): GoalsResult.Error {
+    private fun responseError(code: Int, fallback: String): GoalsResult.Error {
         return when (code) {
-            400,
-            422 -> {
-                GoalsResult.Error(
-                    message =
-                        "Os dados enviados são inválidos.",
-                    canRetry = false
-                )
-            }
+            400, 422 -> GoalsResult.Error(
+                "Os dados enviados são inválidos.",
+                false
+            )
 
-            403 -> {
-                GoalsResult.Error(
-                    message =
-                        "Você não possui permissão para realizar esta ação.",
-                    canRetry = false
-                )
-            }
+            403 -> GoalsResult.Error(
+                "Você não possui permissão para realizar esta ação.",
+                false
+            )
 
-            404 -> {
-                GoalsResult.Error(
-                    message =
-                        "A meta não foi encontrada.",
-                    canRetry = false
-                )
-            }
+            404 -> GoalsResult.Error(
+                "A meta não foi encontrada.",
+                false
+            )
 
-            429 -> {
-                GoalsResult.Error(
-                    message =
-                        "Muitas tentativas. Aguarde e tente novamente.",
-                    canRetry = true
-                )
-            }
+            429 -> GoalsResult.Error(
+                "Muitas tentativas. Aguarde e tente novamente.",
+                true
+            )
 
-            in 500..599 -> {
-                GoalsResult.Error(
-                    message =
-                        "O serviço está indisponível. Tente novamente.",
-                    canRetry = true
-                )
-            }
+            in 500..599 -> GoalsResult.Error(
+                "O serviço está indisponível. Tente novamente.",
+                true
+            )
 
-            else -> {
-                GoalsResult.Error(
-                    message = fallback,
-                    canRetry = true
-                )
-            }
+            else -> GoalsResult.Error(fallback, true)
         }
     }
 
-    private fun temporaryError():
-            GoalsResult.Error {
-        return GoalsResult.Error(
-            message =
-                "Não foi possível validar sua sessão. Verifique sua conexão e tente novamente.",
-            canRetry = true
-        )
-    }
+    private fun temporaryError() = GoalsResult.Error(
+        message = "Não foi possível validar sua sessão. Verifique sua conexão e tente novamente.",
+        canRetry = true
+    )
 
     private suspend fun <T> authenticatedCall(
-        request:
-        suspend (
-            String
-        ) -> Response<T>
+        request: suspend (String) -> Response<T>
     ): ApiCallResult<T> {
-        val firstAuthorization =
-            ensureAuthorization()
+        when (val authorization = ensureAuthorization()) {
+            AuthorizationResult.AuthenticationRequired ->
+                return ApiCallResult.AuthenticationRequired
 
-        when (firstAuthorization) {
-            AuthorizationResult.AuthenticationRequired -> {
-                return ApiCallResult
-                    .AuthenticationRequired
-            }
-
-            AuthorizationResult.TemporaryFailure -> {
-                return ApiCallResult
-                    .TemporaryFailure
-            }
+            AuthorizationResult.TemporaryFailure ->
+                return ApiCallResult.TemporaryFailure
 
             is AuthorizationResult.Ready -> {
-                val response =
-                    request(
-                        firstAuthorization.header
-                    )
+                val response = request(authorization.header)
 
                 if (response.code() != 401) {
-                    return ApiCallResult
-                        .ResponseResult(
-                            response
-                        )
+                    return ApiCallResult.ResponseResult(response)
                 }
             }
         }
 
-        return when (
-            val refreshedAuthorization =
-                refreshAuthorization()
-        ) {
-            AuthorizationResult.AuthenticationRequired -> {
+        return when (val authorization = refreshAuthorization()) {
+            AuthorizationResult.AuthenticationRequired ->
                 ApiCallResult.AuthenticationRequired
-            }
 
-            AuthorizationResult.TemporaryFailure -> {
+            AuthorizationResult.TemporaryFailure ->
                 ApiCallResult.TemporaryFailure
-            }
 
             is AuthorizationResult.Ready -> {
-                val response =
-                    request(
-                        refreshedAuthorization.header
-                    )
+                val response = request(authorization.header)
 
                 if (response.code() == 401) {
                     authRepository.clearSession()
-
-                    ApiCallResult
-                        .AuthenticationRequired
+                    ApiCallResult.AuthenticationRequired
                 } else {
-                    ApiCallResult.ResponseResult(
-                        response
-                    )
+                    ApiCallResult.ResponseResult(response)
                 }
             }
         }
     }
 
-    private suspend fun ensureAuthorization():
-            AuthorizationResult {
-        val token =
-            sessionManager.accessToken()
+    private suspend fun ensureAuthorization(): AuthorizationResult {
+        val token = sessionManager.accessToken()
 
-        return if (!token.isNullOrBlank()) {
-            AuthorizationResult.Ready(
-                header = "Bearer $token"
-            )
-        } else {
+        return if (token.isNullOrBlank()) {
             refreshAuthorization()
+        } else {
+            AuthorizationResult.Ready("Bearer $token")
         }
     }
 
-    private suspend fun refreshAuthorization():
-            AuthorizationResult {
-        return when (
-            val result =
-                authRepository.refreshSession()
-        ) {
+    private suspend fun refreshAuthorization(): AuthorizationResult {
+        return when (val result = authRepository.refreshSession()) {
             is AuthResult.Success -> {
-                val token =
-                    sessionManager.accessToken()
+                val token = sessionManager.accessToken()
 
                 if (token.isNullOrBlank()) {
-                    AuthorizationResult
-                        .AuthenticationRequired
+                    AuthorizationResult.AuthenticationRequired
                 } else {
-                    AuthorizationResult.Ready(
-                        header = "Bearer $token"
-                    )
+                    AuthorizationResult.Ready("Bearer $token")
                 }
             }
 
             is AuthResult.Error -> {
                 if (
                     result.statusCode == 401 ||
-                    result.message ==
-                    NO_SAVED_SESSION_MESSAGE
+                    result.message == NO_SAVED_SESSION_MESSAGE
                 ) {
-                    AuthorizationResult
-                        .AuthenticationRequired
+                    AuthorizationResult.AuthenticationRequired
                 } else {
-                    AuthorizationResult
-                        .TemporaryFailure
+                    AuthorizationResult.TemporaryFailure
                 }
             }
         }
     }
 
     private suspend fun <T> safeRequest(
-        block:
-        suspend () -> GoalsResult<T>
+        block: suspend () -> GoalsResult<T>
     ): GoalsResult<T> {
         return try {
             block()
-        } catch (
-            error: CancellationException
-        ) {
+        } catch (error: CancellationException) {
             throw error
         } catch (_: IOException) {
             GoalsResult.Error(
-                message =
-                    "Sem conexão. Verifique sua internet.",
-                canRetry = true
+                "Sem conexão. Verifique sua internet.",
+                true
             )
         } catch (_: Exception) {
             GoalsResult.Error(
-                message =
-                    "Ocorreu um erro inesperado.",
-                canRetry = true
+                "Ocorreu um erro inesperado.",
+                true
             )
         }
     }
 
     private sealed interface AuthorizationResult {
-        data class Ready(
-            val header: String
-        ) : AuthorizationResult
-
-        data object AuthenticationRequired :
-            AuthorizationResult
-
-        data object TemporaryFailure :
-            AuthorizationResult
+        data class Ready(val header: String) : AuthorizationResult
+        data object AuthenticationRequired : AuthorizationResult
+        data object TemporaryFailure : AuthorizationResult
     }
 
     private sealed interface ApiCallResult<out T> {
@@ -477,15 +348,11 @@ class GoalsRepository(
             val response: Response<T>
         ) : ApiCallResult<T>
 
-        data object AuthenticationRequired :
-            ApiCallResult<Nothing>
-
-        data object TemporaryFailure :
-            ApiCallResult<Nothing>
+        data object AuthenticationRequired : ApiCallResult<Nothing>
+        data object TemporaryFailure : ApiCallResult<Nothing>
     }
 
     private companion object {
-        const val NO_SAVED_SESSION_MESSAGE =
-            "Nenhuma sessão salva."
+        const val NO_SAVED_SESSION_MESSAGE = "Nenhuma sessão salva."
     }
 }

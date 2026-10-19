@@ -37,6 +37,7 @@ import android.view.WindowManager
 import android.app.Activity
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Build
 import com.ouros.app.feature.onboarding.welcome.WelcomeActivity
 import com.yalantis.ucrop.UCrop
 import java.io.File
@@ -213,6 +214,8 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         val dialog = Dialog(this)
 
         dialog.setContentView(R.layout.popup_photo)
+        dialog.setCancelable(true)
+        dialog.setCanceledOnTouchOutside(true)
         dialog.window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
 
         dialog.findViewById<View>(R.id.btnTakePhoto).setOnClickListener {
@@ -233,13 +236,19 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         dialog.show()
 
         dialog.window?.apply {
-            setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+            setLayout(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+
             addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
 
             val windowAttributes = attributes
-            windowAttributes.blurBehindRadius = 35
             windowAttributes.dimAmount = 0.18f
+
+            addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+            windowAttributes.blurBehindRadius = 35
+
             attributes = windowAttributes
         }
     }

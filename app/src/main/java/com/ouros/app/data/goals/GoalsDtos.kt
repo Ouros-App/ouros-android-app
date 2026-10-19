@@ -14,7 +14,8 @@ data class GoalResponse(
     @SerializedName("date_end") val dateEnd: String?,
     val region: String?
 ) {
-    val isCompleted: Boolean get() = status.equals(COMPLETED, ignoreCase = true)
+    val isCompleted: Boolean
+        get() = status.equals(COMPLETED, ignoreCase = true)
 
     companion object {
         const val COMPLETED = "COMPLETED"
@@ -22,7 +23,15 @@ data class GoalResponse(
     }
 }
 
-data class UpdateGoalStatusRequest(val status: String)
+data class UpdateGoalStatusRequest(
+    val status: String
+)
+
+data class UpdateIndividualGoalRequest(
+    val title: String? = null,
+    val description: String? = null,
+    val status: String? = null
+)
 
 data class CreateIndividualGoalRequest(
     val title: String,
@@ -35,7 +44,10 @@ data class CreateIndividualGoalRequest(
 
 enum class GoalOrigin { PERSONAL, STATE }
 
-data class GoalKey(val origin: GoalOrigin, val id: Long)
+data class GoalKey(
+    val origin: GoalOrigin,
+    val id: Long
+)
 
 data class GoalsPayload(
     val personalGoals: List<GoalResponse>,
