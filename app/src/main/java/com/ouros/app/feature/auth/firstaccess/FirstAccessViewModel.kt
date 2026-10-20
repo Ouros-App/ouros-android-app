@@ -46,6 +46,8 @@ class FirstAccessViewModel(
 
         fun onNewPasswordError(message: String?)
 
+        fun onLocationPermissionRequired()
+
         fun onFirstAccessMessage(message: String)
 
         fun onFirstAccessError(message: String)
@@ -79,6 +81,10 @@ class FirstAccessViewModel(
     private var cpf = ""
     private var telephone = ""
     private var newPassword = ""
+
+    private var waitingForLocation = false
+    private var latitude: Double? = null
+    private var longitude: Double? = null
 
     fun setListener(listener: Listener) {
         this.listener = listener
@@ -415,6 +421,7 @@ class FirstAccessViewModel(
     fun onFinishClicked() {
         if (
             isLoading ||
+            waitingForLocation ||
             !validateNewPassword()
         ) {
             return
@@ -430,12 +437,61 @@ class FirstAccessViewModel(
             return
         }
 
+        if (
+            latitude == null ||
+            longitude == null
+        ) {
+            waitingForLocation = true
+            listener?.onLocationPermissionRequired()
+            return
+        }
+
+        submitFirstAccess(profileId)
+    }
+
+    fun onLocationAvailable(
+        latitude: Double,
+        longitude: Double
+    ) {
+        waitingForLocation = false
+
+        if (
+            latitude !in -90.0..90.0 ||
+            longitude !in -180.0..180.0
+        ) {
+            listener?.onFirstAccessError(
+                "A localização obtida é inválida. Tente novamente."
+            )
+            return
+        }
+
+        this.latitude = latitude
+        this.longitude = longitude
+
+        onFinishClicked()
+    }
+
+    fun onLocationUnavailable(
+        message: String
+    ) {
+        waitingForLocation = false
+        listener?.onFirstAccessError(message)
+    }
+
+    fun cancelLocationRequest() {
+        waitingForLocation = false
+    }
+
+    private fun submitFirstAccess(
+        profileId: Long
+    ) {
         viewModelScope.launch {
             setLoading(true)
-
-            finishFirstAccess(profileId)
-
-            setLoading(false)
+            try {
+                finishFirstAccess(profileId)
+            } finally {
+                setLoading(false)
+            }
         }
     }
 
@@ -593,7 +649,11 @@ class FirstAccessViewModel(
 
             password = newPassword,
 
-            firstAccess = false
+            firstAccess = false,
+
+            latitude = latitude,
+
+            longitude = longitude
         )
 
         when (
