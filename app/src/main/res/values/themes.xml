@@ -1,11 +1,10 @@
 <resources>
 
     <style name="Theme.Ouros" parent="Theme.Material3.Light.NoActionBar">
-        <item name="android:windowLightStatusBar">true</item>
-<!--        <item name="android:statusBarColor">@android:color/transparent</item>-->
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="textInputStyle">@style/Widget.App.TextInputLayout.Gold</item>
-
     </style>
 
 </resources>

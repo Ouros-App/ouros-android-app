@@ -14,4 +14,12 @@
     <color name="gold_gradient_end">#8B6508</color>
     <color name="notification_text_secondary">#B0AFC5</color>
     <color name="star_gold">#FFB800</color>
+
+    <!-- Cores do Ranking (Figma) -->
+    <color name="rank_blue_dark">#110B95</color>
+    <color name="rank_blue_night">#05032F</color>
+    <color name="rank_avatar_above">#FFD5FB</color>
+    <color name="rank_avatar_current">#D8A23A</color>
+    <color name="rank_avatar_below">#2019A3</color>
+    <color name="rank_position_gray">#7E7D89</color>
 </resources>

@@ -1,17 +1,19 @@
 package com.ouros.app.data.session
 
 import android.content.Context
+import android.content.SharedPreferences
 
-class FarmSessionStore(context: Context) {
-
-    private val preferences = context.applicationContext
-        .getSharedPreferences(
+open class FarmSessionStore(
+    context: Context? = null,
+    private val preferences: SharedPreferences? = context?.applicationContext
+        ?.getSharedPreferences(
             PREFERENCES_NAME,
             Context.MODE_PRIVATE
         )
+) {
 
-    fun saveAccount(ownerId: Long?, farmId: Long?) {
-        preferences.edit().apply {
+    open fun saveAccount(ownerId: Long?, farmId: Long?) {
+        preferences?.edit()?.apply {
             if (ownerId != null) {
                 putLong(KEY_OWNER_ID, ownerId)
             } else {
@@ -23,26 +25,27 @@ class FarmSessionStore(context: Context) {
             } else {
                 remove(KEY_FARM_ID)
             }
-        }.apply()
+        }?.apply()
     }
 
-    fun ownerId(): Long? = storedId(KEY_OWNER_ID)
+    open fun ownerId(): Long? = storedId(KEY_OWNER_ID)
 
-    fun farmId(): Long? = storedId(KEY_FARM_ID)
+    open fun farmId(): Long? = storedId(KEY_FARM_ID)
 
-    fun clear() {
-        preferences.edit()
-            .remove(KEY_OWNER_ID)
-            .remove(KEY_FARM_ID)
-            .apply()
+    open fun clear() {
+        preferences?.edit()
+            ?.remove(KEY_OWNER_ID)
+            ?.remove(KEY_FARM_ID)
+            ?.apply()
     }
 
     private fun storedId(key: String): Long? {
-        if (!preferences.contains(key)) {
+        val prefs = preferences ?: return null
+        if (!prefs.contains(key)) {
             return null
         }
 
-        return preferences.getLong(key, INVALID_ID)
+        return prefs.getLong(key, INVALID_ID)
             .takeIf { it > INVALID_ID }
     }
 

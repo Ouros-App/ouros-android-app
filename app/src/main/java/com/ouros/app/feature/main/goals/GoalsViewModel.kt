@@ -14,15 +14,19 @@ import kotlinx.coroutines.launch
 
 sealed interface GoalsEvent {
     data class ShowMessage(val message: String) : GoalsEvent
-    data object GoalCreated : GoalsEvent
+    data object CloseGoalPopup : GoalsEvent
     data object AuthenticationRequired : GoalsEvent
 }
 
-class GoalsViewModel(private val repository: GoalsRepository) : ViewModel() {
+class GoalsViewModel(
+    private val repository: GoalsRepository
+) : ViewModel() {
     private val _state = MutableLiveData(GoalsUiState())
     val state: LiveData<GoalsUiState> = _state
+
     private val _event = MutableLiveData<GoalsEvent?>()
     val event: LiveData<GoalsEvent?> = _event
+
     private var initialLoadPerformed = false
 
     fun loadInitialData() {
@@ -36,53 +40,152 @@ class GoalsViewModel(private val repository: GoalsRepository) : ViewModel() {
         loadGoals()
     }
 
-    fun toggleGoal(origin: GoalOrigin, goal: GoalResponse, completed: Boolean) {
+    fun toggleGoal(
+        origin: GoalOrigin,
+        goal: GoalResponse,
+        completed: Boolean
+    ) {
         val key = GoalKey(origin, goal.id)
+
         if (key in currentState().updatingGoals) return
+
         val previousGoal = goal
-        updateGoalLocally(origin, goal.copy(status = if (completed) GoalResponse.COMPLETED else GoalResponse.PENDING))
-        updateState(currentState().copy(updatingGoals = currentState().updatingGoals + key))
+        val updatedGoal = goal.copy(
+            status = if (completed) {
+                GoalResponse.COMPLETED
+            } else {
+                GoalResponse.PENDING
+            }
+        )
+
+        updateGoalLocally(origin, updatedGoal)
+        updateState(
+            currentState().copy(
+                updatingGoals = currentState().updatingGoals + key
+            )
+        )
 
         viewModelScope.launch {
-            when (val result = repository.update(origin, goal.id, completed)) {
-                is GoalsResult.Success -> updateGoalLocally(origin, result.data)
+            when (
+                val result = repository.updateStatus(
+                    origin = origin,
+                    goal = goal,
+                    completed = completed
+                )
+            ) {
+                is GoalsResult.Success ->
+                    updateGoalLocally(origin, result.data)
+
                 is GoalsResult.Error -> {
                     updateGoalLocally(origin, previousGoal)
                     _event.value = GoalsEvent.ShowMessage(result.message)
                 }
+
                 GoalsResult.AuthenticationRequired -> {
                     updateGoalLocally(origin, previousGoal)
                     _event.value = GoalsEvent.AuthenticationRequired
                 }
             }
-            updateState(currentState().copy(updatingGoals = currentState().updatingGoals - key))
+
+            updateState(
+                currentState().copy(
+                    updatingGoals = currentState().updatingGoals - key
+                )
+            )
         }
     }
 
-    fun createGoal(title: String) {
+    fun saveGoal(
+        goal: GoalResponse?,
+        title: String,
+        description: String
+    ) {
         val cleanTitle = title.trim()
+        val cleanDescription = description.trim()
+
         if (cleanTitle.isBlank()) {
             _event.value = GoalsEvent.ShowMessage("Informe o título da meta.")
             return
         }
-        if (currentState().isCreating) return
-        updateState(currentState().copy(isCreating = true))
+
+        if (currentState().isPopupSaving) return
+
+        updateState(currentState().copy(isPopupSaving = true))
 
         viewModelScope.launch {
-            when (val result = repository.create(cleanTitle)) {
+            val result = if (goal == null) {
+                repository.create(
+                    title = cleanTitle,
+                    description = cleanDescription
+                )
+            } else {
+                repository.updateDetails(
+                    goal = goal,
+                    title = cleanTitle,
+                    description = cleanDescription
+                )
+            }
+
+            when (result) {
                 is GoalsResult.Success -> {
-                    updateState(currentState().copy(
-                        isCreating = false,
-                        personalGoals = currentState().personalGoals + result.data
-                    ))
-                    _event.value = GoalsEvent.GoalCreated
+                    val personalGoals = if (goal == null) {
+                        currentState().personalGoals + result.data
+                    } else {
+                        currentState().personalGoals.map {
+                            if (it.id == result.data.id) result.data else it
+                        }
+                    }
+
+                    updateState(
+                        currentState().copy(
+                            isPopupSaving = false,
+                            personalGoals = personalGoals
+                        )
+                    )
+
+                    _event.value = GoalsEvent.CloseGoalPopup
                 }
+
                 is GoalsResult.Error -> {
-                    updateState(currentState().copy(isCreating = false))
+                    updateState(currentState().copy(isPopupSaving = false))
                     _event.value = GoalsEvent.ShowMessage(result.message)
                 }
+
                 GoalsResult.AuthenticationRequired -> {
-                    updateState(currentState().copy(isCreating = false))
+                    updateState(currentState().copy(isPopupSaving = false))
+                    _event.value = GoalsEvent.AuthenticationRequired
+                }
+            }
+        }
+    }
+
+    fun deleteGoal(goal: GoalResponse) {
+        if (currentState().isPopupSaving) return
+
+        updateState(currentState().copy(isPopupSaving = true))
+
+        viewModelScope.launch {
+            when (val result = repository.delete(goal.id)) {
+                is GoalsResult.Success -> {
+                    updateState(
+                        currentState().copy(
+                            isPopupSaving = false,
+                            personalGoals = currentState().personalGoals.filterNot {
+                                it.id == goal.id
+                            }
+                        )
+                    )
+
+                    _event.value = GoalsEvent.CloseGoalPopup
+                }
+
+                is GoalsResult.Error -> {
+                    updateState(currentState().copy(isPopupSaving = false))
+                    _event.value = GoalsEvent.ShowMessage(result.message)
+                }
+
+                GoalsResult.AuthenticationRequired -> {
+                    updateState(currentState().copy(isPopupSaving = false))
                     _event.value = GoalsEvent.AuthenticationRequired
                 }
             }
@@ -94,21 +197,38 @@ class GoalsViewModel(private val repository: GoalsRepository) : ViewModel() {
     }
 
     private fun loadGoals() {
-        updateState(currentState().copy(isLoading = true, error = null, canRetry = false))
+        updateState(
+            currentState().copy(
+                isLoading = true,
+                error = null,
+                canRetry = false
+            )
+        )
+
         viewModelScope.launch {
             when (val result = repository.load()) {
-                is GoalsResult.Success -> updateState(currentState().copy(
-                    isLoading = false,
-                    personalGoals = result.data.personalGoals,
-                    stateGoals = result.data.stateGoals,
-                    error = null,
-                    canRetry = false
-                ))
-                is GoalsResult.Error -> updateState(currentState().copy(
-                    isLoading = false,
-                    error = result.message,
-                    canRetry = result.canRetry
-                ))
+                is GoalsResult.Success -> {
+                    updateState(
+                        currentState().copy(
+                            isLoading = false,
+                            personalGoals = result.data.personalGoals,
+                            stateGoals = result.data.stateGoals,
+                            error = null,
+                            canRetry = false
+                        )
+                    )
+                }
+
+                is GoalsResult.Error -> {
+                    updateState(
+                        currentState().copy(
+                            isLoading = false,
+                            error = result.message,
+                            canRetry = result.canRetry
+                        )
+                    )
+                }
+
                 GoalsResult.AuthenticationRequired -> {
                     updateState(currentState().copy(isLoading = false))
                     _event.value = GoalsEvent.AuthenticationRequired
@@ -117,18 +237,33 @@ class GoalsViewModel(private val repository: GoalsRepository) : ViewModel() {
         }
     }
 
-    private fun updateGoalLocally(origin: GoalOrigin, updated: GoalResponse) {
+    private fun updateGoalLocally(
+        origin: GoalOrigin,
+        updated: GoalResponse
+    ) {
         val state = currentState()
-        updateState(when (origin) {
-            GoalOrigin.PERSONAL -> state.copy(
-                personalGoals = state.personalGoals.map { if (it.id == updated.id) updated else it }
-            )
-            GoalOrigin.STATE -> state.copy(
-                stateGoals = state.stateGoals.map { if (it.id == updated.id) updated else it }
-            )
-        })
+
+        updateState(
+            when (origin) {
+                GoalOrigin.PERSONAL -> state.copy(
+                    personalGoals = state.personalGoals.map {
+                        if (it.id == updated.id) updated else it
+                    }
+                )
+
+                GoalOrigin.STATE -> state.copy(
+                    stateGoals = state.stateGoals.map {
+                        if (it.id == updated.id) updated else it
+                    }
+                )
+            }
+        )
     }
 
-    private fun currentState(): GoalsUiState = _state.value ?: GoalsUiState()
-    private fun updateState(state: GoalsUiState) { _state.value = state }
+    private fun currentState(): GoalsUiState =
+        _state.value ?: GoalsUiState()
+
+    private fun updateState(state: GoalsUiState) {
+        _state.value = state
+    }
 }

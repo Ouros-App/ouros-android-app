@@ -8,24 +8,35 @@ class SessionManager {
     @Volatile
     private var accessTokenExpiresAt: Long = 0L
 
-    fun setAccessToken(token: String, expiresInSeconds: Long) {
+    fun setAccessToken(
+        token: String,
+        expiresInSeconds: Long
+    ) {
         accessToken = token
-        accessTokenExpiresAt = System.currentTimeMillis() + expiresInSeconds * 1_000L
+
+        accessTokenExpiresAt =
+            System.currentTimeMillis() +
+                    expiresInSeconds * 1_000L
+
+        AppSession.markSessionActive()
     }
 
     fun accessToken(): String? {
-        val token = accessToken ?: return null
+        val token =
+            accessToken ?: return null
 
         return if (hasValidAccessToken()) {
             token
-
         } else {
             null
         }
     }
 
     fun hasValidAccessToken(): Boolean {
-        return accessToken != null && System.currentTimeMillis() < accessTokenExpiresAt - SAFETY_MARGIN_MILLIS
+        return accessToken != null &&
+                System.currentTimeMillis() <
+                accessTokenExpiresAt -
+                SAFETY_MARGIN_MILLIS
     }
 
     fun clear() {
@@ -34,6 +45,7 @@ class SessionManager {
     }
 
     private companion object {
-        const val SAFETY_MARGIN_MILLIS = 30_000L
+        const val SAFETY_MARGIN_MILLIS =
+            30_000L
     }
 }
