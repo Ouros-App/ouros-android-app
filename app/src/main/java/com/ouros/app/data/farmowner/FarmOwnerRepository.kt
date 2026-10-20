@@ -7,14 +7,14 @@ import retrofit2.Response
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 
-class FarmOwnerRepository(
+open class FarmOwnerRepository(
     private val api: FarmOwnerApi,
     private val sessionManager: SessionManager,
     private val refreshSession: suspend () -> AuthResult<TokenResponse>,
     private val clearSession: () -> Unit
 ) {
 
-    suspend fun getMe(): AuthResult<FarmOwnerResponse> {
+    open suspend fun getMe(): AuthResult<FarmOwnerResponse> {
         return try {
             when (val result = authenticatedCall(api::getMe)) {
                 is AuthenticatedCallResult.ResponseResult -> {
