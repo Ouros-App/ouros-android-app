@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="56dp"
+    android:background="@android:color/transparent">
+
+    <TextView
+        android:id="@+id/textRankPosition"
+        android:layout_width="22dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/poppins_regular"
+        android:gravity="start"
+        android:includeFontPadding="false"
+        android:textColor="@color/rank_position_gray"
+        android:textSize="13sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="2" />
+
+    <View
+        android:id="@+id/viewRankAvatar"
+        android:layout_width="46dp"
+        android:layout_height="46dp"
+        android:layout_marginStart="6dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/textRankPosition"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:background="@color/rank_avatar_above" />
+
+    <TextView
+        android:id="@+id/textFarmName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="12dp"
+        android:ellipsize="end"
+        android:fontFamily="@font/poppins_regular"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:textColor="@color/black"
+        android:textSize="15sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/textRankScore"
+        app:layout_constraintStart_toEndOf="@id/viewRankAvatar"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Marcelona" />
+
+    <TextView
+        android:id="@+id/textRankScore"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/poppins_regular"
+        android:includeFontPadding="false"
+        android:textColor="@color/black"
+        android:textSize="15sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="6,05" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
