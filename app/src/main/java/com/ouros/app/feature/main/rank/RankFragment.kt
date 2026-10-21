@@ -15,6 +15,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.ouros.app.R
+import com.ouros.app.core.SkeletonLoaderView
 import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository
@@ -33,7 +34,7 @@ class RankFragment : Fragment() {
     private lateinit var viewModel: RankViewModel
     private lateinit var adapter: RankAdapter
     private lateinit var content: View
-    private lateinit var loading: View
+    private lateinit var loading: SkeletonLoaderView
     private lateinit var error: TextView
     private lateinit var retry: View
     private lateinit var currentPosition: TextView
@@ -102,6 +103,7 @@ class RankFragment : Fragment() {
     private fun bindViews(root: View) {
         content = root.findViewById(R.id.rankContent)
         loading = root.findViewById(R.id.rankLoading)
+        loading.mode = SkeletonLoaderView.Mode.RANK
         error = root.findViewById(R.id.rankError)
         retry = root.findViewById(R.id.rankRetry)
         currentPosition = root.findViewById(R.id.textCurrentPosition)
@@ -145,7 +147,13 @@ class RankFragment : Fragment() {
     }
 
     private fun render(state: RankUiState) {
-        loading.visibility = if (state.isLoading) View.VISIBLE else View.GONE
+        if (state.isLoading) {
+            loading.visibility = View.VISIBLE
+            loading.start()
+        } else {
+            loading.stop()
+            loading.visibility = View.GONE
+        }
         content.visibility =
             if (!state.isLoading && state.ranking != null) View.VISIBLE
             else View.INVISIBLE

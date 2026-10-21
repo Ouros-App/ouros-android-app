@@ -19,7 +19,8 @@ class SkeletonLoaderView @JvmOverloads constructor(
 
     enum class Mode {
         DASHBOARD,
-        GOALS
+        GOALS,
+        RANK
     }
 
     var mode: Mode = Mode.DASHBOARD
@@ -69,6 +70,7 @@ class SkeletonLoaderView @JvmOverloads constructor(
         when (mode) {
             Mode.DASHBOARD -> drawDashboard(canvas)
             Mode.GOALS -> drawGoals(canvas)
+            Mode.RANK -> drawRank(canvas)
         }
     }
 
@@ -244,6 +246,91 @@ class SkeletonLoaderView @JvmOverloads constructor(
         }
 
         return itemTop
+    }
+
+    private fun drawRank(canvas: Canvas) {
+        val horizontalPadding = dp(24f)
+        val availableWidth = width - horizontalPadding * 2f
+
+        // Card superior de liga e posicao (top: 84dp, height: 136dp, radius: 15dp)
+        canvas.drawRoundRect(
+            horizontalPadding,
+            dp(84f),
+            horizontalPadding + availableWidth,
+            dp(84f + 136f),
+            dp(15f),
+            dp(15f),
+            paint
+        )
+
+        // Titulo 'Proximos resultados em' (top: 240dp)
+        canvas.drawRoundRect(
+            horizontalPadding,
+            dp(240f),
+            horizontalPadding + dp(180f),
+            dp(240f + 18f),
+            dp(6f),
+            dp(6f),
+            paint
+        )
+
+        // Contador de tempo restante (top: 266dp)
+        canvas.drawRoundRect(
+            horizontalPadding,
+            dp(266f),
+            horizontalPadding + dp(120f),
+            dp(266f + 24f),
+            dp(6f),
+            dp(6f),
+            paint
+        )
+
+        // Lista de produtores ranqueados (top: 306dp)
+        var itemTop = dp(306f)
+        repeat(7) {
+            // Posicao (numero)
+            canvas.drawRoundRect(
+                horizontalPadding,
+                itemTop + dp(18f),
+                horizontalPadding + dp(20f),
+                itemTop + dp(38f),
+                dp(4f),
+                dp(4f),
+                paint
+            )
+
+            // Avatar circular
+            canvas.drawCircle(
+                horizontalPadding + dp(28f + 23f),
+                itemTop + dp(28f),
+                dp(23f),
+                paint
+            )
+
+            // Nome da granja / produtor
+            canvas.drawRoundRect(
+                horizontalPadding + dp(86f),
+                itemTop + dp(18f),
+                horizontalPadding + dp(200f),
+                itemTop + dp(38f),
+                dp(6f),
+                dp(6f),
+                paint
+            )
+
+            // Pontuacao / CGI (alinhado a direita)
+            canvas.drawRoundRect(
+                horizontalPadding + availableWidth - dp(50f),
+                itemTop + dp(18f),
+                horizontalPadding + availableWidth,
+                itemTop + dp(38f),
+                dp(6f),
+                dp(6f),
+                paint
+            )
+
+            itemTop += dp(56f)
+        }
     }
 
     fun start() {
