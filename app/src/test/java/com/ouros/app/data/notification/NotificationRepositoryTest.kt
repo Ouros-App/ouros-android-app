@@ -16,14 +16,14 @@ class NotificationRepositoryTest {
     fun registerDeviceToken_success() = runBlocking {
         var recordedToken: String? = null
         val fakeApi = object : NotificationApi {
-            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<Unit> {
+            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<DeviceTokenResponse> {
                 recordedToken = request.token
-                return Response.success(Unit)
+                return Response.success(DeviceTokenResponse("OK"))
             }
             override suspend fun deleteDeviceToken(token: String): Response<Unit> = error("unused")
-            override suspend fun getNotifications(page: Int, size: Int): Response<NotificationPageResponse> = error("unused")
+            override suspend fun getNotifications(page: Int, size: Int, unreadOnly: Boolean?): Response<NotificationPageResponse> = error("unused")
             override suspend fun getUnreadCount(): Response<UnreadCountResponse> = error("unused")
-            override suspend fun markAsRead(id: Long): Response<Unit> = error("unused")
+            override suspend fun markAsRead(id: Long): Response<NotificationItemResponse> = error("unused")
             override suspend fun markAllAsRead(): Response<Unit> = error("unused")
         }
 
@@ -37,13 +37,13 @@ class NotificationRepositoryTest {
     @Test
     fun registerDeviceToken_error_returnsFailureWhenFallbackDisabled() = runBlocking {
         val fakeApi = object : NotificationApi {
-            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<Unit> {
+            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<DeviceTokenResponse> {
                 return Response.error(400, "Bad Request".toResponseBody(null))
             }
             override suspend fun deleteDeviceToken(token: String): Response<Unit> = error("unused")
-            override suspend fun getNotifications(page: Int, size: Int): Response<NotificationPageResponse> = error("unused")
+            override suspend fun getNotifications(page: Int, size: Int, unreadOnly: Boolean?): Response<NotificationPageResponse> = error("unused")
             override suspend fun getUnreadCount(): Response<UnreadCountResponse> = error("unused")
-            override suspend fun markAsRead(id: Long): Response<Unit> = error("unused")
+            override suspend fun markAsRead(id: Long): Response<NotificationItemResponse> = error("unused")
             override suspend fun markAllAsRead(): Response<Unit> = error("unused")
         }
 
@@ -57,14 +57,14 @@ class NotificationRepositoryTest {
     fun deleteDeviceToken_success() = runBlocking {
         var deletedToken: String? = null
         val fakeApi = object : NotificationApi {
-            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<Unit> = error("unused")
+            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<DeviceTokenResponse> = error("unused")
             override suspend fun deleteDeviceToken(token: String): Response<Unit> {
                 deletedToken = token
                 return Response.success(Unit)
             }
-            override suspend fun getNotifications(page: Int, size: Int): Response<NotificationPageResponse> = error("unused")
+            override suspend fun getNotifications(page: Int, size: Int, unreadOnly: Boolean?): Response<NotificationPageResponse> = error("unused")
             override suspend fun getUnreadCount(): Response<UnreadCountResponse> = error("unused")
-            override suspend fun markAsRead(id: Long): Response<Unit> = error("unused")
+            override suspend fun markAsRead(id: Long): Response<NotificationItemResponse> = error("unused")
             override suspend fun markAllAsRead(): Response<Unit> = error("unused")
         }
 
@@ -78,13 +78,13 @@ class NotificationRepositoryTest {
     @Test
     fun deleteDeviceToken_error_returnsFailureWhenFallbackDisabled() = runBlocking {
         val fakeApi = object : NotificationApi {
-            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<Unit> = error("unused")
+            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<DeviceTokenResponse> = error("unused")
             override suspend fun deleteDeviceToken(token: String): Response<Unit> {
                 return Response.error(404, "Not Found".toResponseBody(null))
             }
-            override suspend fun getNotifications(page: Int, size: Int): Response<NotificationPageResponse> = error("unused")
+            override suspend fun getNotifications(page: Int, size: Int, unreadOnly: Boolean?): Response<NotificationPageResponse> = error("unused")
             override suspend fun getUnreadCount(): Response<UnreadCountResponse> = error("unused")
-            override suspend fun markAsRead(id: Long): Response<Unit> = error("unused")
+            override suspend fun markAsRead(id: Long): Response<NotificationItemResponse> = error("unused")
             override suspend fun markAllAsRead(): Response<Unit> = error("unused")
         }
 
@@ -97,9 +97,9 @@ class NotificationRepositoryTest {
     @Test
     fun getNotifications_success() = runBlocking {
         val fakeApi = object : NotificationApi {
-            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<Unit> = error("unused")
+            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<DeviceTokenResponse> = error("unused")
             override suspend fun deleteDeviceToken(token: String): Response<Unit> = error("unused")
-            override suspend fun getNotifications(page: Int, size: Int): Response<NotificationPageResponse> {
+            override suspend fun getNotifications(page: Int, size: Int, unreadOnly: Boolean?): Response<NotificationPageResponse> {
                 return Response.success(
                     NotificationPageResponse(
                         content = listOf(NotificationItemResponse(id = 1L, title = "Titulo", message = "Msg", type = "GENERAL", isRead = false)),
@@ -111,7 +111,7 @@ class NotificationRepositoryTest {
                 )
             }
             override suspend fun getUnreadCount(): Response<UnreadCountResponse> = error("unused")
-            override suspend fun markAsRead(id: Long): Response<Unit> = error("unused")
+            override suspend fun markAsRead(id: Long): Response<NotificationItemResponse> = error("unused")
             override suspend fun markAllAsRead(): Response<Unit> = error("unused")
         }
 
@@ -125,13 +125,13 @@ class NotificationRepositoryTest {
     @Test
     fun getNotifications_failure_returnsFailureWhenFallbackDisabled() = runBlocking {
         val fakeApi = object : NotificationApi {
-            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<Unit> = error("unused")
+            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<DeviceTokenResponse> = error("unused")
             override suspend fun deleteDeviceToken(token: String): Response<Unit> = error("unused")
-            override suspend fun getNotifications(page: Int, size: Int): Response<NotificationPageResponse> {
+            override suspend fun getNotifications(page: Int, size: Int, unreadOnly: Boolean?): Response<NotificationPageResponse> {
                 return Response.error(500, "Error".toResponseBody(null))
             }
             override suspend fun getUnreadCount(): Response<UnreadCountResponse> = error("unused")
-            override suspend fun markAsRead(id: Long): Response<Unit> = error("unused")
+            override suspend fun markAsRead(id: Long): Response<NotificationItemResponse> = error("unused")
             override suspend fun markAllAsRead(): Response<Unit> = error("unused")
         }
 
@@ -144,13 +144,13 @@ class NotificationRepositoryTest {
     @Test
     fun getNotifications_withMockFallback_returnsMockData() = runBlocking {
         val fakeApi = object : NotificationApi {
-            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<Unit> = error("unused")
+            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<DeviceTokenResponse> = error("unused")
             override suspend fun deleteDeviceToken(token: String): Response<Unit> = error("unused")
-            override suspend fun getNotifications(page: Int, size: Int): Response<NotificationPageResponse> {
+            override suspend fun getNotifications(page: Int, size: Int, unreadOnly: Boolean?): Response<NotificationPageResponse> {
                 return Response.error(404, "Not Found".toResponseBody("application/json".toMediaTypeOrNull()))
             }
             override suspend fun getUnreadCount(): Response<UnreadCountResponse> = error("unused")
-            override suspend fun markAsRead(id: Long): Response<Unit> = error("unused")
+            override suspend fun markAsRead(id: Long): Response<NotificationItemResponse> = error("unused")
             override suspend fun markAllAsRead(): Response<Unit> = error("unused")
         }
 
@@ -165,13 +165,13 @@ class NotificationRepositoryTest {
     @Test
     fun getUnreadCount_returnsCount() = runBlocking {
         val fakeApi = object : NotificationApi {
-            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<Unit> = error("unused")
+            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<DeviceTokenResponse> = error("unused")
             override suspend fun deleteDeviceToken(token: String): Response<Unit> = error("unused")
-            override suspend fun getNotifications(page: Int, size: Int): Response<NotificationPageResponse> = error("unused")
+            override suspend fun getNotifications(page: Int, size: Int, unreadOnly: Boolean?): Response<NotificationPageResponse> = error("unused")
             override suspend fun getUnreadCount(): Response<UnreadCountResponse> {
                 return Response.success(UnreadCountResponse(unreadCountSnake = 4))
             }
-            override suspend fun markAsRead(id: Long): Response<Unit> = error("unused")
+            override suspend fun markAsRead(id: Long): Response<NotificationItemResponse> = error("unused")
             override suspend fun markAllAsRead(): Response<Unit> = error("unused")
         }
 
@@ -185,13 +185,13 @@ class NotificationRepositoryTest {
     @Test
     fun getUnreadCount_error_returnsFailureWhenFallbackDisabled() = runBlocking {
         val fakeApi = object : NotificationApi {
-            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<Unit> = error("unused")
+            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<DeviceTokenResponse> = error("unused")
             override suspend fun deleteDeviceToken(token: String): Response<Unit> = error("unused")
-            override suspend fun getNotifications(page: Int, size: Int): Response<NotificationPageResponse> = error("unused")
+            override suspend fun getNotifications(page: Int, size: Int, unreadOnly: Boolean?): Response<NotificationPageResponse> = error("unused")
             override suspend fun getUnreadCount(): Response<UnreadCountResponse> {
                 return Response.error(500, "Error".toResponseBody(null))
             }
-            override suspend fun markAsRead(id: Long): Response<Unit> = error("unused")
+            override suspend fun markAsRead(id: Long): Response<NotificationItemResponse> = error("unused")
             override suspend fun markAllAsRead(): Response<Unit> = error("unused")
         }
 
@@ -204,11 +204,11 @@ class NotificationRepositoryTest {
     @Test
     fun markAsRead_success() = runBlocking {
         val fakeApi = object : NotificationApi {
-            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<Unit> = error("unused")
+            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<DeviceTokenResponse> = error("unused")
             override suspend fun deleteDeviceToken(token: String): Response<Unit> = error("unused")
-            override suspend fun getNotifications(page: Int, size: Int): Response<NotificationPageResponse> = error("unused")
+            override suspend fun getNotifications(page: Int, size: Int, unreadOnly: Boolean?): Response<NotificationPageResponse> = error("unused")
             override suspend fun getUnreadCount(): Response<UnreadCountResponse> = error("unused")
-            override suspend fun markAsRead(id: Long): Response<Unit> = Response.success(Unit)
+            override suspend fun markAsRead(id: Long): Response<NotificationItemResponse> = Response.success(NotificationItemResponse(id = id, title = "T", message = "M", type = "G", isRead = true))
             override suspend fun markAllAsRead(): Response<Unit> = error("unused")
         }
 
@@ -221,11 +221,11 @@ class NotificationRepositoryTest {
     @Test
     fun markAsRead_errorResponse_returnsFailureWhenFallbackDisabled() = runBlocking {
         val fakeApi = object : NotificationApi {
-            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<Unit> = error("unused")
+            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<DeviceTokenResponse> = error("unused")
             override suspend fun deleteDeviceToken(token: String): Response<Unit> = error("unused")
-            override suspend fun getNotifications(page: Int, size: Int): Response<NotificationPageResponse> = error("unused")
+            override suspend fun getNotifications(page: Int, size: Int, unreadOnly: Boolean?): Response<NotificationPageResponse> = error("unused")
             override suspend fun getUnreadCount(): Response<UnreadCountResponse> = error("unused")
-            override suspend fun markAsRead(id: Long): Response<Unit> {
+            override suspend fun markAsRead(id: Long): Response<NotificationItemResponse> {
                 return Response.error(404, "Not Found".toResponseBody("application/json".toMediaTypeOrNull()))
             }
             override suspend fun markAllAsRead(): Response<Unit> = error("unused")
@@ -241,11 +241,11 @@ class NotificationRepositoryTest {
     fun markAllAsRead_success() = runBlocking {
         var called = false
         val fakeApi = object : NotificationApi {
-            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<Unit> = error("unused")
+            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<DeviceTokenResponse> = error("unused")
             override suspend fun deleteDeviceToken(token: String): Response<Unit> = error("unused")
-            override suspend fun getNotifications(page: Int, size: Int): Response<NotificationPageResponse> = error("unused")
+            override suspend fun getNotifications(page: Int, size: Int, unreadOnly: Boolean?): Response<NotificationPageResponse> = error("unused")
             override suspend fun getUnreadCount(): Response<UnreadCountResponse> = error("unused")
-            override suspend fun markAsRead(id: Long): Response<Unit> = error("unused")
+            override suspend fun markAsRead(id: Long): Response<NotificationItemResponse> = error("unused")
             override suspend fun markAllAsRead(): Response<Unit> {
                 called = true
                 return Response.success(Unit)
@@ -262,11 +262,11 @@ class NotificationRepositoryTest {
     @Test
     fun markAllAsRead_error_returnsFailureWhenFallbackDisabled() = runBlocking {
         val fakeApi = object : NotificationApi {
-            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<Unit> = error("unused")
+            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<DeviceTokenResponse> = error("unused")
             override suspend fun deleteDeviceToken(token: String): Response<Unit> = error("unused")
-            override suspend fun getNotifications(page: Int, size: Int): Response<NotificationPageResponse> = error("unused")
+            override suspend fun getNotifications(page: Int, size: Int, unreadOnly: Boolean?): Response<NotificationPageResponse> = error("unused")
             override suspend fun getUnreadCount(): Response<UnreadCountResponse> = error("unused")
-            override suspend fun markAsRead(id: Long): Response<Unit> = error("unused")
+            override suspend fun markAsRead(id: Long): Response<NotificationItemResponse> = error("unused")
             override suspend fun markAllAsRead(): Response<Unit> {
                 return Response.error(500, "Server Error".toResponseBody(null))
             }
@@ -281,13 +281,13 @@ class NotificationRepositoryTest {
     @Test
     fun networkException_returnsFailureWithInternetMessage() = runBlocking {
         val fakeApi = object : NotificationApi {
-            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<Unit> {
+            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<DeviceTokenResponse> {
                 throw IOException("Connection timed out")
             }
             override suspend fun deleteDeviceToken(token: String): Response<Unit> = error("unused")
-            override suspend fun getNotifications(page: Int, size: Int): Response<NotificationPageResponse> = error("unused")
+            override suspend fun getNotifications(page: Int, size: Int, unreadOnly: Boolean?): Response<NotificationPageResponse> = error("unused")
             override suspend fun getUnreadCount(): Response<UnreadCountResponse> = error("unused")
-            override suspend fun markAsRead(id: Long): Response<Unit> = error("unused")
+            override suspend fun markAsRead(id: Long): Response<NotificationItemResponse> = error("unused")
             override suspend fun markAllAsRead(): Response<Unit> = error("unused")
         }
 

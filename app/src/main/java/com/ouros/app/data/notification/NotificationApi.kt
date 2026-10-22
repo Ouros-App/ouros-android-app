@@ -14,7 +14,7 @@ interface NotificationApi {
     @POST("notifications/device-token")
     suspend fun registerDeviceToken(
         @Body request: DeviceTokenRequest
-    ): Response<Unit>
+    ): Response<DeviceTokenResponse>
 
     @DELETE("notifications/device-token/{token}")
     suspend fun deleteDeviceToken(
@@ -24,7 +24,8 @@ interface NotificationApi {
     @GET("notifications")
     suspend fun getNotifications(
         @Query("page") page: Int = 0,
-        @Query("size") size: Int = 20
+        @Query("size") size: Int = 20,
+        @Query("unread_only") unreadOnly: Boolean? = null
     ): Response<NotificationPageResponse>
 
     @GET("notifications/unread-count")
@@ -33,7 +34,7 @@ interface NotificationApi {
     @PATCH("notifications/{id}/read")
     suspend fun markAsRead(
         @Path("id") id: Long
-    ): Response<Unit>
+    ): Response<NotificationItemResponse>
 
     @PATCH("notifications/read-all")
     suspend fun markAllAsRead(): Response<Unit>

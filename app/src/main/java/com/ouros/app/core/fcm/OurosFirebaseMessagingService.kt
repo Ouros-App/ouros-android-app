@@ -97,8 +97,17 @@ class OurosFirebaseMessagingService : FirebaseMessagingService() {
             val targetIntent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 putExtra(EXTRA_TYPE, type)
-                if (tipId != null) putExtra(EXTRA_TIP_ID, tipId)
-                if (goalId != null) putExtra(EXTRA_GOAL_ID, goalId)
+                putExtra("type", type)
+                if (tipId != null) {
+                    putExtra(EXTRA_TIP_ID, tipId)
+                    putExtra("tip_id", tipId.toString())
+                    putExtra("id_tip", tipId.toString())
+                }
+                if (goalId != null) {
+                    putExtra(EXTRA_GOAL_ID, goalId)
+                    putExtra("goal_id", goalId.toString())
+                    putExtra("id_goal", goalId.toString())
+                }
             }
 
             val pendingIntent = PendingIntent.getActivity(

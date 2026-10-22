@@ -42,7 +42,6 @@ import com.ouros.app.feature.main.goals.GoalsFragment
 import com.ouros.app.feature.main.rank.RankFragment
 import com.ouros.app.feature.main.record.RecordFragment
 import com.ouros.app.feature.notification.NotificationActivity
-import com.ouros.app.feature.notification.NotificationTestActivity
 import com.ouros.app.feature.secondary.chatbot.ChatbotActivity
 import com.ouros.app.feature.secondary.profile.ProfileActivity
 import com.ouros.app.feature.secondary.profile.ProfilePhotoStore
@@ -298,12 +297,7 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
             )
         }
 
-        btnNotifications.setOnLongClickListener {
-            startActivity(
-                Intent(this, NotificationTestActivity::class.java)
-            )
-            true
-        }
+
     }
 
     private fun checkNotificationPermissionAndRegisterFcm() {
@@ -341,21 +335,34 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
         if (intent == null) return
 
         val type = intent.getStringExtra(OurosFirebaseMessagingService.EXTRA_TYPE)
-        val tipId = intent.getLongExtra(OurosFirebaseMessagingService.EXTRA_TIP_ID, -1L)
-        val goalId = intent.getLongExtra(OurosFirebaseMessagingService.EXTRA_GOAL_ID, -1L)
+            ?: intent.getStringExtra("type")
+
+        val tipId = intent.getLongExtra(OurosFirebaseMessagingService.EXTRA_TIP_ID, -1L).takeIf { it > 0 }
+            ?: intent.getStringExtra("tip_id")?.toLongOrNull()
+            ?: intent.getStringExtra("id_tip")?.toLongOrNull()
+            ?: intent.getStringExtra(OurosFirebaseMessagingService.EXTRA_TIP_ID)?.toLongOrNull()
+            ?: -1L
+
+        val goalId = intent.getLongExtra(OurosFirebaseMessagingService.EXTRA_GOAL_ID, -1L).takeIf { it > 0 }
+            ?: intent.getStringExtra("goal_id")?.toLongOrNull()
+            ?: intent.getStringExtra("id_goal")?.toLongOrNull()
+            ?: intent.getStringExtra(OurosFirebaseMessagingService.EXTRA_GOAL_ID)?.toLongOrNull()
+            ?: -1L
 
         when {
-            type?.equals("TIP_CREATED", ignoreCase = true) == true || tipId > 0 -> {
+            type?.contains("TIP", ignoreCase = true) == true ||
+            type?.contains("ALERT", ignoreCase = true) == true ||
+            type?.contains("WARNING", ignoreCase = true) == true ||
+            tipId > 0 -> {
                 val targetTipId = if (tipId > 0) tipId else 1L
                 startActivity(TipDetailActivity.createIntent(this, targetTipId))
             }
-            type?.equals("GOAL_ASSIGNED", ignoreCase = true) == true ||
-            type?.equals("TASK_ASSIGNED", ignoreCase = true) == true ||
+            type?.contains("GOAL", ignoreCase = true) == true ||
+            type?.contains("TASK", ignoreCase = true) == true ||
             goalId > 0 -> {
                 showDestination(MainDestination.GOALS)
             }
-            type?.equals("RANK_UPDATE", ignoreCase = true) == true ||
-            type?.equals("RANKING_UPDATED", ignoreCase = true) == true -> {
+            type?.contains("RANK", ignoreCase = true) == true -> {
                 showDestination(MainDestination.RANK)
             }
         }

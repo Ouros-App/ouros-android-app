@@ -95,14 +95,9 @@ class NotificationActivity : AppCompatActivity() {
             finish()
         }
 
-        btnOpenTestScreen.setOnClickListener {
-            startActivity(Intent(this, NotificationTestActivity::class.java))
-        }
 
-        findViewById<View>(R.id.titleContainer).setOnLongClickListener {
-            startActivity(Intent(this, NotificationTestActivity::class.java))
-            true
-        }
+
+
 
         btnMarkAllRead.setOnClickListener {
             viewModel.markAllAsRead()
@@ -156,8 +151,10 @@ class NotificationActivity : AppCompatActivity() {
     private fun onNotificationClicked(item: NotificationItemResponse) {
         viewModel.markAsRead(item)
 
-        val tipId = item.idTip ?: extractIdFromPayload(item.dataPayload, "tip_id")
-        val isTip = item.type.equals("TIP_CREATED", ignoreCase = true) ||
+        val tipId = item.idTip
+            ?: extractIdFromPayload(item.dataPayload, "tip_id")
+            ?: extractIdFromPayload(item.dataPayload, "id_tip")
+        val isTip = item.type.contains("TIP", ignoreCase = true) ||
                 tipId != null ||
                 NotificationAdapter.isGoldAlert(item)
 
@@ -174,10 +171,15 @@ class NotificationActivity : AppCompatActivity() {
 
         if (isGoal) {
             val goalId = extractIdFromPayload(item.dataPayload, "goal_id")
+                ?: extractIdFromPayload(item.dataPayload, "id_goal")
             val intent = Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                 putExtra(OurosFirebaseMessagingService.EXTRA_TYPE, "GOAL_ASSIGNED")
-                if (goalId != null) putExtra(OurosFirebaseMessagingService.EXTRA_GOAL_ID, goalId)
+                putExtra("type", "GOAL_ASSIGNED")
+                if (goalId != null) {
+                    putExtra(OurosFirebaseMessagingService.EXTRA_GOAL_ID, goalId)
+                    putExtra("goal_id", goalId.toString())
+                }
             }
             startActivity(intent)
             finish()
@@ -191,6 +193,7 @@ class NotificationActivity : AppCompatActivity() {
             val intent = Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                 putExtra(OurosFirebaseMessagingService.EXTRA_TYPE, "RANK_UPDATE")
+                putExtra("type", "RANK_UPDATE")
             }
             startActivity(intent)
             finish()

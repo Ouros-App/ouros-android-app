@@ -21,23 +21,26 @@ class NotificationRepository(
             val response = callApiWithFallback {
                 api.registerDeviceToken(DeviceTokenRequest(token = token, platform = platform))
             }
-            resolveUnitResponse(response, "Falha ao registrar token")
+            resolveAnyResponse(response, "Falha ao registrar token")
         }
     }
 
     suspend fun deleteDeviceToken(token: String): Result<Unit> = withContext(ioDispatcher) {
         safeCall {
             val response = callApiWithFallback { api.deleteDeviceToken(token) }
-            resolveUnitResponse(response, "Falha ao remover token")
+            resolveAnyResponse(response, "Falha ao remover token")
         }
     }
 
     suspend fun getNotifications(
         page: Int = 0,
-        size: Int = 20
+        size: Int = 20,
+        unreadOnly: Boolean? = null
     ): Result<NotificationPageResponse> = withContext(ioDispatcher) {
         safeCall {
-            val response = callApiWithFallback { api.getNotifications(page = page, size = size) }
+            val response = callApiWithFallback {
+                api.getNotifications(page = page, size = size, unreadOnly = unreadOnly)
+            }
             val body = response?.body()
             when {
                 response?.isSuccessful == true && body != null -> Result.success(body)
@@ -59,11 +62,17 @@ class NotificationRepository(
         }
     }
 
-    suspend fun markAsRead(id: Long): Result<Unit> = withContext(ioDispatcher) {
+    suspend fun markAsRead(id: Long): Result<NotificationItemResponse?> = withContext(ioDispatcher) {
         safeCall {
             val response = callApiWithFallback { api.markAsRead(id) }
             updateMockItemReadStatus(id)
-            resolveUnitResponse(response, "Falha ao marcar notificação como lida")
+            if (response?.isSuccessful == true) {
+                Result.success(response.body())
+            } else if (enableMockFallback) {
+                Result.success(mockNotifications.find { it.id == id })
+            } else {
+                Result.failure(Exception("Falha ao marcar notificação como lida: HTTP ${response?.code()}"))
+            }
         }
     }
 
@@ -71,7 +80,7 @@ class NotificationRepository(
         safeCall {
             val response = callApiWithFallback { api.markAllAsRead() }
             updateAllMockItemsReadStatus()
-            resolveUnitResponse(response, "Falha ao marcar todas como lidas")
+            resolveAnyResponse(response, "Falha ao marcar todas como lidas")
         }
     }
 
@@ -83,8 +92,8 @@ class NotificationRepository(
         }
     }
 
-    private fun resolveUnitResponse(
-        response: Response<Unit>?,
+    private fun <T> resolveAnyResponse(
+        response: Response<T>?,
         errorMessage: String
     ): Result<Unit> {
         return when {

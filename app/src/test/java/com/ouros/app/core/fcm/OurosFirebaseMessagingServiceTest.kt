@@ -39,5 +39,15 @@ class OurosFirebaseMessagingServiceTest {
         val shadowNotification = shadowOf(posted)
         assertEquals("Alerta Teste", shadowNotification.contentTitle)
         assertEquals("Mensagem de teste", shadowNotification.contentText)
+
+        val intent = shadowOf(posted.contentIntent).savedIntent
+        assertEquals("ALERT_WATER", intent.getStringExtra(OurosFirebaseMessagingService.EXTRA_TYPE))
+        assertEquals("ALERT_WATER", intent.getStringExtra("type"))
+        assertEquals(42L, intent.getLongExtra(OurosFirebaseMessagingService.EXTRA_TIP_ID, -1L))
+        assertEquals("42", intent.getStringExtra("tip_id"))
+        assertEquals("42", intent.getStringExtra("id_tip"))
+        assertEquals(99L, intent.getLongExtra(OurosFirebaseMessagingService.EXTRA_GOAL_ID, -1L))
+        assertEquals("99", intent.getStringExtra("goal_id"))
+        assertEquals("99", intent.getStringExtra("id_goal"))
     }
 }

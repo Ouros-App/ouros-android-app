@@ -7,6 +7,10 @@ data class DeviceTokenRequest(
     val platform: String = "ANDROID"
 )
 
+data class DeviceTokenResponse(
+    val message: String? = null
+)
+
 data class NotificationItemResponse(
     val id: Long,
     val title: String,
@@ -49,9 +53,9 @@ data class NotificationPageResponse(
 
 data class UnreadCountResponse(
     @SerializedName("unread_count")
-    val unreadCountSnake: Int? = null,
-    val unreadCount: Int = 0
+    val unreadCountSnake: Long? = null,
+    val unreadCount: Long = 0L
 ) {
     val count: Int
-        get() = unreadCountSnake ?: unreadCount
+        get() = (unreadCountSnake ?: unreadCount).toInt()
 }
