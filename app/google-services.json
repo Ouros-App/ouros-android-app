@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "926400478126",
+    "project_id": "ouros-app",
+    "storage_bucket": "ouros-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:926400478126:android:b4660216e526959d2de63f",
+        "android_client_info": {
+          "package_name": "com.ouros.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD3hOHHqUxcuYowXig9t5F0bP5w0oRFRxc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

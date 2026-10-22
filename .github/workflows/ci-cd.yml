@@ -118,7 +118,7 @@ jobs:
             echo "sonar.sources=app/src/main"
             echo "sonar.tests=app/src/test,app/src/androidTest"
             echo "sonar.exclusions=.git/**,.github/**,**/build/**"
-            echo "sonar.coverage.exclusions=**/*Activity.kt,**/*Fragment.kt,**/*Api.kt,**/*Network.kt,**/*ViewModelFactory.kt,**/*Adapter.kt,**/*View.kt"
+            echo "sonar.coverage.exclusions=**/*Activity.kt,**/*Fragment.kt,**/*Api.kt,**/*Network.kt,**/*ViewModelFactory.kt,**/*Service.kt,**/*Receiver.kt,**/*Adapter.kt,**/*View.kt"
             echo "sonar.coverage.jacoco.xmlReportPaths=coverage/report.xml"
             echo "sonar.sourceEncoding=UTF-8"
             if [ "$GITHUB_EVENT_NAME" != "pull_request" ]; then

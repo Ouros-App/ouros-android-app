@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="24dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginEnd="24dp"
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/bg_notification_gold"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:minHeight="92dp"
+    android:orientation="vertical"
+    android:paddingHorizontal="24dp"
+    android:paddingVertical="20dp">
+
+    <TextView
+        android:id="@+id/txtNotificationTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/poppins_semibold"
+        android:includeFontPadding="false"
+        android:letterSpacing="-0.04"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        tools:text="Toma cuidado," />
+
+    <TextView
+        android:id="@+id/txtNotificationMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:fontFamily="@font/poppins_regular"
+        android:includeFontPadding="false"
+        android:letterSpacing="-0.03"
+        android:lineHeight="18dp"
+        android:textColor="@color/white"
+        android:textSize="13sp"
+        tools:text="os seus pintos estão com sede!" />
+
+    <View
+        android:id="@+id/dotUnread"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/txtNotificationDate"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/txtNotificationAction"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
+
+</LinearLayout>

@@ -57,6 +57,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="14dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Notificações"
             app:layout_constraintBottom_toBottomOf="@+id/imgAvatar"
             app:layout_constraintStart_toEndOf="@+id/imgAvatar"
             app:layout_constraintTop_toTopOf="@+id/imgAvatar"
