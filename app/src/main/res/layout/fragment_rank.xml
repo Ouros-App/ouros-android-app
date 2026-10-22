@@ -737,13 +737,12 @@
     </LinearLayout>
 
     <!-- Estado de Carregamento -->
-    <ProgressBar
+    <com.ouros.app.core.SkeletonLoaderView
         android:id="@+id/rankLoading"
-        style="?android:attr/progressBarStyleLarge"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_gravity="center"
-        android:indeterminateTint="@color/gold"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/white"
+        android:contentDescription="Carregando ranking"
         android:visibility="gone"
         tools:visibility="visible" />
 
