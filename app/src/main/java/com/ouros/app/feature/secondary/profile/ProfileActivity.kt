@@ -74,6 +74,9 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     private val takePhotoLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) {
         wasSaved ->
             val sourceUri = pendingCameraUri
+                ?: photoStore?.pendingCameraFile()?.let { file ->
+                    FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+                }
             pendingCameraUri = null
 
             if (wasSaved && sourceUri != null) {
@@ -282,7 +285,9 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     private fun startPhotoCrop(sourceUri: Uri) {
-        clearPendingCrop()
+        pendingCropOutputFile?.takeIf(File::exists)?.delete()
+        pendingCropOutputFile = null
+
         val cropDirectory = File(cacheDir, "profile_crop").apply {
             if (!exists()) {
                 mkdirs()
@@ -292,7 +297,7 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         val outputFile = File(cropDirectory, "cropped_profile_${System.currentTimeMillis()}.jpg")
         pendingCropOutputFile = outputFile
 
-        val destinationUri = FileProvider.getUriForFile(this, "$packageName.fileprovider", outputFile)
+        val destinationUri = Uri.fromFile(outputFile)
 
         val options = UCrop.Options().apply {
             setCompressionFormat(Bitmap.CompressFormat.JPEG)
@@ -302,11 +307,22 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
             setToolbarTitle("Ajustar foto")
         }
 
-        UCrop.of(sourceUri, destinationUri)
+        val uCropIntent = UCrop.of(sourceUri, destinationUri)
             .withAspectRatio(1f, 1f)
             .withMaxResultSize(720, 720)
             .withOptions(options)
-            .start(this, cropPhotoLauncher)
+            .getIntent(this)
+            .apply {
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+        grantUriPermission(
+            packageName,
+            sourceUri,
+            Intent.FLAG_GRANT_READ_URI_PERMISSION
+        )
+
+        cropPhotoLauncher.launch(uCropIntent)
     }
 
     private fun saveCroppedPhoto(croppedUri: Uri) {

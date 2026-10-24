@@ -72,6 +72,12 @@ class ProfilePhotoStore(
         }
     }
 
+    fun pendingCameraFile(): File? {
+        return pendingCameraPhoto.takeIf {
+            it.exists() && it.length() > 0L
+        }
+    }
+
     fun commitPhoto(sourceFile: File, remoteUrl: String? = null): Boolean {
         if (!sourceFile.exists() || sourceFile.length() == 0L) {
             return false

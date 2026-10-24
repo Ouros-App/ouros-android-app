@@ -143,6 +143,22 @@ class ProfilePhotoStoreTest {
     }
 
     @Test
+    fun pendingCameraFile_reflectsPreparedFileWithContent() {
+        val store = ProfilePhotoStore(RuntimeEnvironment.getApplication(), 5108L)
+        assertNull(store.pendingCameraFile())
+
+        val cameraFile = store.prepareCameraFile()
+        assertNull(store.pendingCameraFile())
+
+        cameraFile.writeBytes(byteArrayOf(1, 2, 3))
+        assertNotNull(store.pendingCameraFile())
+        assertEquals(cameraFile.absolutePath, store.pendingCameraFile()?.absolutePath)
+
+        store.cancelPendingCameraPhoto()
+        assertNull(store.pendingCameraFile())
+    }
+
+    @Test
     fun savingGalleryPhotoMarksUploadPendingUntilMarkedComplete() {
         val store = ProfilePhotoStore(RuntimeEnvironment.getApplication(), 4101L)
         val source = temporaryFolder.newFile("gallery.jpg").apply {
