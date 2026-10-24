@@ -419,6 +419,8 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
         fallbackAvatar: Int
     ) {
         val store = profilePhotoStore
+        store?.syncWithRemote(remotePhotoUrl)
+
         val localPhoto = store?.localPhotoFile()
 
         if (localPhoto != null) {
