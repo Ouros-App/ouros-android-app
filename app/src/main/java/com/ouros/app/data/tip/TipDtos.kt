@@ -5,31 +5,29 @@ import com.google.gson.annotations.SerializedName
 data class TipDetailResponse(
     val id: Long,
     val tip: String,
+    @SerializedName("title", alternate = ["titulo"])
     val title: String? = null,
-    @SerializedName("image_url")
-    val imageUrlSnake: String? = null,
+    @SerializedName("image_url", alternate = ["foto_url", "imageUrl", "fotoUrl"])
     val imageUrl: String? = null,
     @SerializedName("id_farm")
     val idFarm: Long? = null,
     val categories: List<String>? = emptyList(),
-    @SerializedName("total_reviews")
-    val totalReviewsSnake: Int? = null,
+    @SerializedName("total_reviews", alternate = ["totalReviews"])
     val totalReviews: Int = 0,
-    @SerializedName("average_rating")
-    val averageRatingSnake: Double? = null,
+    @SerializedName("average_rating", alternate = ["averageRating"])
     val averageRating: Double = 0.0
 ) {
     val effectiveTitle: String
-        get() = title?.takeIf { it.isNotBlank() } ?: "Como diminuir a conta de água"
+        get() = title?.takeIf { it.isNotBlank() } ?: "Dica Operacional"
 
     val effectiveImageUrl: String?
-        get() = imageUrlSnake ?: imageUrl
+        get() = imageUrl
 
     val effectiveTotalReviews: Int
-        get() = totalReviewsSnake ?: totalReviews
+        get() = totalReviews
 
     val effectiveAverageRating: Double
-        get() = averageRatingSnake ?: averageRating
+        get() = averageRating
 }
 
 data class ReviewRequest(

@@ -2,6 +2,7 @@ package com.ouros.app.data.tip
 
 import com.google.gson.Gson
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -33,6 +34,86 @@ class TipDtoTest {
         assertEquals(4.75, tip.effectiveAverageRating, 0.001)
         assertEquals("https://example.com/nipple.jpg", tip.effectiveImageUrl)
         assertEquals(listOf("Manejo", "Água"), tip.categories)
+    }
+
+    @Test
+    fun deserializesTipDetailResponse_withFotoUrl() {
+        val json = """
+            {
+                "id": 1,
+                "titulo": "Regulagem de Pressão e Vazão dos Bebedouros Nipple",
+                "tip": "* **Diagnóstico Zootécnico:** Vazamentos geram umidade na cama.",
+                "foto_url": "https://res.cloudinary.com/ouros/image/upload/v1/tips/tip_nipple_hero.webp",
+                "total_reviews": 12,
+                "average_rating": 4.8
+            }
+        """.trimIndent()
+
+        val tip = gson.fromJson(json, TipDetailResponse::class.java)
+
+        assertEquals(1L, tip.id)
+        assertEquals("Regulagem de Pressão e Vazão dos Bebedouros Nipple", tip.effectiveTitle)
+        assertEquals("https://res.cloudinary.com/ouros/image/upload/v1/tips/tip_nipple_hero.webp", tip.effectiveImageUrl)
+        assertEquals(12, tip.effectiveTotalReviews)
+        assertEquals(4.8, tip.effectiveAverageRating, 0.001)
+    }
+
+    @Test
+    fun deserializesTipDetailResponse_withComplexMarkdownAndLineBreaks() {
+        val json = """
+            {
+                "id": 2,
+                "tip": "* **Diagnóstico Zootécnico:** Consumo hídrico reduzido.\n\n1. **Ajuste de Altura:** Posicionar bicos a 45°.\n2. **Higienização:** Cloração a 3-5 ppm.",
+                "image_url": "https://res.cloudinary.com/ouros/image/upload/v1/tips/dica2.webp"
+            }
+        """.trimIndent()
+
+        val tip = gson.fromJson(json, TipDetailResponse::class.java)
+
+        assertEquals(2L, tip.id)
+        assertEquals("Dica Operacional", tip.effectiveTitle)
+        assertTrue(tip.tip.contains("* **Diagnóstico Zootécnico:**"))
+        assertTrue(tip.tip.contains("1. **Ajuste de Altura:**"))
+        assertEquals("https://res.cloudinary.com/ouros/image/upload/v1/tips/dica2.webp", tip.effectiveImageUrl)
+        assertEquals(0, tip.effectiveTotalReviews)
+        assertEquals(0.0, tip.effectiveAverageRating, 0.001)
+    }
+
+    @Test
+    fun deserializesTipDetailResponse_withFallbackTitleAndNullImage() {
+        val json = """
+            {
+                "id": 3,
+                "tip": "Dica sem título e sem imagem"
+            }
+        """.trimIndent()
+
+        val tip = gson.fromJson(json, TipDetailResponse::class.java)
+
+        assertEquals(3L, tip.id)
+        assertEquals("Dica Operacional", tip.effectiveTitle)
+        assertNull(tip.effectiveImageUrl)
+        assertEquals(0, tip.effectiveTotalReviews)
+        assertEquals(0.0, tip.effectiveAverageRating, 0.001)
+    }
+
+    @Test
+    fun deserializesTipDetailResponse_withCamelCaseKeys() {
+        val json = """
+            {
+                "id": 4,
+                "imageUrl": "https://example.com/tip4.webp",
+                "tip": "Texto com chave imageUrl",
+                "totalReviews": 15,
+                "averageRating": 4.2
+            }
+        """.trimIndent()
+
+        val tip = gson.fromJson(json, TipDetailResponse::class.java)
+
+        assertEquals("https://example.com/tip4.webp", tip.effectiveImageUrl)
+        assertEquals(15, tip.effectiveTotalReviews)
+        assertEquals(4.2, tip.effectiveAverageRating, 0.001)
     }
 
     @Test

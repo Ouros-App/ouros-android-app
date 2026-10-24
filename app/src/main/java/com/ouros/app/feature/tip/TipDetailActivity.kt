@@ -4,13 +4,8 @@ import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.text.SpannableStringBuilder
-import android.text.Spanned
-import android.text.style.LeadingMarginSpan
-import android.text.style.StyleSpan
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
@@ -32,6 +27,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import coil.load
 import com.ouros.app.R
 import com.ouros.app.data.tip.TipDetailResponse
+import io.noties.markwon.Markwon
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -39,6 +35,10 @@ class TipDetailActivity : AppCompatActivity() {
 
     private val viewModel: TipDetailViewModel by viewModels {
         TipDetailViewModel.Factory()
+    }
+
+    private val markwon: Markwon by lazy {
+        Markwon.create(this)
     }
 
     private var tipId: Long = 1L
@@ -152,7 +152,10 @@ class TipDetailActivity : AppCompatActivity() {
 
     private fun renderTip(tip: TipDetailResponse) {
         txtTipTitle.text = tip.effectiveTitle
-        txtTipBody.text = formatTipBody(tip.tip)
+
+        // Renderiza o corpo da dica zootécnica com Markdown
+        val normalizedTip = tip.tip.replace("\\n", "\n").trim()
+        markwon.setMarkdown(txtTipBody, normalizedTip)
 
         val rating = if (tip.effectiveAverageRating > 0.0) tip.effectiveAverageRating else 3.5
         txtRatingScore.text = String.format(Locale.US, "%.1f", rating)
@@ -160,6 +163,7 @@ class TipDetailActivity : AppCompatActivity() {
 
         renderStarIcons(starViews, rating)
 
+        // Carregamento resiliente da imagem Cloudinary (.webp)
         val imageUrl = tip.effectiveImageUrl
         if (!imageUrl.isNullOrBlank()) {
             imgTipHero.load(imageUrl) {
@@ -182,43 +186,6 @@ class TipDetailActivity : AppCompatActivity() {
             }
             starView.setImageResource(iconRes)
         }
-    }
-
-    private fun formatTipBody(rawTip: String): CharSequence {
-        val normalized = rawTip.replace("\\n", "\n").trim()
-        val lines = normalized.lines()
-        val builder = SpannableStringBuilder()
-        val numberedHeadingRegex = Regex("^\\d+\\..*")
-        val indentPx = (14 * resources.displayMetrics.density).toInt()
-
-        lines.forEachIndexed { index, rawLine ->
-            val line = rawLine.trim()
-            val start = builder.length
-            builder.append(line)
-            val end = builder.length
-
-            if (numberedHeadingRegex.matches(line)) {
-                builder.setSpan(
-                    StyleSpan(Typeface.BOLD),
-                    start,
-                    end,
-                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
-            } else if (line.startsWith("•") || line.startsWith("-")) {
-                builder.setSpan(
-                    LeadingMarginSpan.Standard(0, indentPx),
-                    start,
-                    end,
-                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
-            }
-
-            if (index < lines.lastIndex) {
-                builder.append("\n")
-            }
-        }
-
-        return builder
     }
 
     private fun showReviewDialog() {

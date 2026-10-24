@@ -65,6 +65,38 @@ class TipDetailViewModelTest {
     }
 
     @Test
+    fun loadTip_withRichContent_emitsCompleteTipInUiState() = runTest(testDispatcher) {
+        val richTip = TipDetailResponse(
+            id = 2L,
+            title = "Regulagem de Pressão Nipple",
+            tip = "* **Diagnóstico:** Vazamento detectado.\n1. **Ação:** Regular manômetro.",
+            imageUrl = "https://res.cloudinary.com/ouros/image/upload/v1/tips/nipple.webp",
+            totalReviews = 10,
+            averageRating = 4.8
+        )
+
+        val fakeApi = object : TipApi {
+            override suspend fun getTipById(id: Long): Response<TipDetailResponse> = Response.success(richTip)
+            override suspend fun createReview(tipId: Long, request: ReviewRequest): Response<ReviewResponse> = error("unused")
+        }
+
+        val repository = TipRepository(api = fakeApi, enableMockFallback = false, ioDispatcher = testDispatcher)
+        val viewModel = TipDetailViewModel(repository)
+
+        viewModel.loadTip(2L)
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertNull(state.errorMessage)
+        assertEquals(2L, state.tip?.id)
+        assertEquals("Regulagem de Pressão Nipple", state.tip?.effectiveTitle)
+        assertEquals("https://res.cloudinary.com/ouros/image/upload/v1/tips/nipple.webp", state.tip?.effectiveImageUrl)
+        assertEquals(10, state.tip?.effectiveTotalReviews)
+        assertEquals(4.8, state.tip?.effectiveAverageRating ?: 0.0, 0.001)
+        assertTrue(state.tip?.tip?.contains("**Diagnóstico:**") == true)
+    }
+
+    @Test
     fun loadTip_failure_setsErrorMessage() = runTest(testDispatcher) {
         val fakeApi = object : TipApi {
             override suspend fun getTipById(id: Long): Response<TipDetailResponse> {

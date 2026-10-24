@@ -261,6 +261,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.gson)
+    implementation(libs.markwon.core)
     implementation("io.coil-kt:coil:2.7.0")
     implementation("com.github.yalantis:ucrop:2.2.11")
     implementation(platform(libs.firebase.bom))
