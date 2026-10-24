@@ -78,7 +78,9 @@ class DashboardViewModel(private val dashboardRepository: DashboardRepository) :
                     }
 
                     val charts = result.dashboard.charts
-                    val consumptionHtml = charts.firstOrNull { it.id == DashboardRepository.CHART_RESOURCE_EFFICIENCY }?.html
+                    val consumptionHtml = charts.firstOrNull {
+                        it.id == DashboardRepository.CHART_CONSUMPTION_INDEX || it.id == DashboardRepository.CHART_RESOURCE_EFFICIENCY
+                    }?.html
                     val (kpiConsumo, kpiAgua, kpiEnergia) = extractKpis(consumptionHtml)
 
                     updateState(
@@ -143,13 +145,21 @@ class DashboardViewModel(private val dashboardRepository: DashboardRepository) :
                 val jsonArray = JsonParser.parseString(rowsJson).asJsonArray
                 if (jsonArray.size() > 0) {
                     val lastRow = jsonArray.get(jsonArray.size() - 1).asJsonObject
-                    val waterM3 = if (lastRow.has("water_m3_per_chicken") && !lastRow.get("water_m3_per_chicken").isJsonNull) {
-                        lastRow.get("water_m3_per_chicken").asDouble
-                    } else 0.0
+                    val waterM3 = when {
+                        lastRow.has("water_m3_per_chicken") && !lastRow.get("water_m3_per_chicken").isJsonNull ->
+                            lastRow.get("water_m3_per_chicken").asDouble
+                        lastRow.has("water_per_bird") && !lastRow.get("water_per_bird").isJsonNull ->
+                            lastRow.get("water_per_bird").asDouble / 1000.0
+                        else -> 0.0
+                    }
 
-                    val energyKwh = if (lastRow.has("energy_kwh_per_chicken") && !lastRow.get("energy_kwh_per_chicken").isJsonNull) {
-                        lastRow.get("energy_kwh_per_chicken").asDouble
-                    } else 0.0
+                    val energyKwh = when {
+                        lastRow.has("energy_kwh_per_chicken") && !lastRow.get("energy_kwh_per_chicken").isJsonNull ->
+                            lastRow.get("energy_kwh_per_chicken").asDouble
+                        lastRow.has("energy_per_bird") && !lastRow.get("energy_per_bird").isJsonNull ->
+                            lastRow.get("energy_per_bird").asDouble
+                        else -> 0.0
+                    }
 
                     if (waterM3 > 0.0 || energyKwh > 0.0) {
                         val waterLiters = waterM3 * 1000.0

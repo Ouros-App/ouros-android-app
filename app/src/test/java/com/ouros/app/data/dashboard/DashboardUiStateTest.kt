@@ -13,7 +13,7 @@ class DashboardUiStateTest {
         val state = DashboardUiState()
 
         assertFalse(state.isLoading)
-        assertEquals(DashboardPeriod.MONTH, state.period)
+        assertEquals(DashboardPeriod.YEAR, state.period)
         assertEquals("6.07", state.kpiConsumption)
         assertEquals("5.2", state.kpiWaterLitersPerBird)
         assertEquals("8.1", state.kpiEnergyKwhPerBird)

@@ -111,7 +111,7 @@ class DashboardRepositoryTest {
             title = "Telemetria de Consumo",
             charts = listOf(
                 DashboardChartResponse(
-                    id = DashboardRepository.CHART_RESOURCE_EFFICIENCY,
+                    id = DashboardRepository.CHART_CONSUMPTION_INDEX,
                     title = "Eficiência",
                     renderAs = "line",
                     html = "<div>chart1</div>"
@@ -176,7 +176,7 @@ class DashboardRepositoryTest {
         assertNull(success.notice)
         assertEquals(3, success.dashboard.charts.size)
         assertNotNull(api.lastCustomRequest)
-        assertEquals(30, api.lastCustomRequest?.periodDays)
+        assertEquals(DashboardPeriod.ANNUAL_COMPARISON_DAYS, api.lastCustomRequest?.periodDays)
     }
 
     @Test
@@ -224,7 +224,7 @@ class DashboardRepositoryTest {
         val success = result as DashboardResult.Success
         assertEquals("Dados de telemetria em atualização.", success.notice)
         assertEquals(3, success.dashboard.charts.size)
-        assertEquals(7, api.lastCustomRequest?.periodDays)
+        assertEquals(DashboardPeriod.ANNUAL_COMPARISON_DAYS, api.lastCustomRequest?.periodDays)
     }
 
     @Test

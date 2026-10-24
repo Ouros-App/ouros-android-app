@@ -244,7 +244,15 @@ class DashboardFragment : Fragment() {
                     display: none !important;
                 }
                 .series-grid {
-                    display: none !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    min-height: 0 !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    gap: 0 !important;
+                    overflow: hidden !important;
                 }
                 #plot, .series-plot {
                     width: 100% !important;
@@ -257,7 +265,9 @@ class DashboardFragment : Fragment() {
                     min-height: 24px !important;
                     padding: 4px 4px 2px 4px !important;
                     gap: 6px 16px !important;
+                    display: flex !important;
                     justify-content: center !important;
+                    align-items: center !important;
                     overflow: visible !important;
                 }
                 .legend-item {
@@ -268,14 +278,10 @@ class DashboardFragment : Fragment() {
             </style>
         """.trimIndent()
 
-        val singleChartHtml = html
-            .replace("const shouldSplitSeries = (", "const shouldSplitSeries = false && (")
-            .replace("const shouldSplitSeries=(", "const shouldSplitSeries=false&&(")
-
-        return if (singleChartHtml.contains("</head>", ignoreCase = true)) {
-            singleChartHtml.replace("</head>", "$mobileCss</head>", ignoreCase = true)
+        return if (html.contains("</head>", ignoreCase = true)) {
+            html.replace("</head>", "$mobileCss</head>", ignoreCase = true)
         } else {
-            mobileCss + singleChartHtml
+            mobileCss + html
         }
     }
 

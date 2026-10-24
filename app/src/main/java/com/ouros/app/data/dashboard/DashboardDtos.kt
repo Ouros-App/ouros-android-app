@@ -51,6 +51,11 @@ enum class DashboardPeriod(
     val label: String,
     val days: Int
 ) {
+    YEAR(
+        label = "Ano",
+        days = 365
+    ),
+
     MONTH(
         label = "Mês",
         days = 30
@@ -59,10 +64,9 @@ enum class DashboardPeriod(
     WEEK(
         label = "Semana",
         days = 7
-    ),
+    );
 
-    YEAR(
-        label = "Ano",
-        days = 365
-    )
+    companion object {
+        const val ANNUAL_COMPARISON_DAYS = 365
+    }
 }

@@ -17,6 +17,7 @@ class DashboardDtosTest {
 
         assertEquals("Ano", DashboardPeriod.YEAR.label)
         assertEquals(365, DashboardPeriod.YEAR.days)
+        assertEquals(365, DashboardPeriod.ANNUAL_COMPARISON_DAYS)
 
         assertEquals(3, DashboardPeriod.values().size)
         assertEquals(DashboardPeriod.MONTH, DashboardPeriod.valueOf("MONTH"))

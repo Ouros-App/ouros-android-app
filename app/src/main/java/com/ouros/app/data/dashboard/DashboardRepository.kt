@@ -136,18 +136,19 @@ class DashboardRepository(
     private suspend fun requestDashboard(
         period: DashboardPeriod,
         farmId: Long?,
-        notice: String? = null
+        notice: String? = null,
+        consumptionChartId: String = CHART_CONSUMPTION_INDEX
     ): DashboardResult {
         val request =
             DashboardRequest(
                 title =
                     "Telemetria de Consumo",
                 periodDays =
-                    period.days,
+                    DashboardPeriod.ANNUAL_COMPARISON_DAYS,
                 charts = listOf(
                     DashboardChartRequest(
                         chartId =
-                            CHART_RESOURCE_EFFICIENCY,
+                            consumptionChartId,
                         renderAs = "line"
                     ),
                     DashboardChartRequest(
@@ -187,11 +188,21 @@ class DashboardRepository(
             }
 
             is AuthenticatedCallResult.ResponseResult -> {
-                handleDashboardResponse(
-                    response = dashboardResult.response,
-                    farmId = farmId,
-                    notice = notice
-                )
+                val response = dashboardResult.response
+                if (response.code() == 404 && consumptionChartId == CHART_CONSUMPTION_INDEX) {
+                    requestDashboard(
+                        period = period,
+                        farmId = farmId,
+                        notice = notice,
+                        consumptionChartId = CHART_RESOURCE_EFFICIENCY
+                    )
+                } else {
+                    handleDashboardResponse(
+                        response = response,
+                        farmId = farmId,
+                        notice = notice
+                    )
+                }
             }
         }
     }
@@ -427,9 +438,12 @@ class DashboardRepository(
                 )
                 .toSet()
 
-        return chartIds.containsAll(
+        val hasConsumption =
+            chartIds.contains(CHART_CONSUMPTION_INDEX) ||
+            chartIds.contains(CHART_RESOURCE_EFFICIENCY)
+
+        return hasConsumption && chartIds.containsAll(
             setOf(
-                CHART_RESOURCE_EFFICIENCY,
                 CHART_MONTHLY_WATER_CONSUMPTION,
                 CHART_MONTHLY_ENERGY_CONSUMPTION
             )
@@ -465,14 +479,17 @@ class DashboardRepository(
     }
 
     companion object {
-        const val CHART_RESOURCE_EFFICIENCY =
-            "resource-efficiency"
+        const val CHART_CONSUMPTION_INDEX =
+            "relative-consumption"
 
         const val CHART_MONTHLY_WATER_CONSUMPTION =
             "monthly-water-consumption"
 
         const val CHART_MONTHLY_ENERGY_CONSUMPTION =
             "monthly-energy-consumption"
+
+        const val CHART_RESOURCE_EFFICIENCY =
+            "resource-efficiency"
 
         private const val NO_SAVED_SESSION_MESSAGE =
             "Nenhuma sessão salva."

@@ -99,7 +99,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/poppins_regular"
                 android:includeFontPadding="false"
-                android:text="Mês"
+                android:text="Ano"
                 android:textColor="@color/white"
                 android:textSize="15sp" />
 

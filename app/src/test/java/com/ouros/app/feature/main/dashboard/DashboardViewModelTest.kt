@@ -92,7 +92,7 @@ class DashboardViewModelTest {
             title = "Telemetria de Consumo",
             charts = listOf(
                 DashboardChartResponse(
-                    id = DashboardRepository.CHART_RESOURCE_EFFICIENCY,
+                    id = DashboardRepository.CHART_CONSUMPTION_INDEX,
                     title = "Eficiência",
                     renderAs = "line",
                     html = resourceEfficiencyHtml
@@ -273,7 +273,7 @@ class DashboardViewModelTest {
         val emptyChartsResponse = DashboardResponse(
             title = "Empty",
             charts = listOf(
-                DashboardChartResponse(id = DashboardRepository.CHART_RESOURCE_EFFICIENCY, title = null, renderAs = null, html = ""),
+                DashboardChartResponse(id = DashboardRepository.CHART_CONSUMPTION_INDEX, title = null, renderAs = null, html = ""),
                 DashboardChartResponse(id = DashboardRepository.CHART_MONTHLY_WATER_CONSUMPTION, title = null, renderAs = null, html = "water"),
                 DashboardChartResponse(id = DashboardRepository.CHART_MONTHLY_ENERGY_CONSUMPTION, title = null, renderAs = null, html = "energy")
             )
@@ -391,7 +391,7 @@ class DashboardViewModelTest {
         advanceUntilIdle()
         assertEquals(1, api.callCount)
 
-        viewModel.selectPeriod(DashboardPeriod.MONTH)
+        viewModel.selectPeriod(DashboardPeriod.YEAR)
         advanceUntilIdle()
         assertEquals(1, api.callCount)
     }
@@ -414,10 +414,10 @@ class DashboardViewModelTest {
         advanceUntilIdle()
         assertEquals(1, api.callCount)
 
-        viewModel.selectPeriod(DashboardPeriod.YEAR)
+        viewModel.selectPeriod(DashboardPeriod.MONTH)
         advanceUntilIdle()
         assertEquals(2, api.callCount)
-        assertEquals(DashboardPeriod.YEAR, viewModel.state.value?.period)
+        assertEquals(DashboardPeriod.MONTH, viewModel.state.value?.period)
     }
 
     @Test
