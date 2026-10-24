@@ -114,27 +114,29 @@ class DashboardRepository(
                 )
             }
 
-            response.body()
-                ?.status
-                ?.equals(
-                    "fresh",
-                    ignoreCase = true
-                ) != true -> {
-                cachedResult(
-                    "Os dados ainda estão sendo atualizados.",
-                    farmId
-                )
-            }
-
             else -> {
-                requestDashboard(period, farmId)
+                val status = response.body()?.status
+                val notice = when {
+                    status.equals("stale", ignoreCase = true) ->
+                        "Exibindo dados da última sincronização disponível."
+                    status.equals("unknown", ignoreCase = true) ->
+                        "Dados de telemetria em atualização."
+                    else -> null
+                }
+
+                requestDashboard(
+                    period = period,
+                    farmId = farmId,
+                    notice = notice
+                )
             }
         }
     }
 
     private suspend fun requestDashboard(
         period: DashboardPeriod,
-        farmId: Long?
+        farmId: Long?,
+        notice: String? = null
     ): DashboardResult {
         val request =
             DashboardRequest(
@@ -186,8 +188,9 @@ class DashboardRepository(
 
             is AuthenticatedCallResult.ResponseResult -> {
                 handleDashboardResponse(
-                    dashboardResult.response,
-                    farmId
+                    response = dashboardResult.response,
+                    farmId = farmId,
+                    notice = notice
                 )
             }
         }
@@ -195,7 +198,8 @@ class DashboardRepository(
 
     private suspend fun handleDashboardResponse(
         response: Response<DashboardResponse>,
-        farmId: Long?
+        farmId: Long?,
+        notice: String? = null
     ): DashboardResult {
         return when {
             response.code() == 403 -> {
@@ -240,7 +244,8 @@ class DashboardRepository(
                     farmId?.let { cache.save(it, dashboard) }
 
                     DashboardResult.Success(
-                        dashboard = dashboard
+                        dashboard = dashboard,
+                        notice = notice
                     )
                 }
             }
