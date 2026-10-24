@@ -1,27 +1,47 @@
 package com.ouros.app.feature.secondary.profile
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.net.Uri
 import com.ouros.app.R
 import java.io.File
+import java.io.InputStream
 import kotlin.random.Random
 
-class ProfilePhotoStore(
-    context: Context,
-    ownerId: Long
+class ProfilePhotoStore internal constructor(
+    private val filesDir: File,
+    private val preferences: SharedPreferences,
+    ownerId: Long,
+    private val streamOpener: (Uri) -> InputStream? = { null },
+    private val legacyClearAction: () -> Unit = {}
 ) {
 
-    private val appContext =
-        context.applicationContext
+    constructor(
+        context: Context,
+        ownerId: Long
+    ) : this(
+        filesDir = context.applicationContext.filesDir,
+        preferences = context.applicationContext.getSharedPreferences(
+            ProfilePhotoScope.forOwner(context.applicationContext.filesDir, ownerId).preferencesName,
+            Context.MODE_PRIVATE
+        ),
+        ownerId = ownerId,
+        streamOpener = { uri -> context.applicationContext.contentResolver.openInputStream(uri) },
+        legacyClearAction = {
+            File(
+                context.applicationContext.filesDir,
+                LEGACY_PROFILE_DIRECTORY
+            ).deleteRecursively()
+
+            context.applicationContext.getSharedPreferences(
+                ProfilePhotoScope.PREFERENCES_NAME,
+                Context.MODE_PRIVATE
+            ).edit().clear().apply()
+        }
+    )
 
     private val scope =
-        ProfilePhotoScope.forOwner(appContext.filesDir, ownerId)
-
-    private val preferences =
-        appContext.getSharedPreferences(
-            scope.preferencesName,
-            Context.MODE_PRIVATE
-        )
+        ProfilePhotoScope.forOwner(filesDir, ownerId)
 
     private val profileDirectory = scope.directory
 
@@ -38,15 +58,16 @@ class ProfilePhotoStore(
         )
 
     init {
-        File(
-            appContext.filesDir,
-            LEGACY_PROFILE_DIRECTORY
-        ).deleteRecursively()
+        legacyClearAction()
+    }
 
-        appContext.getSharedPreferences(
-            ProfilePhotoScope.PREFERENCES_NAME,
-            Context.MODE_PRIVATE
-        ).edit().clear().apply()
+    private fun safelyDeleteFile(file: File) {
+        if (file.exists()) {
+            val wasDeleted = file.delete()
+            if (!wasDeleted && file.exists()) {
+                // file could not be deleted
+            }
+        }
     }
 
     fun localPhotoFile(): File? {
@@ -58,18 +79,14 @@ class ProfilePhotoStore(
     fun prepareCameraFile(): File {
         createProfileDirectory()
 
-        if (pendingCameraPhoto.exists()) {
-            pendingCameraPhoto.delete()
-        }
+        safelyDeleteFile(pendingCameraPhoto)
 
         pendingCameraPhoto.createNewFile()
         return pendingCameraPhoto
     }
 
     fun cancelPendingCameraPhoto() {
-        if (pendingCameraPhoto.exists()) {
-            pendingCameraPhoto.delete()
-        }
+        safelyDeleteFile(pendingCameraPhoto)
     }
 
     fun pendingCameraFile(): File? {
@@ -106,9 +123,7 @@ class ProfilePhotoStore(
     }
 
     fun commitPhotoRemoval(): Int? {
-        if (profilePhoto.exists()) {
-            profilePhoto.delete()
-        }
+        safelyDeleteFile(profilePhoto)
         cancelPendingCameraPhoto()
 
         val avatarResource = selectedAvatarResource()
@@ -126,9 +141,7 @@ class ProfilePhotoStore(
         val normalizedUrl = remotePhotoUrl?.trim()?.takeIf(String::isNotBlank)
 
         if (normalizedUrl == null) {
-            if (profilePhoto.exists()) {
-                profilePhoto.delete()
-            }
+            safelyDeleteFile(profilePhoto)
             preferences.edit()
                 .remove(KEY_LAST_SYNCED_PHOTO_URL)
                 .putBoolean(KEY_REMOTE_PHOTO_REMOVED, false)
@@ -137,9 +150,7 @@ class ProfilePhotoStore(
         } else {
             val lastSyncedUrl = preferences.getString(KEY_LAST_SYNCED_PHOTO_URL, null)
             if (lastSyncedUrl != null && lastSyncedUrl != normalizedUrl) {
-                if (profilePhoto.exists()) {
-                    profilePhoto.delete()
-                }
+                safelyDeleteFile(profilePhoto)
                 preferences.edit()
                     .remove(KEY_LAST_SYNCED_PHOTO_URL)
                     .apply()
@@ -187,6 +198,10 @@ class ProfilePhotoStore(
     }
 
     fun saveGalleryPhoto(uri: Uri): Boolean {
+        return saveGalleryStream { streamOpener(uri) }
+    }
+
+    internal fun saveGalleryStream(streamSupplier: () -> InputStream?): Boolean {
         createProfileDirectory()
 
         val temporaryFile =
@@ -196,8 +211,7 @@ class ProfilePhotoStore(
             )
 
         return try {
-            appContext.contentResolver
-                .openInputStream(uri)
+            streamSupplier()
                 ?.use { inputStream ->
                     temporaryFile.outputStream()
                         .use { outputStream ->
@@ -207,7 +221,7 @@ class ProfilePhotoStore(
                 ?: return false
 
             if (temporaryFile.length() == 0L) {
-                temporaryFile.delete()
+                safelyDeleteFile(temporaryFile)
                 return false
             }
 
@@ -215,10 +229,10 @@ class ProfilePhotoStore(
             if (committed) {
                 preferences.edit().putBoolean(KEY_PHOTO_PENDING_UPLOAD, true).apply()
             }
-            temporaryFile.delete()
+            safelyDeleteFile(temporaryFile)
             committed
         } catch (_: Exception) {
-            temporaryFile.delete()
+            safelyDeleteFile(temporaryFile)
             false
         }
     }
