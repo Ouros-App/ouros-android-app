@@ -4,12 +4,12 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.JsonParser
 import com.ouros.app.data.dashboard.DashboardPeriod
 import com.ouros.app.data.dashboard.DashboardRepository
 import com.ouros.app.data.dashboard.DashboardResult
 import com.ouros.app.data.dashboard.DashboardUiState
 import kotlinx.coroutines.launch
-import org.json.JSONArray
 import java.util.Locale
 
 sealed interface DashboardEvent {
@@ -140,15 +140,15 @@ class DashboardViewModel(private val dashboardRepository: DashboardRepository) :
             val match = rowsRegex.find(resourceHtml)
             if (match != null) {
                 val rowsJson = match.groupValues[1]
-                val jsonArray = JSONArray(rowsJson)
-                if (jsonArray.length() > 0) {
-                    val lastRow = jsonArray.getJSONObject(jsonArray.length() - 1)
-                    val waterM3 = if (lastRow.has("water_m3_per_chicken") && !lastRow.isNull("water_m3_per_chicken")) {
-                        lastRow.optDouble("water_m3_per_chicken", 0.0)
+                val jsonArray = JsonParser.parseString(rowsJson).asJsonArray
+                if (jsonArray.size() > 0) {
+                    val lastRow = jsonArray.get(jsonArray.size() - 1).asJsonObject
+                    val waterM3 = if (lastRow.has("water_m3_per_chicken") && !lastRow.get("water_m3_per_chicken").isJsonNull) {
+                        lastRow.get("water_m3_per_chicken").asDouble
                     } else 0.0
 
-                    val energyKwh = if (lastRow.has("energy_kwh_per_chicken") && !lastRow.isNull("energy_kwh_per_chicken")) {
-                        lastRow.optDouble("energy_kwh_per_chicken", 0.0)
+                    val energyKwh = if (lastRow.has("energy_kwh_per_chicken") && !lastRow.get("energy_kwh_per_chicken").isJsonNull) {
+                        lastRow.get("energy_kwh_per_chicken").asDouble
                     } else 0.0
 
                     if (waterM3 > 0.0 || energyKwh > 0.0) {
