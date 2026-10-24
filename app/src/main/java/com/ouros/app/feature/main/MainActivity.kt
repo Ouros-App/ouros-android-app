@@ -13,6 +13,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -23,6 +24,7 @@ import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository
 import com.ouros.app.data.auth.SecureRefreshTokenStore
+import com.ouros.app.data.dashboard.DashboardPeriod
 import com.ouros.app.data.farmowner.FarmOwnerNetwork
 import com.ouros.app.data.farmowner.FarmOwnerRepository
 import com.ouros.app.data.rank.RankLeague
@@ -51,6 +53,8 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
     private lateinit var txtGreeting: TextView
     private lateinit var txtUserName: TextView
     private lateinit var btnNotifications: ImageView
+    private lateinit var btnPeriodSelector: View
+    private lateinit var txtSelectedPeriod: TextView
     private lateinit var navMidas: View
     private lateinit var footerItems: List<FooterItem>
 
@@ -207,6 +211,8 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
         txtGreeting = findViewById(R.id.txtGreeting)
         txtUserName = findViewById(R.id.txtUserName)
         btnNotifications = findViewById(R.id.btnNotifications)
+        btnPeriodSelector = findViewById(R.id.btnPeriodSelector)
+        txtSelectedPeriod = findViewById(R.id.txtSelectedPeriod)
     }
 
     private fun bindFooterViews() {
@@ -259,6 +265,33 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
                 Toast.LENGTH_SHORT
             ).show()
         }
+
+        btnPeriodSelector.setOnClickListener {
+            showPeriodSelectionMenu()
+        }
+    }
+
+    private fun showPeriodSelectionMenu() {
+        val popup = PopupMenu(this, btnPeriodSelector)
+        popup.menu.add(0, 1, 0, DashboardPeriod.MONTH.label)
+        popup.menu.add(0, 2, 1, DashboardPeriod.WEEK.label)
+        popup.menu.add(0, 3, 2, DashboardPeriod.YEAR.label)
+
+        popup.setOnMenuItemClickListener { item ->
+            val selectedPeriod = when (item.itemId) {
+                1 -> DashboardPeriod.MONTH
+                2 -> DashboardPeriod.WEEK
+                3 -> DashboardPeriod.YEAR
+                else -> DashboardPeriod.MONTH
+            }
+            txtSelectedPeriod.text = selectedPeriod.label
+
+            val dashboardFragment =
+                supportFragmentManager.findFragmentByTag(tagFor(MainDestination.ANALYTICS)) as? DashboardFragment
+            dashboardFragment?.selectPeriod(selectedPeriod)
+            true
+        }
+        popup.show()
     }
 
     private fun configureFooter() {
@@ -400,14 +433,17 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
                     currentProfile?.name
                         ?: if (mainLoading) "Carregando..."
                         else "Usuário"
+                btnPeriodSelector.visibility = View.VISIBLE
             }
             MainDestination.GOALS -> {
                 txtGreeting.text = "Organize seus objetivos"
                 txtUserName.text = "Metas"
+                btnPeriodSelector.visibility = View.GONE
             }
             MainDestination.RECORD -> {
                 txtGreeting.text = "Salvar dados"
                 txtUserName.text = "Registro"
+                btnPeriodSelector.visibility = View.GONE
             }
             MainDestination.RANK -> {
                 txtGreeting.text =
@@ -415,6 +451,7 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
                         "Divisão ${it.displayName}"
                     } ?: "Divisão"
                 txtUserName.text = "Ranking"
+                btnPeriodSelector.visibility = View.GONE
             }
         }
     }

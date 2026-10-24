@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F4F7F9">
+    android:background="@color/white">
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/dashboardContent"
@@ -20,60 +20,248 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="20dp"
+            android:paddingStart="25dp"
             android:paddingTop="60dp"
-            android:paddingEnd="20dp">
+            android:paddingEnd="25dp">
 
+            <!-- 3 Cards Rápidos de Indicadores (KPIs) -->
+            <LinearLayout
+                android:id="@+id/layoutDashboardKpis"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <!-- Card 1: Consumo Geral -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardKpiConsumption"
+                    android:layout_width="0dp"
+                    android:layout_height="115dp"
+                    android:layout_marginEnd="2dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="@android:color/transparent"
+                    app:cardCornerRadius="15dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_rank_card_gradient"
+                        android:gravity="bottom|start"
+                        android:orientation="vertical"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="8dp"
+                        android:paddingBottom="14dp">
+
+                        <TextView
+                            android:id="@+id/txtKpiConsumptionValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_semibold"
+                            android:includeFontPadding="false"
+                            android:letterSpacing="-0.06"
+                            android:maxLines="1"
+                            android:text="6.07"
+                            android:textColor="@color/white"
+                            android:textSize="32sp"
+                            app:autoSizeMaxTextSize="35sp"
+                            app:autoSizeMinTextSize="22sp"
+                            app:autoSizeStepGranularity="1sp"
+                            app:autoSizeTextType="uniform" />
+
+                        <TextView
+                            android:id="@+id/txtKpiConsumptionLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="@font/poppins_regular"
+                            android:includeFontPadding="false"
+                            android:letterSpacing="-0.05"
+                            android:maxLines="1"
+                            android:text="Consumo"
+                            android:textColor="@color/white"
+                            android:textSize="15sp"
+                            app:autoSizeMaxTextSize="16sp"
+                            app:autoSizeMinTextSize="11sp"
+                            app:autoSizeStepGranularity="1sp"
+                            app:autoSizeTextType="uniform" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Card 2: Eficiência Hídrica -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardKpiWater"
+                    android:layout_width="0dp"
+                    android:layout_height="115dp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="@android:color/transparent"
+                    app:cardCornerRadius="15dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_rank_card_gradient"
+                        android:gravity="bottom|start"
+                        android:orientation="vertical"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="8dp"
+                        android:paddingBottom="14dp">
+
+                        <TextView
+                            android:id="@+id/txtKpiWaterValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_semibold"
+                            android:includeFontPadding="false"
+                            android:letterSpacing="-0.06"
+                            android:maxLines="1"
+                            android:text="5.2"
+                            android:textColor="@color/white"
+                            android:textSize="32sp"
+                            app:autoSizeMaxTextSize="35sp"
+                            app:autoSizeMinTextSize="22sp"
+                            app:autoSizeStepGranularity="1sp"
+                            app:autoSizeTextType="uniform" />
+
+                        <TextView
+                            android:id="@+id/txtKpiWaterLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="@font/poppins_regular"
+                            android:includeFontPadding="false"
+                            android:letterSpacing="-0.05"
+                            android:maxLines="1"
+                            android:text="Litros/ave"
+                            android:textColor="@color/white"
+                            android:textSize="15sp"
+                            app:autoSizeMaxTextSize="16sp"
+                            app:autoSizeMinTextSize="11sp"
+                            app:autoSizeStepGranularity="1sp"
+                            app:autoSizeTextType="uniform" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Card 3: Eficiência Energética -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardKpiEnergy"
+                    android:layout_width="0dp"
+                    android:layout_height="115dp"
+                    android:layout_marginStart="2dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="@android:color/transparent"
+                    app:cardCornerRadius="15dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_rank_card_gradient"
+                        android:gravity="bottom|start"
+                        android:orientation="vertical"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="8dp"
+                        android:paddingBottom="14dp">
+
+                        <TextView
+                            android:id="@+id/txtKpiEnergyValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_semibold"
+                            android:includeFontPadding="false"
+                            android:letterSpacing="-0.06"
+                            android:maxLines="1"
+                            android:text="8.1"
+                            android:textColor="@color/white"
+                            android:textSize="32sp"
+                            app:autoSizeMaxTextSize="35sp"
+                            app:autoSizeMinTextSize="22sp"
+                            app:autoSizeStepGranularity="1sp"
+                            app:autoSizeTextType="uniform" />
+
+                        <TextView
+                            android:id="@+id/txtKpiEnergyLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="@font/poppins_regular"
+                            android:includeFontPadding="false"
+                            android:letterSpacing="-0.05"
+                            android:maxLines="1"
+                            android:text="kWh/ave"
+                            android:textColor="@color/white"
+                            android:textSize="15sp"
+                            app:autoSizeMaxTextSize="16sp"
+                            app:autoSizeMinTextSize="11sp"
+                            app:autoSizeStepGranularity="1sp"
+                            app:autoSizeTextType="uniform" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- Seção Gráfico: Consumo -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="24dp"
+                android:fontFamily="@font/poppins_semibold"
+                android:letterSpacing="-0.06"
                 android:text="Consumo"
-                android:textColor="#101318"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                android:textColor="#010B13"
+                android:textSize="22sp" />
 
             <WebView
                 android:id="@+id/chartConsumption"
                 android:layout_width="match_parent"
-                android:layout_height="190dp"
-                android:layout_marginTop="4dp"
+                android:layout_height="220dp"
+                android:layout_marginTop="6dp"
                 android:background="@android:color/transparent"
                 android:overScrollMode="never"
                 android:scrollbars="none" />
 
+            <!-- Seção Gráfico: Água -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="38dp"
+                android:layout_marginTop="24dp"
+                android:fontFamily="@font/poppins_semibold"
+                android:letterSpacing="-0.06"
                 android:text="Água"
-                android:textColor="#101318"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                android:textColor="#010B13"
+                android:textSize="22sp" />
 
             <WebView
                 android:id="@+id/chartWater"
                 android:layout_width="match_parent"
-                android:layout_height="190dp"
-                android:layout_marginTop="4dp"
+                android:layout_height="185dp"
+                android:layout_marginTop="6dp"
                 android:background="@android:color/transparent"
                 android:overScrollMode="never"
                 android:scrollbars="none" />
 
+            <!-- Seção Gráfico: Energia -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="38dp"
+                android:layout_marginTop="24dp"
+                android:fontFamily="@font/poppins_semibold"
+                android:letterSpacing="-0.06"
                 android:text="Energia"
-                android:textColor="#101318"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                android:textColor="#010B13"
+                android:textSize="22sp" />
 
             <WebView
                 android:id="@+id/chartEnergy"
                 android:layout_width="match_parent"
-                android:layout_height="190dp"
-                android:layout_marginTop="4dp"
+                android:layout_height="185dp"
+                android:layout_marginTop="6dp"
                 android:background="@android:color/transparent"
                 android:overScrollMode="never"
                 android:scrollbars="none" />
@@ -86,21 +274,9 @@
         android:id="@+id/dashboardLoading"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#F4F7F9"
+        android:background="@color/white"
         android:contentDescription="Carregando dashboard"
         android:visibility="visible" />
-
-    <TextView
-        android:id="@+id/dashboardNotice"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:layout_margin="20dp"
-        android:background="#FFF4D5"
-        android:padding="12dp"
-        android:textColor="#654B00"
-        android:textSize="13sp"
-        android:visibility="gone" />
 
     <LinearLayout
         android:layout_width="match_parent"

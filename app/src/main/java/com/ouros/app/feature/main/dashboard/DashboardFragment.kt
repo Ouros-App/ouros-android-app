@@ -30,10 +30,14 @@ class DashboardFragment : Fragment() {
 
     private lateinit var viewModel: DashboardViewModel
     private lateinit var loading: SkeletonLoaderView
-    private lateinit var notice: TextView
     private lateinit var error: TextView
     private lateinit var retry: View
     private lateinit var content: View
+
+    private lateinit var txtKpiConsumptionValue: TextView
+    private lateinit var txtKpiWaterValue: TextView
+    private lateinit var txtKpiEnergyValue: TextView
+
     private lateinit var consumptionChart: WebView
     private lateinit var waterChart: WebView
     private lateinit var energyChart: WebView
@@ -86,17 +90,21 @@ class DashboardFragment : Fragment() {
 
     private fun bindViews(root: View) {
         loading = root.findViewById(R.id.dashboardLoading)
-        notice = root.findViewById(R.id.dashboardNotice)
         error = root.findViewById(R.id.dashboardError)
         retry = root.findViewById(R.id.dashboardRetry)
         content = root.findViewById(R.id.dashboardContent)
+
+        txtKpiConsumptionValue = root.findViewById(R.id.txtKpiConsumptionValue)
+        txtKpiWaterValue = root.findViewById(R.id.txtKpiWaterValue)
+        txtKpiEnergyValue = root.findViewById(R.id.txtKpiEnergyValue)
+
         consumptionChart = root.findViewById(R.id.chartConsumption)
         waterChart = root.findViewById(R.id.chartWater)
         energyChart = root.findViewById(R.id.chartEnergy)
     }
 
     private fun configureActions() {
-        retry.setOnClickListener {viewModel.retry()}
+        retry.setOnClickListener { viewModel.retry() }
     }
 
     private fun observeState() {
@@ -108,11 +116,6 @@ class DashboardFragment : Fragment() {
             when (event) {
                 DashboardEvent.AuthenticationRequired -> {
                     viewModel.consumeEvent()
-
-                    /*
-                     * Reutiliza o tratamento de sessão que já existe
-                     * na MainActivity. Não cria um segundo fluxo de login.
-                     */
                     (activity as? MainActivity)?.onMainSessionExpired()
                 }
                 null -> Unit
@@ -147,8 +150,8 @@ class DashboardFragment : Fragment() {
 
     private fun render(state: DashboardUiState) {
         renderLoading(state)
-        renderNotice(state.notice)
         renderError(state)
+        renderKpis(state)
 
         loadChartIfChanged(webView = consumptionChart, html = state.consumptionChartHtml, previousHtml = loadedConsumptionHtml) {
             loadedConsumptionHtml = it
@@ -158,9 +161,15 @@ class DashboardFragment : Fragment() {
             loadedWaterHtml = it
         }
 
-        loadChartIfChanged(webView = energyChart, html = state.energyChartHtml, previousHtml = loadedEnergyHtml ) {
+        loadChartIfChanged(webView = energyChart, html = state.energyChartHtml, previousHtml = loadedEnergyHtml) {
             loadedEnergyHtml = it
         }
+    }
+
+    private fun renderKpis(state: DashboardUiState) {
+        txtKpiConsumptionValue.text = state.kpiConsumption
+        txtKpiWaterValue.text = state.kpiWaterLitersPerBird
+        txtKpiEnergyValue.text = state.kpiEnergyKwhPerBird
     }
 
     private fun renderLoading(state: DashboardUiState) {
@@ -168,7 +177,6 @@ class DashboardFragment : Fragment() {
             loading.visibility = View.VISIBLE
             loading.start()
             content.visibility = View.INVISIBLE
-
             return
         }
 
@@ -177,8 +185,8 @@ class DashboardFragment : Fragment() {
 
         val hasCharts =
             !state.consumptionChartHtml.isNullOrBlank() ||
-            !state.waterChartHtml .isNullOrBlank() ||
-            !state.energyChartHtml .isNullOrBlank()
+            !state.waterChartHtml.isNullOrBlank() ||
+            !state.energyChartHtml.isNullOrBlank()
 
         content.visibility =
             if (hasCharts) {
@@ -188,20 +196,8 @@ class DashboardFragment : Fragment() {
             }
     }
 
-    private fun renderNotice(message: String?) {
-        notice.text = message.orEmpty()
-
-        notice.visibility =
-            if (message.isNullOrBlank()) {
-                View.GONE
-            } else {
-                View.VISIBLE
-            }
-    }
-
     private fun renderError(state: DashboardUiState) {
         error.text = state.error.orEmpty()
-
         error.visibility =
             if (state.error.isNullOrBlank()) {
                 View.GONE
@@ -217,14 +213,82 @@ class DashboardFragment : Fragment() {
             }
     }
 
+    private fun adaptHtmlForMobile(html: String): String {
+        val mobileCss = """
+            <style>
+                html, body {
+                    width: 100% !important;
+                    height: 100% !important;
+                    min-height: 0 !important;
+                    background: transparent !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    overflow: hidden !important;
+                }
+                .chart-shell, .series-panel {
+                    border: none !important;
+                    border-radius: 0 !important;
+                    background: transparent !important;
+                    box-shadow: none !important;
+                    min-height: 0 !important;
+                    height: 100% !important;
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    overflow: hidden !important;
+                }
+                .chart-heading, .series-panel-heading {
+                    display: none !important;
+                }
+                .series-grid {
+                    display: none !important;
+                }
+                #plot, .series-plot {
+                    width: 100% !important;
+                    flex: 1 1 auto !important;
+                    min-height: 0 !important;
+                    height: auto !important;
+                }
+                .native-legend, .panel-legend {
+                    flex: 0 0 auto !important;
+                    min-height: 24px !important;
+                    padding: 4px 4px 2px 4px !important;
+                    gap: 6px 16px !important;
+                    justify-content: center !important;
+                    overflow: visible !important;
+                }
+                .legend-item {
+                    font-size: 13px !important;
+                    line-height: 1.2 !important;
+                    white-space: nowrap !important;
+                }
+            </style>
+        """.trimIndent()
+
+        val singleChartHtml = html
+            .replace("const shouldSplitSeries = (", "const shouldSplitSeries = false && (")
+            .replace("const shouldSplitSeries=(", "const shouldSplitSeries=false&&(")
+
+        return if (singleChartHtml.contains("</head>", ignoreCase = true)) {
+            singleChartHtml.replace("</head>", "$mobileCss</head>", ignoreCase = true)
+        } else {
+            mobileCss + singleChartHtml
+        }
+    }
+
     private fun loadChartIfChanged(webView: WebView, html: String?, previousHtml: String?, onLoaded: (String) -> Unit) {
         if (html.isNullOrBlank() || html == previousHtml) {
             return
         }
 
+        val adaptedHtml = adaptHtmlForMobile(html)
+
         webView.loadDataWithBaseURL(
             DASHBOARD_BASE_URL,
-            html,
+            adaptedHtml,
             MIME_TYPE_HTML,
             Charsets.UTF_8.name(),
             null

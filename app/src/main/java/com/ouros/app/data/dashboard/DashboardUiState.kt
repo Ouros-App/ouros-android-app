@@ -6,6 +6,10 @@ data class DashboardUiState(
     val period: DashboardPeriod =
         DashboardPeriod.MONTH,
 
+    val kpiConsumption: String = "6.07",
+    val kpiWaterLitersPerBird: String = "5.2",
+    val kpiEnergyKwhPerBird: String = "8.1",
+
     val consumptionChartHtml: String? = null,
     val waterChartHtml: String? = null,
     val energyChartHtml: String? = null,
