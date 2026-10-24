@@ -74,6 +74,9 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     private val takePhotoLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) {
         wasSaved ->
             val sourceUri = pendingCameraUri
+                ?: photoStore?.pendingCameraFile()?.let { file ->
+                    FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+                }
             pendingCameraUri = null
 
             if (wasSaved && sourceUri != null) {
@@ -147,6 +150,17 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         pendingCameraUri = savedInstanceState
             ?.getString(STATE_PENDING_CAMERA_URI)
             ?.let(Uri::parse)
+
+        val pendingCropPath = savedInstanceState?.getString(STATE_PENDING_CROP_PATH)
+        if (pendingCropPath != null) {
+            val file = File(pendingCropPath)
+            if (file.exists() && file.length() > 0L) {
+                pendingCropOutputFile = file
+                pendingPhotoChange = ProfilePhotoChange.UploadNew(file)
+            }
+        } else if (savedInstanceState?.getBoolean(STATE_PENDING_PHOTO_REMOVAL, false) == true) {
+            pendingPhotoChange = ProfilePhotoChange.Remove
+        }
 
         viewModel.loadProfile()
     }
@@ -271,6 +285,9 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     private fun startPhotoCrop(sourceUri: Uri) {
+        pendingCropOutputFile?.takeIf(File::exists)?.delete()
+        pendingCropOutputFile = null
+
         val cropDirectory = File(cacheDir, "profile_crop").apply {
             if (!exists()) {
                 mkdirs()
@@ -280,7 +297,7 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         val outputFile = File(cropDirectory, "cropped_profile_${System.currentTimeMillis()}.jpg")
         pendingCropOutputFile = outputFile
 
-        val destinationUri = FileProvider.getUriForFile(this, "$packageName.fileprovider", outputFile)
+        val destinationUri = Uri.fromFile(outputFile)
 
         val options = UCrop.Options().apply {
             setCompressionFormat(Bitmap.CompressFormat.JPEG)
@@ -290,28 +307,57 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
             setToolbarTitle("Ajustar foto")
         }
 
-        UCrop.of(sourceUri, destinationUri)
+        val uCropIntent = UCrop.of(sourceUri, destinationUri)
             .withAspectRatio(1f, 1f)
             .withMaxResultSize(720, 720)
             .withOptions(options)
-            .start(this, cropPhotoLauncher)
+            .getIntent(this)
+            .apply {
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+        grantUriPermission(
+            packageName,
+            sourceUri,
+            Intent.FLAG_GRANT_READ_URI_PERMISSION
+        )
+
+        cropPhotoLauncher.launch(uCropIntent)
     }
 
     private fun saveCroppedPhoto(croppedUri: Uri) {
-        val store = photoStore ?: return
-        val saved = store.saveGalleryPhoto(croppedUri)
-        clearPendingCrop()
+        val outputFile = pendingCropOutputFile?.takeIf { it.exists() && it.length() > 0L }
+            ?: croppedUri.path?.let(::File)?.takeIf { it.exists() && it.length() > 0L }
 
-        if (saved) {
-            val localFile = store.localPhotoFile()
-            if (localFile != null) {
-                pendingPhotoChange = ProfilePhotoChange.UploadNew(localFile)
-            }
-            showLocalPhoto(store)
-            Toast.makeText(this, "Foto salva.", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, "Não foi possível salvar a foto.", Toast.LENGTH_LONG).show()
+        if (outputFile == null) {
+            clearPendingCrop()
+            Toast.makeText(this, "Não foi possível obter a foto cortada.", Toast.LENGTH_LONG).show()
+            return
         }
+
+        photoStore?.cancelPendingCameraPhoto()
+        pendingCropOutputFile = outputFile
+        pendingPhotoChange = ProfilePhotoChange.UploadNew(outputFile)
+
+        if (!showDraftPhoto(outputFile)) {
+            clearPendingCrop()
+            Toast.makeText(this, "Não foi possível processar a imagem selecionada.", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        Toast.makeText(this, "Foto selecionada. Toque em Salvar para confirmar.", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showDraftPhoto(file: File): Boolean {
+        val bitmap = BitmapFactory.decodeFile(file.absolutePath) ?: return false
+
+        photoRequestSequence.incrementAndGet()
+
+        imgProfilePhoto.setBackgroundColor(Color.TRANSPARENT)
+        imgProfilePhoto.scaleType = ImageView.ScaleType.CENTER_CROP
+        imgProfilePhoto.setImageBitmap(bitmap)
+
+        return true
     }
 
     private fun clearPendingCrop() {
@@ -329,23 +375,30 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         pendingCameraUri?.let {
             outState.putString(STATE_PENDING_CAMERA_URI, it.toString())
         }
+        pendingCropOutputFile?.takeIf { it.exists() && it.length() > 0L }?.let {
+            outState.putString(STATE_PENDING_CROP_PATH, it.absolutePath)
+        }
+        if (pendingPhotoChange is ProfilePhotoChange.Remove) {
+            outState.putBoolean(STATE_PENDING_PHOTO_REMOVAL, true)
+        }
         super.onSaveInstanceState(outState)
     }
 
 
     private fun deleteProfilePhoto() {
         val store = photoStore ?: return
-        val avatarResource = store.deletePhotoAndSelectRandomAvatar()
+        clearPendingCrop()
 
+        val avatarResource = store.peekRandomAvatar()
         if (avatarResource == null) {
-            Toast.makeText(this, "Nenhum avatar_ foi encontrado.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Nenhum avatar foi encontrado.", Toast.LENGTH_LONG).show()
             return
         }
 
         pendingPhotoChange = ProfilePhotoChange.Remove
         showAvatarColor(avatarResource)
 
-        Toast.makeText(this, "Foto removida.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Foto removida. Toque em Salvar para confirmar.", Toast.LENGTH_SHORT).show()
     }
 
     private fun configureMasks() {
@@ -393,8 +446,19 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     override fun onProfileSaved(profile: FarmOwnerResponse) {
+        when (val change = pendingPhotoChange) {
+            is ProfilePhotoChange.UploadNew -> {
+                photoStore?.commitPhoto(change.file, profile.photoUrl)
+            }
+            is ProfilePhotoChange.Remove -> {
+                photoStore?.commitPhotoRemoval()
+            }
+            is ProfilePhotoChange.KeepCurrent -> {
+                photoStore?.markPhotoUploadCompleted()
+            }
+        }
         pendingPhotoChange = ProfilePhotoChange.KeepCurrent
-        photoStore?.markPhotoUploadCompleted()
+        clearPendingCrop()
         renderProfile(profile)
         editPassword.text?.clear()
 
@@ -427,7 +491,9 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     private fun renderProfile(profile: FarmOwnerResponse) {
         photoStore = profile.id?.let { ownerId ->
             farmSessionStore.saveAccount(ownerId, profile.farmId)
-            ProfilePhotoStore(applicationContext, ownerId)
+            ProfilePhotoStore(applicationContext, ownerId).apply {
+                syncWithRemote(profile.photoUrl)
+            }
         }
         findViewById<View>(R.id.btnEditPhoto).isEnabled = photoStore != null
         editName.setText(profile.name.orEmpty())
@@ -452,6 +518,21 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     private fun renderProfilePhoto(remotePhotoUrl: String?) {
+        when (val change = pendingPhotoChange) {
+            is ProfilePhotoChange.UploadNew -> {
+                if (showDraftPhoto(change.file)) {
+                    return
+                }
+            }
+            is ProfilePhotoChange.Remove -> {
+                showDefaultAvatar()
+                return
+            }
+            is ProfilePhotoChange.KeepCurrent -> {
+                // Proceder normalmente
+            }
+        }
+
         val store = photoStore
         if (store != null && showLocalPhoto(store)) {
             return
@@ -632,11 +713,17 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         photoRequestSequence.incrementAndGet()
         photoExecutor.shutdownNow()
 
+        if (isFinishing) {
+            clearPendingCrop()
+        }
+
         super.onDestroy()
     }
 
     private companion object {
         const val PHOTO_TIMEOUT_MILLIS = 10_000
         const val STATE_PENDING_CAMERA_URI = "pending_camera_uri"
+        const val STATE_PENDING_CROP_PATH = "pending_crop_path"
+        const val STATE_PENDING_PHOTO_REMOVAL = "pending_photo_removal"
     }
 }
