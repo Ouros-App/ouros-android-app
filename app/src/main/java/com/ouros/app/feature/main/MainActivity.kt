@@ -101,20 +101,6 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
         )
         setContentView(R.layout.activity_main)
 
-        ViewCompat.setOnApplyWindowInsetsListener(
-            findViewById(R.id.footer)
-        ) { view, insets ->
-            view.setPadding(
-                view.paddingLeft,
-                view.paddingTop,
-                view.paddingRight,
-                insets.getInsets(
-                    WindowInsetsCompat.Type.navigationBars()
-                ).bottom
-            )
-            insets
-        }
-
         bindHeaderViews()
         bindFooterViews()
         currentDestination = restoreDestination(savedInstanceState)
