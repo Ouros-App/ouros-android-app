@@ -30,47 +30,66 @@
             android:name="com.yalantis.ucrop.UCropActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
         <activity
             android:name=".feature.secondary.profile.ProfileActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".feature.main.record.RecordWizardActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+
         <activity
             android:name=".feature.main.MainActivity"
             android:exported="false" />
+
         <activity
             android:name=".feature.secondary.chatbot.ChatbotActivity"
             android:exported="false" />
+
         <activity
             android:name=".feature.error.ErrorActivity"
             android:exported="false" />
+
         <activity
             android:name=".feature.auth.firstaccess.FirstAccessActivity"
             android:exported="false" />
+
         <activity
             android:name=".feature.auth.forgotpassword.ForgotPasswordActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
+
         <activity
             android:name=".feature.auth.login.LoginActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
+
         <activity
             android:name=".feature.onboarding.tutorial.TutorialActivity"
             android:exported="false" />
+
         <activity
             android:name=".feature.onboarding.welcome.WelcomeActivity"
             android:exported="false" />
+
         <activity
             android:name=".feature.auth.choose.ChooseActivity"
             android:exported="false" />
+
         <activity
             android:name=".feature.onboarding.splash.SplashActivity"
             android:exported="true">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
+
     </application>
 
 </manifest>

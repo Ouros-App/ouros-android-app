@@ -10,6 +10,7 @@ import android.graphics.Shader
 import android.util.AttributeSet
 import android.view.View
 import android.view.animation.LinearInterpolator
+import androidx.core.view.isVisible
 
 class SkeletonLoaderView @JvmOverloads constructor(
     context: Context,
@@ -345,7 +346,7 @@ class SkeletonLoaderView @JvmOverloads constructor(
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        if (visibility == VISIBLE) start()
+        if (isVisible) start()
     }
 
     override fun onDetachedFromWindow() {
