@@ -7,6 +7,7 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -255,12 +256,16 @@ dependencies {
     implementation(libs.androidx.cardview)
     implementation(libs.androidx.viewpager2)
     implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.gson)
+    implementation(libs.markwon.core)
     implementation("io.coil-kt:coil:2.7.0")
     implementation("com.github.yalantis:ucrop:2.2.11")
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)

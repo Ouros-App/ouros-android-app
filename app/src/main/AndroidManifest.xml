@@ -3,6 +3,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -26,6 +27,22 @@
 
         </provider>
 
+        <service
+            android:name=".core.fcm.OurosFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <receiver
+            android:name=".core.fcm.TestNotificationReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.ouros.app.TEST_NOTIFICATION" />
+            </intent-filter>
+        </receiver>
+
         <activity
             android:name="com.yalantis.ucrop.UCropActivity"
             android:screenOrientation="portrait"
@@ -33,6 +50,18 @@
 
         <activity
             android:name=".feature.secondary.profile.ProfileActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".feature.tip.TipDetailActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".feature.notification.NotificationActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".feature.notification.NotificationTestActivity"
             android:exported="false" />
 
         <activity

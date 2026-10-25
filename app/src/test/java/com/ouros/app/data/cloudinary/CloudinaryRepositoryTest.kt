@@ -301,5 +301,4 @@ class CloudinaryRepositoryTest {
         assertTrue(result.isFailure)
         assertEquals("Falha ao obter URL da imagem enviada.", result.exceptionOrNull()?.message)
     }
-
 }

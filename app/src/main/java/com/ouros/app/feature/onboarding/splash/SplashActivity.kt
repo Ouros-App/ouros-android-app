@@ -1,11 +1,18 @@
 package com.ouros.app.feature.onboarding.splash
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import com.google.firebase.messaging.FirebaseMessaging
 import com.ouros.app.R
+import com.ouros.app.core.fcm.FcmTokenStore
 import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository
@@ -13,6 +20,7 @@ import com.ouros.app.data.auth.AuthResult
 import com.ouros.app.data.auth.SecureRefreshTokenStore
 import com.ouros.app.data.farmowner.FarmOwnerNetwork
 import com.ouros.app.data.farmowner.FarmOwnerRepository
+import com.ouros.app.data.notification.NotificationRepository
 import com.ouros.app.feature.auth.firstaccess.FirstAccessActivity
 import com.ouros.app.feature.error.ErrorActivity
 import com.ouros.app.feature.main.MainActivity
@@ -33,6 +41,27 @@ class SplashActivity : AppCompatActivity() {
     private lateinit var refreshTokenStore: SecureRefreshTokenStore
 
     private var navigationStarted = false
+    private var isWaitingForPermission = false
+    private var pendingNavigationIntent: Intent? = null
+
+    private val fcmTokenStore: FcmTokenStore by lazy {
+        FcmTokenStore(applicationContext)
+    }
+
+    private val notificationRepository: NotificationRepository by lazy {
+        NotificationRepository()
+    }
+
+    private val requestNotificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            isWaitingForPermission = false
+            if (isGranted) {
+                registerFcmToken()
+            }
+            pendingNavigationIntent?.let { intent ->
+                navigate(intent)
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,7 +73,40 @@ class SplashActivity : AppCompatActivity() {
         )
 
         configureRepositories()
+        checkAndRequestNotificationPermission()
         restoreSession()
+    }
+
+    private fun checkAndRequestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val permission = Manifest.permission.POST_NOTIFICATIONS
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                isWaitingForPermission = true
+                requestNotificationPermissionLauncher.launch(permission)
+            } else {
+                registerFcmToken()
+            }
+        } else {
+            registerFcmToken()
+        }
+    }
+
+    private fun registerFcmToken() {
+        runCatching {
+            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val token = task.result
+                    if (!token.isNullOrBlank()) {
+                        fcmTokenStore.saveToken(token)
+                        if (AppSession.sessionManager.hasValidAccessToken()) {
+                            activityScope.launch {
+                                notificationRepository.registerDeviceToken(token)
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun configureRepositories() {
@@ -171,6 +233,11 @@ class SplashActivity : AppCompatActivity() {
 
     private fun navigate(intent: Intent) {
         if (navigationStarted) {
+            return
+        }
+
+        if (isWaitingForPermission) {
+            pendingNavigationIntent = intent
             return
         }
 

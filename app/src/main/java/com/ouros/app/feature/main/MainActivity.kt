@@ -1,8 +1,11 @@
 package com.ouros.app.feature.main
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
@@ -11,6 +14,7 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
@@ -18,8 +22,12 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import coil.load
+import com.google.firebase.messaging.FirebaseMessaging
 import com.ouros.app.R
+import com.ouros.app.core.fcm.FcmTokenStore
+import com.ouros.app.core.fcm.OurosFirebaseMessagingService
 import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository
@@ -27,6 +35,7 @@ import com.ouros.app.data.auth.SecureRefreshTokenStore
 import com.ouros.app.data.dashboard.DashboardPeriod
 import com.ouros.app.data.farmowner.FarmOwnerNetwork
 import com.ouros.app.data.farmowner.FarmOwnerRepository
+import com.ouros.app.data.notification.NotificationRepository
 import com.ouros.app.data.rank.RankLeague
 import com.ouros.app.data.session.FarmSessionStore
 import com.ouros.app.feature.auth.login.LoginActivity
@@ -34,10 +43,13 @@ import com.ouros.app.feature.main.dashboard.DashboardFragment
 import com.ouros.app.feature.main.goals.GoalsFragment
 import com.ouros.app.feature.main.rank.RankFragment
 import com.ouros.app.feature.main.record.RecordFragment
+import com.ouros.app.feature.notification.NotificationActivity
 import com.ouros.app.feature.secondary.chatbot.ChatbotActivity
 import com.ouros.app.feature.secondary.profile.ProfileActivity
 import com.ouros.app.feature.secondary.profile.ProfilePhotoStore
+import com.ouros.app.feature.tip.TipDetailActivity
 import java.util.Calendar
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity(), MainViewModel.Listener {
     private data class FooterItem(
@@ -55,6 +67,21 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
     private lateinit var btnNotifications: ImageView
     private lateinit var btnPeriodSelector: View
     private lateinit var txtSelectedPeriod: TextView
+
+    private val notificationRepository: NotificationRepository by lazy {
+        NotificationRepository()
+    }
+
+    private val fcmTokenStore: FcmTokenStore by lazy {
+        FcmTokenStore(applicationContext)
+    }
+
+    private val requestNotificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                registerFcmToken()
+            }
+        }
     private lateinit var navMidas: View
     private lateinit var footerItems: List<FooterItem>
 
@@ -108,7 +135,17 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
         configureFooter()
         configureBackButton()
         configureProfileNavigation()
+
+        checkNotificationPermissionAndRegisterFcm()
+        handleIncomingIntent(intent)
+
         showDestination(currentDestination)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIncomingIntent(intent)
     }
 
     override fun onStart() {
@@ -169,6 +206,7 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
         AppSession.sessionManager.clear()
         farmSessionStore.clear()
         profilePhotoStore = null
+        fcmTokenStore.clear()
         currentRankLeague = null
 
         val intent = Intent(
@@ -245,16 +283,81 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
         imgAvatar.setImageResource(R.drawable.avatar_yellow)
 
         btnNotifications.setOnClickListener {
-            Toast.makeText(
-                this,
-                "Tela de notificações ainda não implementada.",
-                Toast.LENGTH_SHORT
-            ).show()
+            startActivity(
+                Intent(this, NotificationActivity::class.java)
+            )
         }
 
         btnPeriodSelector.setOnClickListener {
             showPeriodSelectionMenu()
         }
+    }
+
+    private fun checkNotificationPermissionAndRegisterFcm() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val permission = Manifest.permission.POST_NOTIFICATIONS
+            if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
+                registerFcmToken()
+            }
+        } else {
+            registerFcmToken()
+        }
+    }
+
+    private fun registerFcmToken() {
+        runCatching {
+            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val token = task.result
+                    if (!token.isNullOrBlank()) {
+                        fcmTokenStore.saveToken(token)
+                        if (AppSession.sessionManager.hasValidAccessToken()) {
+                            lifecycleScope.launch {
+                                notificationRepository.registerDeviceToken(token)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun handleIncomingIntent(intent: Intent?) {
+        if (intent == null) return
+
+        val type = intent.getStringExtra(OurosFirebaseMessagingService.EXTRA_TYPE)
+            ?: intent.getStringExtra("type")
+
+        val tipId = intent.getLongExtra(OurosFirebaseMessagingService.EXTRA_TIP_ID, -1L).takeIf { it > 0 }
+            ?: intent.getStringExtra("tip_id")?.toLongOrNull()
+            ?: intent.getStringExtra("id_tip")?.toLongOrNull()
+            ?: intent.getStringExtra(OurosFirebaseMessagingService.EXTRA_TIP_ID)?.toLongOrNull()
+            ?: -1L
+
+        val goalId = intent.getLongExtra(OurosFirebaseMessagingService.EXTRA_GOAL_ID, -1L).takeIf { it > 0 }
+            ?: intent.getStringExtra("goal_id")?.toLongOrNull()
+            ?: intent.getStringExtra("id_goal")?.toLongOrNull()
+            ?: intent.getStringExtra(OurosFirebaseMessagingService.EXTRA_GOAL_ID)?.toLongOrNull()
+            ?: -1L
+
+        when {
+            type?.contains("TIP", ignoreCase = true) == true ||
+            type?.contains("ALERT", ignoreCase = true) == true ||
+            type?.contains("WARNING", ignoreCase = true) == true ||
+            tipId > 0 -> {
+                val targetTipId = if (tipId > 0) tipId else 1L
+                startActivity(TipDetailActivity.createIntent(this, targetTipId))
+            }
+            type?.contains("GOAL", ignoreCase = true) == true ||
+            type?.contains("TASK", ignoreCase = true) == true ||
+            goalId > 0 -> {
+                showDestination(MainDestination.GOALS)
+            }
+            type?.contains("RANK", ignoreCase = true) == true -> {
+                showDestination(MainDestination.RANK)
+            }
+        }
+
     }
 
     private fun showPeriodSelectionMenu() {
