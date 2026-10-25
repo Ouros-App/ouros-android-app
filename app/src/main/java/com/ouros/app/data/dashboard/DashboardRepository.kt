@@ -127,7 +127,8 @@ class DashboardRepository(
                 requestDashboard(
                     period = period,
                     farmId = farmId,
-                    notice = notice
+                    notice = notice,
+                    consumptionChartId = CHART_CONSUMPTION_INDEX
                 )
             }
         }
@@ -136,8 +137,8 @@ class DashboardRepository(
     private suspend fun requestDashboard(
         period: DashboardPeriod,
         farmId: Long?,
-        notice: String? = null,
-        consumptionChartId: String = CHART_CONSUMPTION_INDEX
+        notice: String?,
+        consumptionChartId: String
     ): DashboardResult {
         val request =
             DashboardRequest(
@@ -210,7 +211,7 @@ class DashboardRepository(
     private suspend fun handleDashboardResponse(
         response: Response<DashboardResponse>,
         farmId: Long?,
-        notice: String? = null
+        notice: String?
     ): DashboardResult {
         return when {
             response.code() == 403 -> {

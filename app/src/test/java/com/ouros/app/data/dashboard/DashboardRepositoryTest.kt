@@ -809,4 +809,222 @@ class DashboardRepositoryTest {
         val error = result as DashboardResult.Error
         assertEquals("Não foi possível atualizar os dados.", error.message)
     }
+
+    @Test
+    fun loadWhenCustomDashboardReturns404FallsBackToResourceEfficiencyChartAndSucceeds() = runBlocking {
+        val error404 = "{\"detail\":\"Not found\"}".toResponseBody("application/json".toMediaTypeOrNull())
+        val fallbackDashboard = DashboardResponse(
+            title = "Telemetria de Consumo",
+            charts = listOf(
+                DashboardChartResponse(
+                    id = DashboardRepository.CHART_RESOURCE_EFFICIENCY,
+                    title = "Eficiência",
+                    renderAs = "line",
+                    html = "<div>chart-fallback</div>"
+                ),
+                DashboardChartResponse(
+                    id = DashboardRepository.CHART_MONTHLY_WATER_CONSUMPTION,
+                    title = "Água",
+                    renderAs = "bar",
+                    html = "<div>chart2</div>"
+                ),
+                DashboardChartResponse(
+                    id = DashboardRepository.CHART_MONTHLY_ENERGY_CONSUMPTION,
+                    title = "Energia",
+                    renderAs = "bar",
+                    html = "<div>chart3</div>"
+                )
+            )
+        )
+        val api = FakeDashboardApi().apply {
+            statusResponse = Response.success(
+                DashboardStatusResponse(status = "fresh", lastUpdatedAt = null, ageSeconds = null, staleAfterSeconds = null)
+            )
+            customResponsesQueue = mutableListOf(
+                Response.error(404, error404),
+                Response.success(fallbackDashboard)
+            )
+        }
+        val repository = createRepository(api)
+
+        val result = repository.load(DashboardPeriod.MONTH)
+
+        assertTrue(result is DashboardResult.Success)
+        val success = result as DashboardResult.Success
+        assertEquals(DashboardRepository.CHART_RESOURCE_EFFICIENCY, success.dashboard.charts[0].id)
+        assertEquals(2, api.customCallCount)
+        assertEquals(DashboardRepository.CHART_RESOURCE_EFFICIENCY, api.lastCustomRequest?.charts?.get(0)?.chartId)
+    }
+
+    @Test
+    fun loadWhenCustomDashboardReturns404AndFallbackAlsoReturns404ReturnsError() = runBlocking {
+        val error404 = "{\"detail\":\"Not found\"}".toResponseBody("application/json".toMediaTypeOrNull())
+        val api = FakeDashboardApi().apply {
+            statusResponse = Response.success(
+                DashboardStatusResponse(status = "fresh", lastUpdatedAt = null, ageSeconds = null, staleAfterSeconds = null)
+            )
+            customResponsesQueue = mutableListOf(
+                Response.error(404, error404),
+                Response.error(404, error404)
+            )
+        }
+        val repository = createRepository(api)
+
+        val result = repository.load(DashboardPeriod.MONTH)
+
+        assertTrue(result is DashboardResult.Error)
+        val error = result as DashboardResult.Error
+        assertEquals("Não foi possível carregar os gráficos.", error.message)
+        assertTrue(error.canRetry)
+        assertEquals(2, api.customCallCount)
+    }
+
+    @Test
+    fun loadWhenStatusResponseHasNullBodyRequestsDashboardWithNullNotice() = runBlocking {
+        val api = FakeDashboardApi().apply {
+            statusResponse = Response.success(null)
+            customResponse = Response.success(createValidDashboardResponse())
+        }
+        val repository = createRepository(api)
+
+        val result = repository.load(DashboardPeriod.MONTH)
+
+        assertTrue(result is DashboardResult.Success)
+        val success = result as DashboardResult.Success
+        assertNull(success.notice)
+    }
+
+    @Test
+    fun loadWhenMissingConsumptionChartReturnsPayloadError() = runBlocking {
+        val invalidDashboard = DashboardResponse(
+            title = "Telemetria de Consumo",
+            charts = listOf(
+                DashboardChartResponse(
+                    id = DashboardRepository.CHART_MONTHLY_WATER_CONSUMPTION,
+                    title = "Água",
+                    renderAs = "bar",
+                    html = "<div>chart2</div>"
+                ),
+                DashboardChartResponse(
+                    id = DashboardRepository.CHART_MONTHLY_ENERGY_CONSUMPTION,
+                    title = "Energia",
+                    renderAs = "bar",
+                    html = "<div>chart3</div>"
+                )
+            )
+        )
+        val api = FakeDashboardApi().apply {
+            statusResponse = Response.success(
+                DashboardStatusResponse(status = "fresh", lastUpdatedAt = null, ageSeconds = null, staleAfterSeconds = null)
+            )
+            customResponse = Response.success(invalidDashboard)
+        }
+        val repository = createRepository(api)
+
+        val result = repository.load(DashboardPeriod.MONTH)
+
+        assertTrue(result is DashboardResult.Error)
+        val error = result as DashboardResult.Error
+        assertEquals("A API não retornou todos os gráficos.", error.message)
+        assertTrue(error.canRetry)
+    }
+
+    @Test
+    fun loadWhenMissingWaterChartReturnsPayloadError() = runBlocking {
+        val invalidDashboard = DashboardResponse(
+            title = "Telemetria de Consumo",
+            charts = listOf(
+                DashboardChartResponse(
+                    id = DashboardRepository.CHART_CONSUMPTION_INDEX,
+                    title = "Eficiência",
+                    renderAs = "line",
+                    html = "<div>chart1</div>"
+                ),
+                DashboardChartResponse(
+                    id = DashboardRepository.CHART_MONTHLY_ENERGY_CONSUMPTION,
+                    title = "Energia",
+                    renderAs = "bar",
+                    html = "<div>chart3</div>"
+                )
+            )
+        )
+        val api = FakeDashboardApi().apply {
+            statusResponse = Response.success(
+                DashboardStatusResponse(status = "fresh", lastUpdatedAt = null, ageSeconds = null, staleAfterSeconds = null)
+            )
+            customResponse = Response.success(invalidDashboard)
+        }
+        val repository = createRepository(api)
+
+        val result = repository.load(DashboardPeriod.MONTH)
+
+        assertTrue(result is DashboardResult.Error)
+        val error = result as DashboardResult.Error
+        assertEquals("A API não retornou todos os gráficos.", error.message)
+        assertTrue(error.canRetry)
+    }
+
+    @Test
+    fun loadWhenMissingEnergyChartReturnsPayloadError() = runBlocking {
+        val invalidDashboard = DashboardResponse(
+            title = "Telemetria de Consumo",
+            charts = listOf(
+                DashboardChartResponse(
+                    id = DashboardRepository.CHART_CONSUMPTION_INDEX,
+                    title = "Eficiência",
+                    renderAs = "line",
+                    html = "<div>chart1</div>"
+                ),
+                DashboardChartResponse(
+                    id = DashboardRepository.CHART_MONTHLY_WATER_CONSUMPTION,
+                    title = "Água",
+                    renderAs = "bar",
+                    html = "<div>chart2</div>"
+                )
+            )
+        )
+        val api = FakeDashboardApi().apply {
+            statusResponse = Response.success(
+                DashboardStatusResponse(status = "fresh", lastUpdatedAt = null, ageSeconds = null, staleAfterSeconds = null)
+            )
+            customResponse = Response.success(invalidDashboard)
+        }
+        val repository = createRepository(api)
+
+        val result = repository.load(DashboardPeriod.MONTH)
+
+        assertTrue(result is DashboardResult.Error)
+        val error = result as DashboardResult.Error
+        assertEquals("A API não retornou todos os gráficos.", error.message)
+        assertTrue(error.canRetry)
+    }
+
+    @Test
+    fun dashboardResultDataClassCoverage() {
+        val response = createValidDashboardResponse()
+        val successDefault = DashboardResult.Success(dashboard = response)
+        assertNull(successDefault.notice)
+        assertEquals(response, successDefault.component1())
+        assertNull(successDefault.component2())
+
+        val successWithNotice = successDefault.copy(notice = "Aviso")
+        assertEquals("Aviso", successWithNotice.notice)
+        assertEquals(successDefault.dashboard, successWithNotice.dashboard)
+        assertTrue(successDefault != successWithNotice)
+        assertEquals(successDefault, successDefault.copy())
+        assertEquals(successDefault.hashCode(), successDefault.copy().hashCode())
+        assertTrue(successDefault.toString().contains("Success"))
+
+        val error = DashboardResult.Error(message = "Falha", canRetry = true)
+        assertEquals("Falha", error.component1())
+        assertTrue(error.component2())
+        val errorCopy = error.copy(canRetry = false)
+        assertFalse(errorCopy.canRetry)
+        assertEquals(error, error.copy())
+        assertEquals(error.hashCode(), error.copy().hashCode())
+        assertTrue(error.toString().contains("Error"))
+
+        val authReq = DashboardResult.AuthenticationRequired
+        assertEquals("AuthenticationRequired", authReq.toString())
+    }
 }

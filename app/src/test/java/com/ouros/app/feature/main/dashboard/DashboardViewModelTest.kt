@@ -539,4 +539,358 @@ class DashboardViewModelTest {
         assertEquals(DashboardPeriod.WEEK, viewModel.state.value?.period)
         assertEquals(weekChart, viewModel.state.value?.consumptionChartHtml)
     }
+
+    @Test
+    fun retry_whenIsLoading_returnsImmediatelyWithoutStartingNewRequest() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
+
+        val deferred = CompletableDeferred<Response<DashboardStatusResponse>>()
+        val api = object : DashboardApi {
+            var callCount = 0
+            override suspend fun getStatus(authorization: String): Response<DashboardStatusResponse> {
+                callCount++
+                return deferred.await()
+            }
+            override suspend fun getCustomDashboard(authorization: String, request: DashboardRequest) =
+                Response.success(createValidDashboardResponse())
+        }
+        val repository = createRepository(api)
+        val viewModel = DashboardViewModel(repository)
+
+        viewModel.loadInitialData()
+        testScheduler.runCurrent()
+        assertTrue(viewModel.state.value?.isLoading == true)
+        assertEquals(1, api.callCount)
+
+        // Calling retry while loading should be ignored
+        viewModel.retry()
+        assertEquals(1, api.callCount)
+
+        deferred.complete(Response.success(DashboardStatusResponse(status = "fresh", lastUpdatedAt = null, ageSeconds = null, staleAfterSeconds = null)))
+        advanceUntilIdle()
+        assertFalse(viewModel.state.value?.isLoading == true)
+    }
+
+    @Test
+    fun loadDashboard_withChartResourceEfficiency_correctlyExtractsKpisAndUpdatesState() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
+
+        val resourceEfficiencyDashboard = DashboardResponse(
+            title = "Telemetria de Consumo",
+            charts = listOf(
+                DashboardChartResponse(
+                    id = DashboardRepository.CHART_RESOURCE_EFFICIENCY,
+                    title = "Eficiência",
+                    renderAs = "line",
+                    html = """
+                        <script>
+                        var plotData = {"rows": [{"water_m3_per_chicken": 0.0052, "energy_kwh_per_chicken": 8.1}]};
+                        </script>
+                    """.trimIndent()
+                ),
+                DashboardChartResponse(
+                    id = DashboardRepository.CHART_MONTHLY_WATER_CONSUMPTION,
+                    title = "Água",
+                    renderAs = "bar",
+                    html = "<div>water-chart</div>"
+                ),
+                DashboardChartResponse(
+                    id = DashboardRepository.CHART_MONTHLY_ENERGY_CONSUMPTION,
+                    title = "Energia",
+                    renderAs = "bar",
+                    html = "<div>energy-chart</div>"
+                )
+            )
+        )
+
+        val api = FakeDashboardApi().apply {
+            statusResponse = Response.success(DashboardStatusResponse(status = "fresh", lastUpdatedAt = null, ageSeconds = null, staleAfterSeconds = null))
+            customResponse = Response.success(resourceEfficiencyDashboard)
+        }
+        val repository = createRepository(api)
+        val viewModel = DashboardViewModel(repository)
+
+        viewModel.loadInitialData()
+        advanceUntilIdle()
+
+        val state = viewModel.state.value
+        assertNotNull(state)
+        assertEquals("6.07", state?.kpiConsumption)
+        assertEquals("5.2", state?.kpiWaterLitersPerBird)
+        assertEquals("8.1", state?.kpiEnergyKwhPerBird)
+        assertNotNull(state?.consumptionChartHtml)
+    }
+
+    @Test
+    fun loadDashboard_withWaterPerBirdAndEnergyPerBird_calculatesKpisCorrectly() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
+
+        val html = """
+            <script>
+            var plotData = {"rows": [{"water_per_bird": 5200.0, "energy_per_bird": 8.1}]};
+            </script>
+        """.trimIndent()
+
+        val api = FakeDashboardApi().apply {
+            statusResponse = Response.success(DashboardStatusResponse(status = "fresh", lastUpdatedAt = null, ageSeconds = null, staleAfterSeconds = null))
+            customResponse = Response.success(createValidDashboardResponse(htmlResource = html))
+        }
+        val repository = createRepository(api)
+        val viewModel = DashboardViewModel(repository)
+
+        viewModel.loadInitialData()
+        advanceUntilIdle()
+
+        val state = viewModel.state.value
+        assertNotNull(state)
+        // water_per_bird = 5200.0 / 1000.0 = 5.2 m3 -> waterLiters = 5200.0
+        // energy_per_bird = 8.1
+        // cgi = 5200 * 0.7 + 8.1 * 0.3 = 3640.0 + 2.43 = 3642.43
+        assertEquals("3642.43", state?.kpiConsumption)
+        assertEquals("5200.0", state?.kpiWaterLitersPerBird)
+        assertEquals("8.1", state?.kpiEnergyKwhPerBird)
+    }
+
+    @Test
+    fun loadDashboard_withNullOrBlankOrMalformedHtml_fallsBackToBaseline() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
+
+        // 1. Blank HTML
+        val apiBlank = FakeDashboardApi().apply {
+            statusResponse = Response.success(DashboardStatusResponse(status = "fresh", lastUpdatedAt = null, ageSeconds = null, staleAfterSeconds = null))
+            customResponse = Response.success(createValidDashboardResponse(htmlResource = "   "))
+        }
+        val vmBlank = DashboardViewModel(createRepository(apiBlank))
+        vmBlank.loadInitialData()
+        advanceUntilIdle()
+        assertEquals("6.07", vmBlank.state.value?.kpiConsumption)
+        assertEquals("5.2", vmBlank.state.value?.kpiWaterLitersPerBird)
+        assertEquals("8.1", vmBlank.state.value?.kpiEnergyKwhPerBird)
+
+        // 2. Malformed JSON inside "rows"
+        val apiMalformed = FakeDashboardApi().apply {
+            statusResponse = Response.success(DashboardStatusResponse(status = "fresh", lastUpdatedAt = null, ageSeconds = null, staleAfterSeconds = null))
+            customResponse = Response.success(createValidDashboardResponse(htmlResource = "var plotData = {\"rows\": [not valid json]};"))
+        }
+        val vmMalformed = DashboardViewModel(createRepository(apiMalformed))
+        vmMalformed.loadInitialData()
+        advanceUntilIdle()
+        assertEquals("6.07", vmMalformed.state.value?.kpiConsumption)
+        assertEquals("5.2", vmMalformed.state.value?.kpiWaterLitersPerBird)
+        assertEquals("8.1", vmMalformed.state.value?.kpiEnergyKwhPerBird)
+
+        // 3. Empty rows []
+        val apiEmpty = FakeDashboardApi().apply {
+            statusResponse = Response.success(DashboardStatusResponse(status = "fresh", lastUpdatedAt = null, ageSeconds = null, staleAfterSeconds = null))
+            customResponse = Response.success(createValidDashboardResponse(htmlResource = "var plotData = {\"rows\": []};"))
+        }
+        val vmEmpty = DashboardViewModel(createRepository(apiEmpty))
+        vmEmpty.loadInitialData()
+        advanceUntilIdle()
+        assertEquals("6.07", vmEmpty.state.value?.kpiConsumption)
+        assertEquals("5.2", vmEmpty.state.value?.kpiWaterLitersPerBird)
+        assertEquals("8.1", vmEmpty.state.value?.kpiEnergyKwhPerBird)
+
+        // 4. Zero values (waterM3 = 0.0 and energyKwh = 0.0)
+        val apiZero = FakeDashboardApi().apply {
+            statusResponse = Response.success(DashboardStatusResponse(status = "fresh", lastUpdatedAt = null, ageSeconds = null, staleAfterSeconds = null))
+            customResponse = Response.success(createValidDashboardResponse(htmlResource = "var plotData = {\"rows\": [{\"water_m3_per_chicken\": 0.0, \"energy_kwh_per_chicken\": 0.0}]};"))
+        }
+        val vmZero = DashboardViewModel(createRepository(apiZero))
+        vmZero.loadInitialData()
+        advanceUntilIdle()
+        assertEquals("6.07", vmZero.state.value?.kpiConsumption)
+        assertEquals("5.2", vmZero.state.value?.kpiWaterLitersPerBird)
+        assertEquals("8.1", vmZero.state.value?.kpiEnergyKwhPerBird)
+
+        // 5. JsonNull values
+        val apiNulls = FakeDashboardApi().apply {
+            statusResponse = Response.success(DashboardStatusResponse(status = "fresh", lastUpdatedAt = null, ageSeconds = null, staleAfterSeconds = null))
+            customResponse = Response.success(createValidDashboardResponse(htmlResource = "var plotData = {\"rows\": [{\"water_m3_per_chicken\": null, \"water_per_bird\": null, \"energy_kwh_per_chicken\": null, \"energy_per_bird\": null}]};"))
+        }
+        val vmNulls = DashboardViewModel(createRepository(apiNulls))
+        vmNulls.loadInitialData()
+        advanceUntilIdle()
+        assertEquals("6.07", vmNulls.state.value?.kpiConsumption)
+        assertEquals("5.2", vmNulls.state.value?.kpiWaterLitersPerBird)
+        assertEquals("8.1", vmNulls.state.value?.kpiEnergyKwhPerBird)
+    }
+
+    @Test
+    fun loadDashboard_withoutConsumptionChartInList_handlesNullHtmlGracefully() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
+
+        val dashboardWithoutConsumption = DashboardResponse(
+            title = "Telemetria de Consumo",
+            charts = listOf(
+                DashboardChartResponse(
+                    id = DashboardRepository.CHART_MONTHLY_WATER_CONSUMPTION,
+                    title = "Água",
+                    renderAs = "bar",
+                    html = "<div>water-chart</div>"
+                ),
+                DashboardChartResponse(
+                    id = DashboardRepository.CHART_MONTHLY_ENERGY_CONSUMPTION,
+                    title = "Energia",
+                    renderAs = "bar",
+                    html = "<div>energy-chart</div>"
+                )
+            )
+        )
+
+        val api = FakeDashboardApi().apply {
+            statusResponse = Response.success(DashboardStatusResponse(status = "fresh", lastUpdatedAt = null, ageSeconds = null, staleAfterSeconds = null))
+            customResponse = Response.success(dashboardWithoutConsumption)
+        }
+        val repository = createRepository(api)
+        val viewModel = DashboardViewModel(repository)
+
+        viewModel.loadInitialData()
+        advanceUntilIdle()
+
+        val state = viewModel.state.value
+        assertNotNull(state)
+        assertNull(state?.consumptionChartHtml)
+        assertEquals("6.07", state?.kpiConsumption)
+    }
+
+    @Test
+    fun raceCondition_olderSuccessDoesNotOverwriteNewerRequest() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
+
+        val deferredFirst = CompletableDeferred<Response<DashboardStatusResponse>>()
+        val deferredSecond = CompletableDeferred<Response<DashboardStatusResponse>>()
+
+        var getStatusCalls = 0
+        val api = object : DashboardApi {
+            override suspend fun getStatus(authorization: String): Response<DashboardStatusResponse> {
+                getStatusCalls++
+                return if (getStatusCalls == 1) {
+                    deferredFirst.await()
+                } else {
+                    deferredSecond.await()
+                }
+            }
+
+            override suspend fun getCustomDashboard(
+                authorization: String,
+                request: DashboardRequest
+            ): Response<DashboardResponse> {
+                return Response.success(createValidDashboardResponse())
+            }
+        }
+
+        val repository = createRepository(api)
+        val viewModel = DashboardViewModel(repository)
+
+        viewModel.loadInitialData()
+        viewModel.selectPeriod(DashboardPeriod.WEEK)
+
+        // Conclui a 2ª chamada com sucesso
+        deferredSecond.complete(
+            Response.success(
+                DashboardStatusResponse(
+                    status = "fresh",
+                    lastUpdatedAt = "2026-10-24T02:00:00Z",
+                    ageSeconds = 10L,
+                    staleAfterSeconds = 1800L
+                )
+            )
+        )
+        advanceUntilIdle()
+        assertEquals(DashboardPeriod.WEEK, viewModel.state.value?.period)
+
+        // Conclui a 1ª chamada antiga com Sucesso (deve ser ignorada pois version != requestVersion)
+        deferredFirst.complete(
+            Response.success(
+                DashboardStatusResponse(
+                    status = "stale",
+                    lastUpdatedAt = "2026-10-24T01:00:00Z",
+                    ageSeconds = 20L,
+                    staleAfterSeconds = 1800L
+                )
+            )
+        )
+        advanceUntilIdle()
+
+        assertEquals(DashboardPeriod.WEEK, viewModel.state.value?.period)
+        assertNull(viewModel.state.value?.notice)
+    }
+
+    @Test
+    fun raceCondition_olderAuthRequiredDoesNotOverwriteNewerRequest() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
+
+        val deferredFirst = CompletableDeferred<Response<DashboardStatusResponse>>()
+        val deferredSecond = CompletableDeferred<Response<DashboardStatusResponse>>()
+
+        var getStatusCalls = 0
+        val sessionManager = SessionManager().apply { setAccessToken("token", 3600L) }
+        val fakeAuthApi = FakeAuthApi()
+        val api = object : DashboardApi {
+            override suspend fun getStatus(authorization: String): Response<DashboardStatusResponse> {
+                getStatusCalls++
+                return if (getStatusCalls == 1) {
+                    deferredFirst.await()
+                } else {
+                    deferredSecond.await()
+                }
+            }
+
+            override suspend fun getCustomDashboard(
+                authorization: String,
+                request: DashboardRequest
+            ): Response<DashboardResponse> {
+                return Response.success(createValidDashboardResponse())
+            }
+        }
+
+        val authRepository = AuthRepository(
+            api = fakeAuthApi,
+            refreshTokenStore = FakeRefreshTokenStorage(),
+            sessionManager = sessionManager
+        )
+        val repository = DashboardRepository(
+            api = api,
+            authRepository = authRepository,
+            sessionManager = sessionManager,
+            cache = DashboardCache(temporaryFolder.root),
+            farmSessionStore = FakeFarmSessionStore()
+        )
+        val viewModel = DashboardViewModel(repository)
+
+        viewModel.loadInitialData()
+        viewModel.selectPeriod(DashboardPeriod.WEEK)
+
+        // Conclui a 2ª chamada com sucesso
+        deferredSecond.complete(
+            Response.success(
+                DashboardStatusResponse(
+                    status = "fresh",
+                    lastUpdatedAt = "2026-10-24T02:00:00Z",
+                    ageSeconds = 10L,
+                    staleAfterSeconds = 1800L
+                )
+            )
+        )
+        advanceUntilIdle()
+        assertEquals(DashboardPeriod.WEEK, viewModel.state.value?.period)
+        assertNull(viewModel.event.value)
+
+        // Conclui a 1ª chamada antiga com 401 que aciona AuthenticationRequired (deve ser descartada)
+        val error401 = "{\"detail\":\"Token expired\"}".toResponseBody("application/json".toMediaTypeOrNull())
+        deferredFirst.complete(Response.error(401, error401))
+        advanceUntilIdle()
+
+        // Evento AuthenticationRequired não deve ter sido disparado pela 1ª requisição antiga
+        assertNull(viewModel.event.value)
+        assertEquals(DashboardPeriod.WEEK, viewModel.state.value?.period)
+    }
 }
