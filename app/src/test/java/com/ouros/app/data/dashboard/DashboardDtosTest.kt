@@ -11,16 +11,21 @@ class DashboardDtosTest {
     fun dashboardPeriodHasExpectedLabelsAndDays() {
         assertEquals("Mês", DashboardPeriod.MONTH.label)
         assertEquals(30, DashboardPeriod.MONTH.days)
+        assertEquals(1, DashboardPeriod.MONTH.maxMonths)
 
-        assertEquals("Semana", DashboardPeriod.WEEK.label)
-        assertEquals(7, DashboardPeriod.WEEK.days)
+        assertEquals("Trimestre", DashboardPeriod.QUARTER.label)
+        assertEquals(90, DashboardPeriod.QUARTER.days)
+        assertEquals(3, DashboardPeriod.QUARTER.maxMonths)
 
         assertEquals("Ano", DashboardPeriod.YEAR.label)
         assertEquals(365, DashboardPeriod.YEAR.days)
+        assertEquals(12, DashboardPeriod.YEAR.maxMonths)
         assertEquals(365, DashboardPeriod.ANNUAL_COMPARISON_DAYS)
 
         assertEquals(3, DashboardPeriod.values().size)
         assertEquals(DashboardPeriod.MONTH, DashboardPeriod.valueOf("MONTH"))
+        assertEquals(DashboardPeriod.QUARTER, DashboardPeriod.valueOf("QUARTER"))
+        assertEquals(DashboardPeriod.YEAR, DashboardPeriod.valueOf("YEAR"))
     }
 
     @Test

@@ -274,14 +274,14 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
     private fun showPeriodSelectionMenu() {
         val popup = PopupMenu(this, btnPeriodSelector)
         popup.menu.add(0, 1, 0, DashboardPeriod.YEAR.label)
-        popup.menu.add(0, 2, 1, DashboardPeriod.MONTH.label)
-        popup.menu.add(0, 3, 2, DashboardPeriod.WEEK.label)
+        popup.menu.add(0, 2, 1, DashboardPeriod.QUARTER.label)
+        popup.menu.add(0, 3, 2, DashboardPeriod.MONTH.label)
 
         popup.setOnMenuItemClickListener { item ->
             val selectedPeriod = when (item.itemId) {
                 1 -> DashboardPeriod.YEAR
-                2 -> DashboardPeriod.MONTH
-                3 -> DashboardPeriod.WEEK
+                2 -> DashboardPeriod.QUARTER
+                3 -> DashboardPeriod.MONTH
                 else -> DashboardPeriod.YEAR
             }
             txtSelectedPeriod.text = selectedPeriod.label

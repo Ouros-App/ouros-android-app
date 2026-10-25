@@ -49,21 +49,25 @@ data class DashboardChartResponse(
 
 enum class DashboardPeriod(
     val label: String,
-    val days: Int
+    val days: Int,
+    val maxMonths: Int
 ) {
     YEAR(
         label = "Ano",
-        days = 365
+        days = 365,
+        maxMonths = 12
+    ),
+
+    QUARTER(
+        label = "Trimestre",
+        days = 90,
+        maxMonths = 3
     ),
 
     MONTH(
         label = "Mês",
-        days = 30
-    ),
-
-    WEEK(
-        label = "Semana",
-        days = 7
+        days = 30,
+        maxMonths = 1
     );
 
     companion object {

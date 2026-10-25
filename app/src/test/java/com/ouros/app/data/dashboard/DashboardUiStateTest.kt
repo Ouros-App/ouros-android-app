@@ -30,7 +30,7 @@ class DashboardUiStateTest {
         val initial = DashboardUiState()
         val updated = initial.copy(
             isLoading = true,
-            period = DashboardPeriod.WEEK,
+            period = DashboardPeriod.QUARTER,
             kpiConsumption = "10.50",
             kpiWaterLitersPerBird = "4.0",
             kpiEnergyKwhPerBird = "7.5",
@@ -43,7 +43,7 @@ class DashboardUiStateTest {
         )
 
         assertTrue(updated.isLoading)
-        assertEquals(DashboardPeriod.WEEK, updated.period)
+        assertEquals(DashboardPeriod.QUARTER, updated.period)
         assertEquals("10.50", updated.kpiConsumption)
         assertEquals("4.0", updated.kpiWaterLitersPerBird)
         assertEquals("7.5", updated.kpiEnergyKwhPerBird)

@@ -508,7 +508,7 @@ class DashboardViewModelTest {
         // 1ª chamada
         viewModel.loadInitialData()
         // 2ª chamada (com período diferente)
-        viewModel.selectPeriod(DashboardPeriod.WEEK)
+        viewModel.selectPeriod(DashboardPeriod.QUARTER)
 
         // Completa a 2ª chamada primeiro
         deferredSecond.complete(
@@ -523,7 +523,7 @@ class DashboardViewModelTest {
         )
         advanceUntilIdle()
 
-        assertEquals(DashboardPeriod.WEEK, viewModel.state.value?.period)
+        assertEquals(DashboardPeriod.QUARTER, viewModel.state.value?.period)
         assertFalse(viewModel.state.value?.isLoading == true)
         val weekChart = viewModel.state.value?.consumptionChartHtml
         assertNotNull(weekChart)
@@ -536,7 +536,7 @@ class DashboardViewModelTest {
 
         // Estado continua preservando o resultado da 2ª requisição
         assertNull(viewModel.state.value?.error)
-        assertEquals(DashboardPeriod.WEEK, viewModel.state.value?.period)
+        assertEquals(DashboardPeriod.QUARTER, viewModel.state.value?.period)
         assertEquals(weekChart, viewModel.state.value?.consumptionChartHtml)
     }
 
@@ -790,7 +790,7 @@ class DashboardViewModelTest {
         val viewModel = DashboardViewModel(repository)
 
         viewModel.loadInitialData()
-        viewModel.selectPeriod(DashboardPeriod.WEEK)
+        viewModel.selectPeriod(DashboardPeriod.QUARTER)
 
         // Conclui a 2ª chamada com sucesso
         deferredSecond.complete(
@@ -804,7 +804,7 @@ class DashboardViewModelTest {
             )
         )
         advanceUntilIdle()
-        assertEquals(DashboardPeriod.WEEK, viewModel.state.value?.period)
+        assertEquals(DashboardPeriod.QUARTER, viewModel.state.value?.period)
 
         // Conclui a 1ª chamada antiga com Sucesso (deve ser ignorada pois version != requestVersion)
         deferredFirst.complete(
@@ -819,7 +819,7 @@ class DashboardViewModelTest {
         )
         advanceUntilIdle()
 
-        assertEquals(DashboardPeriod.WEEK, viewModel.state.value?.period)
+        assertEquals(DashboardPeriod.QUARTER, viewModel.state.value?.period)
         assertNull(viewModel.state.value?.notice)
     }
 
@@ -867,7 +867,7 @@ class DashboardViewModelTest {
         val viewModel = DashboardViewModel(repository)
 
         viewModel.loadInitialData()
-        viewModel.selectPeriod(DashboardPeriod.WEEK)
+        viewModel.selectPeriod(DashboardPeriod.QUARTER)
 
         // Conclui a 2ª chamada com sucesso
         deferredSecond.complete(
@@ -881,7 +881,7 @@ class DashboardViewModelTest {
             )
         )
         advanceUntilIdle()
-        assertEquals(DashboardPeriod.WEEK, viewModel.state.value?.period)
+        assertEquals(DashboardPeriod.QUARTER, viewModel.state.value?.period)
         assertNull(viewModel.event.value)
 
         // Conclui a 1ª chamada antiga com 401 que aciona AuthenticationRequired (deve ser descartada)
@@ -891,6 +891,80 @@ class DashboardViewModelTest {
 
         // Evento AuthenticationRequired não deve ter sido disparado pela 1ª requisição antiga
         assertNull(viewModel.event.value)
-        assertEquals(DashboardPeriod.WEEK, viewModel.state.value?.period)
+        assertEquals(DashboardPeriod.QUARTER, viewModel.state.value?.period)
+    }
+
+    @Test
+    fun selectPeriod_calculatesKpisAccordingToSelectedPeriodWindow() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
+
+        val multiMonthHtml = """
+            <script>
+            var plotData = {"rows": [
+                {"month_start": "2025-09-01", "water_m3_per_chicken": 0.009, "energy_kwh_per_chicken": 9.0},
+                {"month_start": "2026-06-01", "water_m3_per_chicken": 0.008, "energy_kwh_per_chicken": 5.0},
+                {"month_start": "2026-07-01", "water_m3_per_chicken": 0.007, "energy_kwh_per_chicken": 6.0},
+                {"month_start": "2026-08-01", "water_m3_per_chicken": 0.006, "energy_kwh_per_chicken": 7.0},
+                {"month_start": "2026-09-01", "water_m3_per_chicken": 0.005, "energy_kwh_per_chicken": 8.0}
+            ]};
+            </script>
+        """.trimIndent()
+
+        val api = FakeDashboardApi().apply {
+            statusResponse = Response.success(
+                DashboardStatusResponse(
+                    status = "fresh",
+                    lastUpdatedAt = "2026-10-24T00:00:00Z",
+                    ageSeconds = 60L,
+                    staleAfterSeconds = 1800L
+                )
+            )
+            customResponse = Response.success(createValidDashboardResponse(multiMonthHtml))
+        }
+        val repository = createRepository(api)
+        val viewModel = DashboardViewModel(repository)
+
+        // 1. Initial Load defaults to YEAR (average of all 2026 months: 6, 7, 8, 9)
+        // 2026 water: (8.0 + 7.0 + 6.0 + 5.0) / 4 = 6.5 L
+        // 2026 energy: (5.0 + 6.0 + 7.0 + 8.0) / 4 = 6.5 kWh
+        // cgi = 6.5 * 0.7 + 6.5 * 0.3 = 6.50
+        viewModel.loadInitialData()
+        advanceUntilIdle()
+
+        val stateYear = viewModel.state.value
+        assertNotNull(stateYear)
+        assertEquals(DashboardPeriod.YEAR, stateYear!!.period)
+        assertEquals("6.50", stateYear.kpiConsumption)
+        assertEquals("6.5", stateYear.kpiWaterLitersPerBird)
+        assertEquals("6.5", stateYear.kpiEnergyKwhPerBird)
+
+        // 2. Select QUARTER (average of last 3 months of 2026: 7, 8, 9)
+        // water: (7.0 + 6.0 + 5.0) / 3 = 6.0 L
+        // energy: (6.0 + 7.0 + 8.0) / 3 = 7.0 kWh
+        // cgi = (6.0 * 0.7) + (7.0 * 0.3) = 4.2 + 2.1 = 6.30
+        viewModel.selectPeriod(DashboardPeriod.QUARTER)
+        advanceUntilIdle()
+
+        val stateQuarter = viewModel.state.value
+        assertNotNull(stateQuarter)
+        assertEquals(DashboardPeriod.QUARTER, stateQuarter!!.period)
+        assertEquals("6.30", stateQuarter.kpiConsumption)
+        assertEquals("6.0", stateQuarter.kpiWaterLitersPerBird)
+        assertEquals("7.0", stateQuarter.kpiEnergyKwhPerBird)
+
+        // 3. Select MONTH (last month of 2026: 9)
+        // water: 5.0 L
+        // energy: 8.0 kWh
+        // cgi = (5.0 * 0.7) + (8.0 * 0.3) = 3.5 + 2.4 = 5.90
+        viewModel.selectPeriod(DashboardPeriod.MONTH)
+        advanceUntilIdle()
+
+        val stateMonth = viewModel.state.value
+        assertNotNull(stateMonth)
+        assertEquals(DashboardPeriod.MONTH, stateMonth!!.period)
+        assertEquals("5.90", stateMonth.kpiConsumption)
+        assertEquals("5.0", stateMonth.kpiWaterLitersPerBird)
+        assertEquals("8.0", stateMonth.kpiEnergyKwhPerBird)
     }
 }

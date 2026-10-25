@@ -79,9 +79,14 @@ class DashboardViewModel(private val dashboardRepository: DashboardRepository) :
 
                     val charts = result.dashboard.charts
                     val consumptionHtml = charts.firstOrNull {
-                        it.id == DashboardRepository.CHART_CONSUMPTION_INDEX || it.id == DashboardRepository.CHART_RESOURCE_EFFICIENCY
+                        it.id == DashboardRepository.CHART_CONSUMPTION_INDEX
+                    }?.html ?: charts.firstOrNull {
+                        it.id == DashboardRepository.CHART_RESOURCE_EFFICIENCY
                     }?.html
-                    val (kpiConsumo, kpiAgua, kpiEnergia) = extractKpis(consumptionHtml)
+                    val kpiSourceHtml = charts.firstOrNull {
+                        it.id == DashboardRepository.CHART_RESOURCE_EFFICIENCY
+                    }?.html ?: consumptionHtml
+                    val (kpiConsumo, kpiAgua, kpiEnergia) = extractKpis(kpiSourceHtml, selectedPeriod)
 
                     updateState(
                         currentState().copy(
@@ -132,7 +137,16 @@ class DashboardViewModel(private val dashboardRepository: DashboardRepository) :
         }
     }
 
-    private fun extractKpis(resourceHtml: String?): Triple<String, String, String> {
+    private data class ParsedMetricRow(
+        val year: Int?,
+        val waterM3: Double,
+        val energyKwh: Double
+    )
+
+    private fun extractKpis(
+        resourceHtml: String?,
+        period: DashboardPeriod = DashboardPeriod.YEAR
+    ): Triple<String, String, String> {
         if (resourceHtml.isNullOrBlank()) {
             return Triple("6.07", "5.2", "8.1")
         }
@@ -144,32 +158,59 @@ class DashboardViewModel(private val dashboardRepository: DashboardRepository) :
                 val rowsJson = match.groupValues[1]
                 val jsonArray = JsonParser.parseString(rowsJson).asJsonArray
                 if (jsonArray.size() > 0) {
-                    val lastRow = jsonArray.get(jsonArray.size() - 1).asJsonObject
-                    val waterM3 = when {
-                        lastRow.has("water_m3_per_chicken") && !lastRow.get("water_m3_per_chicken").isJsonNull ->
-                            lastRow.get("water_m3_per_chicken").asDouble
-                        lastRow.has("water_per_bird") && !lastRow.get("water_per_bird").isJsonNull ->
-                            lastRow.get("water_per_bird").asDouble / 1000.0
-                        else -> 0.0
+                    val parsedRows = jsonArray.mapNotNull { element ->
+                        if (!element.isJsonObject) return@mapNotNull null
+                        val rowObj = element.asJsonObject
+                        val dateStr = when {
+                            rowObj.has("month_start") && !rowObj.get("month_start").isJsonNull -> rowObj.get("month_start").asString
+                            rowObj.has("delivery_date") && !rowObj.get("delivery_date").isJsonNull -> rowObj.get("delivery_date").asString
+                            rowObj.has("registration_date") && !rowObj.get("registration_date").isJsonNull -> rowObj.get("registration_date").asString
+                            else -> null
+                        }
+                        val year = dateStr?.take(4)?.toIntOrNull()
+
+                        val waterM3 = when {
+                            rowObj.has("water_m3_per_chicken") && !rowObj.get("water_m3_per_chicken").isJsonNull ->
+                                rowObj.get("water_m3_per_chicken").asDouble
+                            rowObj.has("water_per_bird") && !rowObj.get("water_per_bird").isJsonNull ->
+                                rowObj.get("water_per_bird").asDouble / 1000.0
+                            else -> 0.0
+                        }
+
+                        val energyKwh = when {
+                            rowObj.has("energy_kwh_per_chicken") && !rowObj.get("energy_kwh_per_chicken").isJsonNull ->
+                                rowObj.get("energy_kwh_per_chicken").asDouble
+                            rowObj.has("energy_per_bird") && !rowObj.get("energy_per_bird").isJsonNull ->
+                                rowObj.get("energy_per_bird").asDouble
+                            else -> 0.0
+                        }
+
+                        ParsedMetricRow(year = year, waterM3 = waterM3, energyKwh = energyKwh)
                     }
 
-                    val energyKwh = when {
-                        lastRow.has("energy_kwh_per_chicken") && !lastRow.get("energy_kwh_per_chicken").isJsonNull ->
-                            lastRow.get("energy_kwh_per_chicken").asDouble
-                        lastRow.has("energy_per_bird") && !lastRow.get("energy_per_bird").isJsonNull ->
-                            lastRow.get("energy_per_bird").asDouble
-                        else -> 0.0
+                    val latestYear = parsedRows.mapNotNull { it.year }.maxOrNull()
+                    val currentYearRows = if (latestYear != null) {
+                        parsedRows.filter { it.year == latestYear }
+                    } else {
+                        parsedRows
                     }
 
-                    if (waterM3 > 0.0 || energyKwh > 0.0) {
-                        val waterLiters = waterM3 * 1000.0
-                        val cgi = (waterLiters * 0.7) + (energyKwh * 0.3)
+                    val targetRows = currentYearRows.takeLast(period.maxMonths)
+                    if (targetRows.isNotEmpty()) {
+                        val avgWaterM3 = targetRows.map { it.waterM3 }.average()
+                        val avgEnergyKwh = targetRows.map { it.energyKwh }.average()
+                        val waterLiters = avgWaterM3 * 1000.0
+                        val energyKwh = avgEnergyKwh
 
-                        val cgiFormatted = String.format(Locale.US, "%.2f", cgi)
-                        val waterFormatted = String.format(Locale.US, "%.1f", waterLiters)
-                        val energyFormatted = String.format(Locale.US, "%.1f", energyKwh)
+                        if (waterLiters > 0.0 || energyKwh > 0.0) {
+                            val cgi = (waterLiters * 0.7) + (energyKwh * 0.3)
 
-                        return Triple(cgiFormatted, waterFormatted, energyFormatted)
+                            val cgiFormatted = String.format(Locale.US, "%.2f", cgi)
+                            val waterFormatted = String.format(Locale.US, "%.1f", waterLiters)
+                            val energyFormatted = String.format(Locale.US, "%.1f", energyKwh)
+
+                            return Triple(cgiFormatted, waterFormatted, energyFormatted)
+                        }
                     }
                 }
             }

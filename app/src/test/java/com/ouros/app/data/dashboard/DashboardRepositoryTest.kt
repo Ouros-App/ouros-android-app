@@ -176,7 +176,7 @@ class DashboardRepositoryTest {
         assertNull(success.notice)
         assertEquals(3, success.dashboard.charts.size)
         assertNotNull(api.lastCustomRequest)
-        assertEquals(DashboardPeriod.ANNUAL_COMPARISON_DAYS, api.lastCustomRequest?.periodDays)
+        assertEquals(DashboardPeriod.MONTH.days, api.lastCustomRequest?.periodDays)
     }
 
     @Test
@@ -218,13 +218,13 @@ class DashboardRepositoryTest {
         }
         val repository = createRepository(api)
 
-        val result = repository.load(DashboardPeriod.WEEK)
+        val result = repository.load(DashboardPeriod.QUARTER)
 
         assertTrue(result is DashboardResult.Success)
         val success = result as DashboardResult.Success
         assertEquals("Dados de telemetria em atualização.", success.notice)
         assertEquals(3, success.dashboard.charts.size)
-        assertEquals(DashboardPeriod.ANNUAL_COMPARISON_DAYS, api.lastCustomRequest?.periodDays)
+        assertEquals(DashboardPeriod.QUARTER.days, api.lastCustomRequest?.periodDays)
     }
 
     @Test

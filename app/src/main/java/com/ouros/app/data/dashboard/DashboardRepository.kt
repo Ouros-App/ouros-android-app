@@ -144,25 +144,17 @@ class DashboardRepository(
             DashboardRequest(
                 title =
                     "Telemetria de Consumo",
-                periodDays =
-                    DashboardPeriod.ANNUAL_COMPARISON_DAYS,
-                charts = listOf(
-                    DashboardChartRequest(
-                        chartId =
-                            consumptionChartId,
-                        renderAs = "line"
-                    ),
-                    DashboardChartRequest(
-                        chartId =
-                            CHART_MONTHLY_WATER_CONSUMPTION,
-                        renderAs = "bar"
-                    ),
-                    DashboardChartRequest(
-                        chartId =
-                            CHART_MONTHLY_ENERGY_CONSUMPTION,
-                        renderAs = "bar"
-                    )
-                )
+                periodDays = period.days,
+                charts = buildList {
+                    add(DashboardChartRequest(chartId = consumptionChartId, renderAs = "line"))
+                    add(DashboardChartRequest(chartId = CHART_MONTHLY_WATER_CONSUMPTION, renderAs = "bar"))
+                    add(DashboardChartRequest(chartId = CHART_MONTHLY_ENERGY_CONSUMPTION, renderAs = "bar"))
+                    // relative-consumption so traz percentuais; os KPIs do topo precisam
+                    // dos dados por ave de resource-efficiency (a API aceita ate 4 graficos).
+                    if (consumptionChartId != CHART_RESOURCE_EFFICIENCY) {
+                        add(DashboardChartRequest(chartId = CHART_RESOURCE_EFFICIENCY, renderAs = "line"))
+                    }
+                }
             )
 
         return when (
