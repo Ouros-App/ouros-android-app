@@ -5,6 +5,7 @@ import com.ouros.app.data.tip.ReviewResponse
 import com.ouros.app.data.tip.TipApi
 import com.ouros.app.data.tip.TipDetailResponse
 import com.ouros.app.data.tip.TipRepository
+import com.ouros.app.feature.secondary.tip.TipDetailViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher

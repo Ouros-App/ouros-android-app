@@ -1,4 +1,4 @@
-package com.ouros.app.feature.notification
+package com.ouros.app.feature.secondary.notification
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

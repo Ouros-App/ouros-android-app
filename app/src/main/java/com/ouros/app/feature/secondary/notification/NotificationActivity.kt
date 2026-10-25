@@ -1,4 +1,4 @@
-package com.ouros.app.feature.notification
+package com.ouros.app.feature.secondary.notification
 
 import android.content.Intent
 import android.os.Bundle
@@ -23,7 +23,7 @@ import com.ouros.app.R
 import com.ouros.app.core.fcm.OurosFirebaseMessagingService
 import com.ouros.app.data.notification.NotificationItemResponse
 import com.ouros.app.feature.main.MainActivity
-import com.ouros.app.feature.tip.TipDetailActivity
+import com.ouros.app.feature.secondary.tip.TipDetailActivity
 import kotlinx.coroutines.launch
 
 class NotificationActivity : AppCompatActivity() {

@@ -1,4 +1,4 @@
-package com.ouros.app.feature.tip
+package com.ouros.app.feature.secondary.tip
 
 import android.app.Dialog
 import android.content.Context
@@ -191,7 +191,7 @@ class TipDetailActivity : AppCompatActivity() {
     private fun showReviewDialog() {
         val dialog = Dialog(this)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        dialog.setContentView(R.layout.dialog_review_tip)
+        dialog.setContentView(R.layout.popup_review_tip)
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
         var currentSelectedScore = 4

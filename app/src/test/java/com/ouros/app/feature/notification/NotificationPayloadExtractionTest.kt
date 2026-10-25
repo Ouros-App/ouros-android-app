@@ -1,6 +1,7 @@
 package com.ouros.app.feature.notification
 
 import com.ouros.app.data.notification.NotificationItemResponse
+import com.ouros.app.feature.secondary.notification.NotificationAdapter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue

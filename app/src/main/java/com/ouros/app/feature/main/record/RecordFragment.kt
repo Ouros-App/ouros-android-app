@@ -23,6 +23,7 @@ import com.ouros.app.data.record.RecordNetwork
 import com.ouros.app.data.record.RecordRepository
 import com.ouros.app.data.session.FarmSessionStore
 import com.ouros.app.feature.auth.login.LoginActivity
+import com.ouros.app.feature.secondary.simulator.SimulatorActivity
 
 class RecordFragment : Fragment() {
     private lateinit var viewModel: RecordViewModel
@@ -47,20 +48,25 @@ class RecordFragment : Fragment() {
         }
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) = inflater.inflate(R.layout.fragment_record, container, false)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
+        inflater.inflate(R.layout.fragment_record, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         val appContext = requireContext().applicationContext
         draftStore = RecordDraftStore(appContext)
-
         val repository = RecordRepository(RecordNetwork.api, draftStore)
+        viewModel = ViewModelProvider(
+            this,
+            RecordViewModelFactory(repository, draftStore, FarmSessionStore(appContext).farmId())
+        )[RecordViewModel::class.java]
 
-        viewModel = ViewModelProvider(this, RecordViewModelFactory(repository, draftStore, FarmSessionStore(appContext).farmId()))[RecordViewModel::class.java]
         bind(view)
         configureLists(view)
         view.findViewById<View>(R.id.recordStartCard).setOnClickListener { viewModel.newOrResume() }
+        view.findViewById<View>(R.id.recordSimulatorCard).setOnClickListener {
+            startActivity(Intent(requireContext(), SimulatorActivity::class.java))
+        }
         retry.setOnClickListener { viewModel.load() }
         observe()
     }
@@ -87,8 +93,16 @@ class RecordFragment : Fragment() {
     private fun configureLists(root: View) {
         waterAdapter = RecordHistoryAdapter(viewModel::edit)
         energyAdapter = RecordHistoryAdapter(viewModel::edit)
-        root.findViewById<RecyclerView>(R.id.waterHistoryList).apply { layoutManager = LinearLayoutManager(requireContext()); adapter = waterAdapter; isNestedScrollingEnabled = false }
-        root.findViewById<RecyclerView>(R.id.energyHistoryList).apply { layoutManager = LinearLayoutManager(requireContext()); adapter = energyAdapter; isNestedScrollingEnabled = false }
+        root.findViewById<RecyclerView>(R.id.waterHistoryList).apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = waterAdapter
+            isNestedScrollingEnabled = false
+        }
+        root.findViewById<RecyclerView>(R.id.energyHistoryList).apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = energyAdapter
+            isNestedScrollingEnabled = false
+        }
     }
 
     private fun observe() {
@@ -106,7 +120,11 @@ class RecordFragment : Fragment() {
         viewModel.event.observe(viewLifecycleOwner) { event ->
             when (event) {
                 RecordEvent.OpenWizard -> wizardLauncher.launch(Intent(requireContext(), RecordWizardActivity::class.java))
-                RecordEvent.AuthenticationRequired -> startActivity(Intent(requireContext(), LoginActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK })
+                RecordEvent.AuthenticationRequired -> startActivity(
+                    Intent(requireContext(), LoginActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    }
+                )
                 null -> Unit
             }
             if (event != null) viewModel.consumeEvent()
@@ -116,7 +134,11 @@ class RecordFragment : Fragment() {
     private fun renderDraftCard() {
         val draft = draftStore.load()?.takeIf { it.hasContent() }
         draftTitle.text = if (draft == null) "Preparado?" else "Pronto?"
-        draftSubtitle.text = if (draft == null) "Vamos começar um novo registro." else "Vamos continuar o registro do dia ${draft.displayDate()}"
+        draftSubtitle.text = if (draft == null) {
+            "Vamos começar um novo registro."
+        } else {
+            "Vamos continuar o registro do dia ${draft.displayDate()}"
+        }
     }
 
     private fun showSuccessPopup() {
@@ -134,7 +156,10 @@ class RecordFragment : Fragment() {
         popup.window?.apply {
             setLayout((resources.displayMetrics.widthPixels * .72f).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND or WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
-            attributes = attributes.apply { dimAmount = .18f; blurBehindRadius = 35 }
+            attributes = attributes.apply {
+                dimAmount = .18f
+                blurBehindRadius = 35
+            }
         }
     }
 

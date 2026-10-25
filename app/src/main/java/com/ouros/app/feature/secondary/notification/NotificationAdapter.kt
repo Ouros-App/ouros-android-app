@@ -1,4 +1,4 @@
-package com.ouros.app.feature.notification
+package com.ouros.app.feature.secondary.notification
 
 import android.view.LayoutInflater
 import android.view.View

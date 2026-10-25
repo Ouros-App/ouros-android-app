@@ -1,8 +1,7 @@
-package com.ouros.app.feature.notification
+package com.ouros.app.feature.secondary.notification
 
 import android.content.ClipData
 import android.content.ClipboardManager
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
@@ -18,7 +17,7 @@ import com.ouros.app.R
 import com.ouros.app.core.fcm.FcmTokenStore
 import com.ouros.app.core.fcm.OurosFirebaseMessagingService
 import com.ouros.app.feature.main.MainActivity
-import com.ouros.app.feature.tip.TipDetailActivity
+import com.ouros.app.feature.secondary.tip.TipDetailActivity
 
 class NotificationTestActivity : AppCompatActivity() {
 
@@ -83,7 +82,7 @@ class NotificationTestActivity : AppCompatActivity() {
         btnCopyToken.setOnClickListener {
             val token = txtFcmToken.text.toString()
             if (token.isNotBlank() && !token.contains("Carregando", ignoreCase = true)) {
-                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText("FCM Token", token)
                 clipboard.setPrimaryClip(clip)
                 Toast.makeText(this, "Token copiado para a área de transferência!", Toast.LENGTH_SHORT).show()

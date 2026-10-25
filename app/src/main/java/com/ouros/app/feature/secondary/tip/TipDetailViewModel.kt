@@ -1,4 +1,4 @@
-package com.ouros.app.feature.tip
+package com.ouros.app.feature.secondary.tip
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
