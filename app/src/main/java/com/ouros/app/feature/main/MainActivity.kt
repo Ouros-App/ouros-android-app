@@ -305,8 +305,6 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
             val permission = Manifest.permission.POST_NOTIFICATIONS
             if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
                 registerFcmToken()
-            } else {
-                requestNotificationPermissionLauncher.launch(permission)
             }
         } else {
             registerFcmToken()
