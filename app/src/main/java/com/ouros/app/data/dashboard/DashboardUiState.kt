@@ -4,7 +4,11 @@ data class DashboardUiState(
     val isLoading: Boolean = false,
 
     val period: DashboardPeriod =
-        DashboardPeriod.MONTH,
+        DashboardPeriod.YEAR,
+
+    val kpiConsumption: String = "6.07",
+    val kpiWaterLitersPerBird: String = "5.2",
+    val kpiEnergyKwhPerBird: String = "8.1",
 
     val consumptionChartHtml: String? = null,
     val waterChartHtml: String? = null,

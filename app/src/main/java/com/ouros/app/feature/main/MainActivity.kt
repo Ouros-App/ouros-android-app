@@ -17,6 +17,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -31,6 +32,7 @@ import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository
 import com.ouros.app.data.auth.SecureRefreshTokenStore
+import com.ouros.app.data.dashboard.DashboardPeriod
 import com.ouros.app.data.farmowner.FarmOwnerNetwork
 import com.ouros.app.data.farmowner.FarmOwnerRepository
 import com.ouros.app.data.notification.NotificationRepository
@@ -63,6 +65,8 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
     private lateinit var txtGreeting: TextView
     private lateinit var txtUserName: TextView
     private lateinit var btnNotifications: ImageView
+    private lateinit var btnPeriodSelector: View
+    private lateinit var txtSelectedPeriod: TextView
 
     private val notificationRepository: NotificationRepository by lazy {
         NotificationRepository()
@@ -78,7 +82,6 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
                 registerFcmToken()
             }
         }
-
     private lateinit var navMidas: View
     private lateinit var footerItems: List<FooterItem>
 
@@ -232,6 +235,8 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
         txtGreeting = findViewById(R.id.txtGreeting)
         txtUserName = findViewById(R.id.txtUserName)
         btnNotifications = findViewById(R.id.btnNotifications)
+        btnPeriodSelector = findViewById(R.id.btnPeriodSelector)
+        txtSelectedPeriod = findViewById(R.id.txtSelectedPeriod)
     }
 
     private fun bindFooterViews() {
@@ -283,7 +288,9 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
             )
         }
 
-
+        btnPeriodSelector.setOnClickListener {
+            showPeriodSelectionMenu()
+        }
     }
 
     private fun checkNotificationPermissionAndRegisterFcm() {
@@ -350,6 +357,30 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
                 showDestination(MainDestination.RANK)
             }
         }
+
+    }
+
+    private fun showPeriodSelectionMenu() {
+        val popup = PopupMenu(this, btnPeriodSelector)
+        popup.menu.add(0, 1, 0, DashboardPeriod.YEAR.label)
+        popup.menu.add(0, 2, 1, DashboardPeriod.QUARTER.label)
+        popup.menu.add(0, 3, 2, DashboardPeriod.MONTH.label)
+
+        popup.setOnMenuItemClickListener { item ->
+            val selectedPeriod = when (item.itemId) {
+                1 -> DashboardPeriod.YEAR
+                2 -> DashboardPeriod.QUARTER
+                3 -> DashboardPeriod.MONTH
+                else -> DashboardPeriod.YEAR
+            }
+            txtSelectedPeriod.text = selectedPeriod.label
+
+            val dashboardFragment =
+                supportFragmentManager.findFragmentByTag(tagFor(MainDestination.ANALYTICS)) as? DashboardFragment
+            dashboardFragment?.selectPeriod(selectedPeriod)
+            true
+        }
+        popup.show()
     }
 
     private fun configureFooter() {
@@ -493,14 +524,17 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
                     currentProfile?.name
                         ?: if (mainLoading) "Carregando..."
                         else "Usuário"
+                btnPeriodSelector.visibility = View.VISIBLE
             }
             MainDestination.GOALS -> {
                 txtGreeting.text = "Organize seus objetivos"
                 txtUserName.text = "Metas"
+                btnPeriodSelector.visibility = View.GONE
             }
             MainDestination.RECORD -> {
                 txtGreeting.text = "Salvar dados"
                 txtUserName.text = "Registro"
+                btnPeriodSelector.visibility = View.GONE
             }
             MainDestination.RANK -> {
                 txtGreeting.text =
@@ -508,6 +542,7 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
                         "Divisão ${it.displayName}"
                     } ?: "Divisão"
                 txtUserName.text = "Ranking"
+                btnPeriodSelector.visibility = View.GONE
             }
         }
     }

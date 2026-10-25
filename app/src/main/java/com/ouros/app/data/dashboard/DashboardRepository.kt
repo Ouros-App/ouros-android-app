@@ -114,51 +114,47 @@ class DashboardRepository(
                 )
             }
 
-            response.body()
-                ?.status
-                ?.equals(
-                    "fresh",
-                    ignoreCase = true
-                ) != true -> {
-                cachedResult(
-                    "Os dados ainda estão sendo atualizados.",
-                    farmId
-                )
-            }
-
             else -> {
-                requestDashboard(period, farmId)
+                val status = response.body()?.status
+                val notice = when {
+                    status.equals("stale", ignoreCase = true) ->
+                        "Exibindo dados da última sincronização disponível."
+                    status.equals("unknown", ignoreCase = true) ->
+                        "Dados de telemetria em atualização."
+                    else -> null
+                }
+
+                requestDashboard(
+                    period = period,
+                    farmId = farmId,
+                    notice = notice,
+                    consumptionChartId = CHART_CONSUMPTION_INDEX
+                )
             }
         }
     }
 
     private suspend fun requestDashboard(
         period: DashboardPeriod,
-        farmId: Long?
+        farmId: Long?,
+        notice: String?,
+        consumptionChartId: String
     ): DashboardResult {
         val request =
             DashboardRequest(
                 title =
                     "Telemetria de Consumo",
-                periodDays =
-                    period.days,
-                charts = listOf(
-                    DashboardChartRequest(
-                        chartId =
-                            CHART_RESOURCE_EFFICIENCY,
-                        renderAs = "line"
-                    ),
-                    DashboardChartRequest(
-                        chartId =
-                            CHART_MONTHLY_WATER_CONSUMPTION,
-                        renderAs = "bar"
-                    ),
-                    DashboardChartRequest(
-                        chartId =
-                            CHART_MONTHLY_ENERGY_CONSUMPTION,
-                        renderAs = "bar"
-                    )
-                )
+                periodDays = period.days,
+                charts = buildList {
+                    add(DashboardChartRequest(chartId = consumptionChartId, renderAs = "line"))
+                    add(DashboardChartRequest(chartId = CHART_MONTHLY_WATER_CONSUMPTION, renderAs = "bar"))
+                    add(DashboardChartRequest(chartId = CHART_MONTHLY_ENERGY_CONSUMPTION, renderAs = "bar"))
+                    // relative-consumption so traz percentuais; os KPIs do topo precisam
+                    // dos dados por ave de resource-efficiency (a API aceita ate 4 graficos).
+                    if (consumptionChartId != CHART_RESOURCE_EFFICIENCY) {
+                        add(DashboardChartRequest(chartId = CHART_RESOURCE_EFFICIENCY, renderAs = "line"))
+                    }
+                }
             )
 
         return when (
@@ -185,17 +181,29 @@ class DashboardRepository(
             }
 
             is AuthenticatedCallResult.ResponseResult -> {
-                handleDashboardResponse(
-                    dashboardResult.response,
-                    farmId
-                )
+                val response = dashboardResult.response
+                if (response.code() == 404 && consumptionChartId == CHART_CONSUMPTION_INDEX) {
+                    requestDashboard(
+                        period = period,
+                        farmId = farmId,
+                        notice = notice,
+                        consumptionChartId = CHART_RESOURCE_EFFICIENCY
+                    )
+                } else {
+                    handleDashboardResponse(
+                        response = response,
+                        farmId = farmId,
+                        notice = notice
+                    )
+                }
             }
         }
     }
 
     private suspend fun handleDashboardResponse(
         response: Response<DashboardResponse>,
-        farmId: Long?
+        farmId: Long?,
+        notice: String?
     ): DashboardResult {
         return when {
             response.code() == 403 -> {
@@ -240,7 +248,8 @@ class DashboardRepository(
                     farmId?.let { cache.save(it, dashboard) }
 
                     DashboardResult.Success(
-                        dashboard = dashboard
+                        dashboard = dashboard,
+                        notice = notice
                     )
                 }
             }
@@ -422,9 +431,12 @@ class DashboardRepository(
                 )
                 .toSet()
 
-        return chartIds.containsAll(
+        val hasConsumption =
+            chartIds.contains(CHART_CONSUMPTION_INDEX) ||
+            chartIds.contains(CHART_RESOURCE_EFFICIENCY)
+
+        return hasConsumption && chartIds.containsAll(
             setOf(
-                CHART_RESOURCE_EFFICIENCY,
                 CHART_MONTHLY_WATER_CONSUMPTION,
                 CHART_MONTHLY_ENERGY_CONSUMPTION
             )
@@ -460,14 +472,17 @@ class DashboardRepository(
     }
 
     companion object {
-        const val CHART_RESOURCE_EFFICIENCY =
-            "resource-efficiency"
+        const val CHART_CONSUMPTION_INDEX =
+            "relative-consumption"
 
         const val CHART_MONTHLY_WATER_CONSUMPTION =
             "monthly-water-consumption"
 
         const val CHART_MONTHLY_ENERGY_CONSUMPTION =
             "monthly-energy-consumption"
+
+        const val CHART_RESOURCE_EFFICIENCY =
+            "resource-efficiency"
 
         private const val NO_SAVED_SESSION_MESSAGE =
             "Nenhuma sessão salva."

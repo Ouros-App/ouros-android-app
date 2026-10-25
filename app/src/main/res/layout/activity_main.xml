@@ -23,7 +23,7 @@
         <View
             android:id="@+id/background"
             android:layout_width="0dp"
-            android:layout_height="190dp"
+            android:layout_height="200dp"
             android:background="@drawable/header_background"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -35,7 +35,7 @@
             style="@style/header_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="16dp"
             android:text="txtGreeting"
             android:textColor="@color/white"
             app:layout_constraintStart_toStartOf="@+id/imgAvatar"
@@ -46,7 +46,7 @@
             style="@style/header_subtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="-10dp"
+            android:layout_marginTop="-6dp"
             android:text="txtUserName"
             android:textColor="@color/white"
             app:layout_constraintStart_toStartOf="@+id/txtGreeting"
@@ -68,13 +68,50 @@
             android:id="@+id/imgAvatar"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_marginStart="30dp"
-            android:layout_marginTop="70dp"
+            android:layout_marginStart="28dp"
+            android:layout_marginTop="73dp"
             android:scaleType="centerCrop"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/background"
             app:shapeAppearanceOverlay="@style/CircleImage"
             tools:srcCompat="@tools:sample/avatars" />
+
+        <!-- Seletor de Período (Figma: Pílula transparente com borda fina e chevron) -->
+        <LinearLayout
+            android:id="@+id/btnPeriodSelector"
+            android:layout_width="wrap_content"
+            android:layout_height="29dp"
+            android:layout_marginEnd="29dp"
+            android:background="@drawable/bg_period_selector"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="10dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/txtUserName"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/txtGreeting"
+            tools:visibility="visible">
+
+            <TextView
+                android:id="@+id/txtSelectedPeriod"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppins_regular"
+                android:includeFontPadding="false"
+                android:text="Ano"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+
+            <ImageView
+                android:layout_width="10dp"
+                android:layout_height="6dp"
+                android:layout_marginStart="8dp"
+                android:contentDescription="Selecionar período"
+                android:src="@drawable/ic_chevron_down" />
+        </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.fragment.app.FragmentContainerView
@@ -239,5 +276,4 @@
             app:layout_constraintStart_toStartOf="parent"
             app:srcCompat="@drawable/midas_footer" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
+</androidx.constraintlayout.widget.ConstraintLayout>
