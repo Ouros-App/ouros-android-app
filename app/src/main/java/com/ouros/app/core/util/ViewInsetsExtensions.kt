@@ -76,6 +76,115 @@ fun View.applyBottomSystemBarPadding(basePaddingBottomPx: Int? = null) {
 }
 
 /**
+ * Mantém o formulário ou container fixo na tela (sem ScrollView), elevando-o fisicamente
+ * via translationY em perfeita sincronia com o teclado virtual (IME), de modo que o
+ * input e o botão de ação fiquem presos/apoiados diretamente em cima do teclado.
+ *
+ * Ao fechar o teclado, retorna suavemente à posição original de descanso.
+ *
+ * @param bottomAnchorView View cuja base inferior deve ficar imediatamente acima do teclado.
+ *                         Se null, usa a base do próprio container.
+ * @param extraMarginPx Espaçamento extra (respiro) acima do topo do teclado.
+ * @param viewsToFadeOut Lista de views secundárias (ex: botões no rodapé como "Esqueci a senha")
+ *                       que devem esmaecer suavemente (alpha de 1 para 0) enquanto o teclado sobe.
+ */
+fun View.applyImeFixedTranslation(
+    bottomAnchorView: View? = null,
+    extraMarginPx: Int = 16.dp,
+    viewsToFadeOut: List<View> = emptyList()
+) {
+    fun calculateTargetTranslation(imeBottom: Int): Float {
+        if (imeBottom <= 0) return 0f
+
+        val anchor = bottomAnchorView ?: this
+        val root = rootView
+        val rootHeight = root.height.takeIf { it > 0 } ?: resources.displayMetrics.heightPixels
+        val keyboardTop = rootHeight - imeBottom
+
+        val location = IntArray(2)
+        anchor.getLocationInWindow(location)
+        val anchorSelfTranslation = if (anchor != this) anchor.translationY else 0f
+        val anchorBottomOriginal = location[1] + anchor.height - translationY - anchorSelfTranslation
+
+        val neededShift = anchorBottomOriginal - (keyboardTop - extraMarginPx)
+        if (neededShift <= 0) return 0f
+
+        val containerLocation = IntArray(2)
+        getLocationInWindow(containerLocation)
+        val containerTopOriginal = containerLocation[1] - translationY
+        val insets = ViewCompat.getRootWindowInsets(this)
+        val statusBarTop = insets?.getInsets(WindowInsetsCompat.Type.statusBars())?.top ?: 24.dp
+        val maxAllowedShift = maxOf(0f, containerTopOriginal - statusBarTop - 8.dp)
+
+        return minOf(neededShift.toFloat(), maxAllowedShift)
+    }
+
+    ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
+        val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
+        val imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
+
+        if (!imeVisible || imeInsets.bottom == 0) {
+            animate().translationY(0f).setDuration(200).start()
+            viewsToFadeOut.forEach { it.animate().alpha(1f).setDuration(200).start() }
+        } else {
+            val shift = calculateTargetTranslation(imeInsets.bottom)
+            animate().translationY(-shift).setDuration(200).start()
+            viewsToFadeOut.forEach { it.animate().alpha(0f).setDuration(200).start() }
+        }
+
+        insets
+    }
+
+    ViewCompat.setWindowInsetsAnimationCallback(
+        this,
+        object : WindowInsetsAnimationCompat.Callback(DISPATCH_MODE_STOP) {
+            override fun onProgress(
+                insets: WindowInsetsCompat,
+                runningAnimations: MutableList<WindowInsetsAnimationCompat>
+            ): WindowInsetsCompat {
+                val imeAnim = runningAnimations.find {
+                    it.typeMask and WindowInsetsCompat.Type.ime() != 0
+                }
+                if (imeAnim != null) {
+                    val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
+                    val shift = calculateTargetTranslation(imeInsets.bottom)
+                    translationY = -shift
+
+                    val fraction = imeAnim.interpolatedFraction
+                    val isOpening = imeInsets.bottom > 0
+                    val targetAlpha = if (isOpening) 1f - fraction else fraction
+                    viewsToFadeOut.forEach { it.alpha = targetAlpha.coerceIn(0f, 1f) }
+                }
+                return insets
+            }
+
+            override fun onEnd(animation: WindowInsetsAnimationCompat) {
+                if (animation.typeMask and WindowInsetsCompat.Type.ime() != 0) {
+                    val insets = ViewCompat.getRootWindowInsets(this@applyImeFixedTranslation)
+                    val imeBottom = insets?.getInsets(WindowInsetsCompat.Type.ime())?.bottom ?: 0
+                    if (imeBottom == 0) {
+                        translationY = 0f
+                        viewsToFadeOut.forEach { it.alpha = 1f }
+                    }
+                }
+            }
+        }
+    )
+
+    if (isAttachedToWindow) {
+        ViewCompat.requestApplyInsets(this)
+    } else {
+        addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(v: View) {
+                v.removeOnAttachStateChangeListener(this)
+                ViewCompat.requestApplyInsets(v)
+            }
+            override fun onViewDetachedFromWindow(v: View) = Unit
+        })
+    }
+}
+
+/**
  * Ajusta o padding e a rolagem de formulários em sincronia com o teclado virtual (IME)
  * e a barra de navegação do sistema.
  *

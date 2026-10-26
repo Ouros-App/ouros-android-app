@@ -18,7 +18,7 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.ouros.app.R
 import com.ouros.app.core.util.applyBottomSystemBarMargin
-import com.ouros.app.core.util.applyImeAndNavigationPadding
+import com.ouros.app.core.util.applyImeFixedTranslation
 
 class FirstAccessPageFragment :
     Fragment() {
@@ -175,9 +175,10 @@ class FirstAccessPageFragment :
         inputEmail.error = null
         inputPassword.error = null
 
+        val btnContinueCred = view.findViewById<View>(R.id.btnContinue)
         view.findViewById<View>(
-            R.id.firstAccessCredentialsScroll
-        )?.applyImeAndNavigationPadding()
+            R.id.firstAccessCredentialsContentContainer
+        )?.applyImeFixedTranslation(bottomAnchorView = btnContinueCred)
     }
 
     private fun bindCode(view: View) {
@@ -205,13 +206,16 @@ class FirstAccessPageFragment :
         restoreVerificationCode()
         configureCodeFields()
 
+        val btnResend = view.findViewById<View>(R.id.btnResendCode)
+        val btnContinueCode = view.findViewById<View>(R.id.btnContinue)
         view.findViewById<View>(
-            R.id.firstAccessCodeScroll
-        )?.applyImeAndNavigationPadding()
+            R.id.firstAccessCodeContentContainer
+        )?.applyImeFixedTranslation(
+            bottomAnchorView = btnContinueCode,
+            viewsToFadeOut = listOfNotNull(btnResend)
+        )
 
-        view.findViewById<View>(
-            R.id.btnResendCode
-        )?.applyBottomSystemBarMargin()
+        btnResend?.applyBottomSystemBarMargin()
 
         renderCodeChallenge(
             maskedEmail =
@@ -442,9 +446,10 @@ class FirstAccessPageFragment :
         inputCpf.error = null
         inputTelephone.error = null
 
+        val btnContinuePersonal = view.findViewById<View>(R.id.btnContinue)
         view.findViewById<View>(
-            R.id.firstAccessPersonalScroll
-        )?.applyImeAndNavigationPadding()
+            R.id.firstAccessPersonalContentContainer
+        )?.applyImeFixedTranslation(bottomAnchorView = btnContinuePersonal)
     }
 
     private fun bindNewPassword(
@@ -485,9 +490,14 @@ class FirstAccessPageFragment :
 
         inputNewPassword.error = null
 
+        val imgMidas = view.findViewById<View>(R.id.imageView3)
+        val textMidas = view.findViewById<View>(R.id.textView22)
         view.findViewById<View>(
-            R.id.firstAccessPasswordScroll
-        )?.applyImeAndNavigationPadding()
+            R.id.firstAccessPasswordContentContainer
+        )?.applyImeFixedTranslation(
+            bottomAnchorView = btnFinish,
+            viewsToFadeOut = listOfNotNull(imgMidas, textMidas)
+        )
     }
 
     fun renderCredentialsErrors(
