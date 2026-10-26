@@ -16,6 +16,7 @@
         android:theme="@style/Theme.Ouros">
         <activity
             android:name=".feature.secondary.simulator.SimulatorActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="false" />
 
         <provider
@@ -50,6 +51,7 @@
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity
             android:name=".feature.secondary.profile.ProfileActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
             android:name=".feature.secondary.tip.TipDetailActivity"
@@ -76,6 +78,7 @@
             android:exported="false" />
         <activity
             android:name=".feature.auth.firstaccess.FirstAccessActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
             android:name=".feature.auth.forgotpassword.ForgotPasswordActivity"

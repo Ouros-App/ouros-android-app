@@ -19,6 +19,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.ouros.app.R
+import com.ouros.app.core.util.applyImeAndNavigationPadding
 import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository
@@ -166,6 +167,7 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     private fun bindViews() {
+        findViewById<View>(R.id.profileScrollContent).applyImeAndNavigationPadding()
         inputName = findViewById(R.id.inputName)
         inputEmail = findViewById(R.id.inputEmail)
         inputPassword = findViewById(R.id.inputPassword)

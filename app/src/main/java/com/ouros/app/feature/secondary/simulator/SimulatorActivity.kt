@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.ouros.app.R
+import com.ouros.app.core.util.applyImeAndNavigationPadding
 import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.SecureRefreshTokenStore
 import com.ouros.app.data.session.FarmSessionStore
@@ -64,6 +65,7 @@ class SimulatorActivity : AppCompatActivity() {
 
     private fun bindViews() {
         content = findViewById(R.id.simulatorContent)
+        content.applyImeAndNavigationPadding()
         loading = findViewById(R.id.simulatorLoading)
         error = findViewById(R.id.simulatorError)
         retry = findViewById(R.id.simulatorRetry)

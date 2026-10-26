@@ -3,6 +3,10 @@ package com.ouros.app.feature.main.record
 import android.app.DatePickerDialog
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import android.widget.Button
 import android.widget.EditText
 import androidx.annotation.LayoutRes
@@ -21,23 +25,54 @@ abstract class RecordStepFragment(@LayoutRes layout: Int) : Fragment(layout) {
     protected val wizard: RecordWizardViewModel get() = host.wizardViewModel
 
     protected fun bindNavigation(root: View) {
-        root.findViewById<View>(R.id.recordBack).setOnClickListener { host.previousStep() }
-        root.findViewById<View>(R.id.recordReturnHome)?.setOnClickListener { host.finishKeepingDraft() }
+        root.findViewById<View>(R.id.recordBack)?.setOnClickListener { host.previousStep() }
+        val returnHome = root.findViewById<View>(R.id.recordReturnHome)
+        returnHome?.setOnClickListener { host.finishKeepingDraft() }
+        configureKeyboardBehavior(root, returnHome)
     }
 
     private fun configureKeyboardBehavior(root: View, returnHome: View?) {
-        if (returnHome != null) {
-            ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
-                val keyboardIsOpen = insets.isVisible(WindowInsetsCompat.Type.ime())
+        val scrollContent = root.findViewById<View>(R.id.recordScrollContent)
+        val initialScrollPaddingBottom = scrollContent?.paddingBottom ?: 0
+        val initialReturnHomeBottomMargin =
+            (returnHome?.layoutParams as? ViewGroup.MarginLayoutParams)?.bottomMargin ?: 0
+
+        ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
+            val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
+            val navInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            val keyboardIsOpen = insets.isVisible(WindowInsetsCompat.Type.ime())
+
+            if (returnHome != null) {
                 returnHome.isVisible = !keyboardIsOpen
-                insets
+                if (!keyboardIsOpen) {
+                    returnHome.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                        bottomMargin = initialReturnHomeBottomMargin + navInsets.bottom
+                    }
+                }
             }
+
+            scrollContent?.let { scroll ->
+                val bottomPadding = if (keyboardIsOpen) {
+                    initialScrollPaddingBottom + imeInsets.bottom
+                } else {
+                    if (returnHome != null) {
+                        initialScrollPaddingBottom
+                    } else {
+                        initialScrollPaddingBottom + navInsets.bottom
+                    }
+                }
+                scroll.updatePadding(bottom = bottomPadding)
+            }
+
+            insets
         }
 
         root.post {
             root.isFocusableInTouchMode = true
             root.requestFocus()
-            ViewCompat.getWindowInsetsController(root)?.hide(WindowInsetsCompat.Type.ime())
+            activity?.window?.let { window ->
+                WindowInsetsControllerCompat(window, root).hide(WindowInsetsCompat.Type.ime())
+            }
             ViewCompat.requestApplyInsets(root)
         }
     }
