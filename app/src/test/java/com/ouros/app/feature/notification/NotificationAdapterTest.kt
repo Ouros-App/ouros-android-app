@@ -4,6 +4,7 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import com.ouros.app.R
 import com.ouros.app.data.notification.NotificationItemResponse
+import com.ouros.app.feature.secondary.notification.NotificationAdapter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

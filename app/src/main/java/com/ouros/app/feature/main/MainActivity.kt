@@ -19,8 +19,6 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import coil.load
@@ -43,11 +41,11 @@ import com.ouros.app.feature.main.dashboard.DashboardFragment
 import com.ouros.app.feature.main.goals.GoalsFragment
 import com.ouros.app.feature.main.rank.RankFragment
 import com.ouros.app.feature.main.record.RecordFragment
-import com.ouros.app.feature.notification.NotificationActivity
+import com.ouros.app.feature.secondary.notification.NotificationActivity
 import com.ouros.app.feature.secondary.chatbot.ChatbotActivity
 import com.ouros.app.feature.secondary.profile.ProfileActivity
 import com.ouros.app.feature.secondary.profile.ProfilePhotoStore
-import com.ouros.app.feature.tip.TipDetailActivity
+import com.ouros.app.feature.secondary.tip.TipDetailActivity
 import java.util.Calendar
 import kotlinx.coroutines.launch
 

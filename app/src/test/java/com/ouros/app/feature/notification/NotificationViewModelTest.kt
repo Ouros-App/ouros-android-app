@@ -7,6 +7,7 @@ import com.ouros.app.data.notification.NotificationItemResponse
 import com.ouros.app.data.notification.NotificationPageResponse
 import com.ouros.app.data.notification.NotificationRepository
 import com.ouros.app.data.notification.UnreadCountResponse
+import com.ouros.app.feature.secondary.notification.NotificationViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
