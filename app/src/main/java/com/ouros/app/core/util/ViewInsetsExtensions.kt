@@ -4,10 +4,13 @@ import android.content.res.Resources
 import android.graphics.Rect
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ScrollView
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsAnimationCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
+import androidx.core.widget.NestedScrollView
 
 /**
  * Converte valor inteiro de dp para pixels (px) usando as métricas do sistema.
@@ -73,9 +76,13 @@ fun View.applyBottomSystemBarPadding(basePaddingBottomPx: Int? = null) {
 }
 
 /**
- * Ajusta o padding inferior de uma View (como NestedScrollView ou ScrollView) quando o teclado (IME)
- * ou as barras de navegação do sistema aparecem. Ao detectar o teclado aberto, solicita scroll
- * para manter o componente em foco visível na tela.
+ * Ajusta o padding e a rolagem de formulários em sincronia com o teclado virtual (IME)
+ * e a barra de navegação do sistema.
+ *
+ * - Quando o teclado está fechado, mantém o layout exatamente como foi desenhado (espaçoso).
+ * - Quando o teclado sobe, anima a rolagem/elevação em tempo real (WindowInsetsAnimationCompat),
+ *   fazendo com que os campos de entrada e botões de ação se levantem suavemente junto com o teclado.
+ * - Quando o teclado fecha, retorna a tela suavemente para a posição inicial de descanso.
  */
 fun View.applyImeAndNavigationPadding(extraPaddingPx: Int = 0) {
     val initialPaddingBottom = paddingBottom
@@ -94,13 +101,136 @@ fun View.applyImeAndNavigationPadding(extraPaddingPx: Int = 0) {
                     val rect = Rect()
                     focused.getDrawingRect(rect)
                     view.offsetDescendantRectToMyCoords(focused, rect)
-                    rect.bottom += extraPaddingPx
+                    rect.bottom += extraPaddingPx + 16.dp
                     view.requestRectangleOnScreen(rect, false)
                 }
+            }
+        } else {
+            // Teclado fechado: retorna suavemente para a posição inicial
+            if (view is NestedScrollView) {
+                view.smoothScrollTo(0, 0)
+            } else if (view is ScrollView) {
+                view.smoothScrollTo(0, 0)
             }
         }
 
         insets
+    }
+
+    // Animação sincronizada com o teclado em tempo real
+    ViewCompat.setWindowInsetsAnimationCallback(
+        this,
+        object : WindowInsetsAnimationCompat.Callback(DISPATCH_MODE_STOP) {
+            private var startScrollY = 0
+            private var targetScrollY = 0
+
+            override fun onPrepare(animation: WindowInsetsAnimationCompat) {
+                if (animation.typeMask and WindowInsetsCompat.Type.ime() != 0) {
+                    startScrollY = scrollY
+                }
+            }
+
+            override fun onStart(
+                animation: WindowInsetsAnimationCompat,
+                bounds: WindowInsetsAnimationCompat.BoundsCompat
+            ): WindowInsetsAnimationCompat.BoundsCompat {
+                if (animation.typeMask and WindowInsetsCompat.Type.ime() != 0) {
+                    val focused = findFocus()
+                    val isScrollContainer = this@applyImeAndNavigationPadding is NestedScrollView ||
+                            this@applyImeAndNavigationPadding is ScrollView
+                    val viewGroup = this@applyImeAndNavigationPadding as? ViewGroup
+
+                    if (focused != null && isScrollContainer && viewGroup != null) {
+                        val focusedRect = Rect()
+                        val container = (focused.parent as? View) ?: focused
+                        container.getDrawingRect(focusedRect)
+                        viewGroup.offsetDescendantRectToMyCoords(container, focusedRect)
+
+                        val continueBtn = findViewById<View>(com.ouros.app.R.id.btnContinue)
+                            ?: findViewById<View>(com.ouros.app.R.id.btnFinish)
+                            ?: findViewById<View>(com.ouros.app.R.id.recordPrimary)
+
+                        val bottomToClear = if (continueBtn != null && continueBtn.isShown) {
+                            val btnRect = Rect()
+                            continueBtn.getDrawingRect(btnRect)
+                            viewGroup.offsetDescendantRectToMyCoords(continueBtn, btnRect)
+                            maxOf(focusedRect.bottom, btnRect.bottom)
+                        } else {
+                            focusedRect.bottom
+                        }
+
+                        val availableHeight = height - bounds.upperBound.bottom
+                        targetScrollY = if (availableHeight > 0) {
+                            maxOf(0, bottomToClear - availableHeight + extraPaddingPx + 16.dp)
+                        } else {
+                            startScrollY
+                        }
+                    } else {
+                        targetScrollY = 0
+                    }
+                }
+                return bounds
+            }
+
+            override fun onProgress(
+                insets: WindowInsetsCompat,
+                runningAnimations: MutableList<WindowInsetsAnimationCompat>
+            ): WindowInsetsCompat {
+                val imeAnim = runningAnimations.find {
+                    it.typeMask and WindowInsetsCompat.Type.ime() != 0
+                }
+                if (imeAnim != null) {
+                    val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
+                    val navInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+                    val bottomInset = maxOf(imeInsets.bottom, navInsets.bottom)
+                    updatePadding(bottom = initialPaddingBottom + bottomInset + extraPaddingPx)
+
+                    val isScrollContainer = this@applyImeAndNavigationPadding is NestedScrollView ||
+                            this@applyImeAndNavigationPadding is ScrollView
+
+                    if (isScrollContainer && targetScrollY > 0) {
+                        val fraction = imeAnim.interpolatedFraction
+                        val currentScroll = (startScrollY + (targetScrollY - startScrollY) * fraction).toInt()
+                        scrollTo(0, currentScroll)
+                    }
+                }
+                return insets
+            }
+
+            override fun onEnd(animation: WindowInsetsAnimationCompat) {
+                if (animation.typeMask and WindowInsetsCompat.Type.ime() != 0) {
+                    val insets = ViewCompat.getRootWindowInsets(this@applyImeAndNavigationPadding)
+                    val imeBottom = insets?.getInsets(WindowInsetsCompat.Type.ime())?.bottom ?: 0
+                    if (imeBottom == 0) {
+                        if (this@applyImeAndNavigationPadding is NestedScrollView) {
+                            smoothScrollTo(0, 0)
+                        } else if (this@applyImeAndNavigationPadding is ScrollView) {
+                            smoothScrollTo(0, 0)
+                        }
+                    }
+                }
+            }
+        }
+    )
+
+    // Monitora troca de foco entre campos enquanto o teclado já estiver aberto
+    viewTreeObserver.addOnGlobalFocusChangeListener { _, newFocus ->
+        if (newFocus != null && isAttachedToWindow) {
+            val rootInsets = ViewCompat.getRootWindowInsets(this)
+            val imeBottom = rootInsets?.getInsets(WindowInsetsCompat.Type.ime())?.bottom ?: 0
+            if (imeBottom > 0) {
+                post {
+                    val viewGroup = this as? ViewGroup
+                    if (viewGroup != null) {
+                        val rect = Rect()
+                        newFocus.getDrawingRect(rect)
+                        viewGroup.offsetDescendantRectToMyCoords(newFocus, rect)
+                        rect.bottom += extraPaddingPx + 16.dp
+                        requestRectangleOnScreen(rect, true)
+                    }
+                }
+            }
+        }
     }
 
     if (isAttachedToWindow) {
