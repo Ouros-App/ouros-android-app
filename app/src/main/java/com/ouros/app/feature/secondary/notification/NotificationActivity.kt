@@ -20,6 +20,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.ouros.app.R
+import com.ouros.app.core.util.applyBottomSystemBarPadding
+import com.ouros.app.core.util.dp
 import com.ouros.app.core.fcm.OurosFirebaseMessagingService
 import com.ouros.app.data.notification.NotificationItemResponse
 import com.ouros.app.feature.main.MainActivity
@@ -88,6 +90,7 @@ class NotificationActivity : AppCompatActivity() {
         }
         recyclerNotifications.layoutManager = LinearLayoutManager(this)
         recyclerNotifications.adapter = adapter
+        recyclerNotifications.applyBottomSystemBarPadding(16.dp)
     }
 
     private fun setupListeners() {

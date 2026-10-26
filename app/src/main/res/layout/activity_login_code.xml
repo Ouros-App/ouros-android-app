@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -37,137 +36,149 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="-20dp"
         android:layout_marginTop="5dp"
+        android:contentDescription="Asas de Ouros"
         app:layout_constraintStart_toEndOf="@id/header"
         app:layout_constraintTop_toTopOf="@id/header"
         app:srcCompat="@drawable/ouros_goldwings" />
 
-    <LinearLayout
-        android:id="@+id/codeTexts"
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/loginCodeScrollContent"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginTop="72dp"
-        android:layout_marginEnd="50dp"
-        android:orientation="vertical"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:isScrollContainer="true"
+        android:overScrollMode="never"
+        android:scrollbars="none"
+        app:layout_constraintBottom_toTopOf="@id/btnResendCode"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/header">
 
-        <TextView
-            android:id="@+id/textCodeTitle"
-            style="@style/subtitle"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Agora, o código de verificação!" />
+            android:orientation="vertical"
+            android:paddingBottom="16dp">
 
-        <TextView
-            android:id="@+id/textCodeDescription"
-            style="@style/text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Enviamos um código temporário para o e-mail registrado." />
+            <LinearLayout
+                android:id="@+id/codeTexts"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="50dp"
+                android:layout_marginTop="50dp"
+                android:layout_marginEnd="50dp"
+                android:orientation="vertical">
 
-    </LinearLayout>
+                <TextView
+                    android:id="@+id/textCodeTitle"
+                    style="@style/subtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Agora, o código de verificação!" />
 
-    <LinearLayout
-        android:id="@+id/codeInputContainer"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="30dp"
-        android:layout_marginTop="70dp"
-        android:layout_marginEnd="30dp"
-        android:gravity="center"
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/codeTexts">
+                <TextView
+                    android:id="@+id/textCodeDescription"
+                    style="@style/text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Enviamos um código temporário para o e-mail registrado." />
 
-        <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Ouros.VerificationCodeBox">
+            </LinearLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editCodeDigitOne"
-                style="@style/Widget.Ouros.VerificationCodeInput"
-                android:autofillHints="smsOTPCode"
-                android:importantForAutofill="yes" />
+            <LinearLayout
+                android:id="@+id/codeInputContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="30dp"
+                android:layout_marginTop="50dp"
+                android:layout_marginEnd="30dp"
+                android:gravity="center"
+                android:orientation="horizontal">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Ouros.VerificationCodeBox">
 
-        <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Ouros.VerificationCodeBox">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editCodeDigitOne"
+                        style="@style/Widget.Ouros.VerificationCodeInput"
+                        android:autofillHints="smsOTPCode"
+                        android:importantForAutofill="yes" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editCodeDigitTwo"
-                style="@style/Widget.Ouros.VerificationCodeInput"
-                android:importantForAutofill="no" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Ouros.VerificationCodeBox">
 
-        <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Ouros.VerificationCodeBox">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editCodeDigitTwo"
+                        style="@style/Widget.Ouros.VerificationCodeInput"
+                        android:importantForAutofill="no" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editCodeDigitThree"
-                style="@style/Widget.Ouros.VerificationCodeInput"
-                android:importantForAutofill="no" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Ouros.VerificationCodeBox">
 
-        <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Ouros.VerificationCodeBox">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editCodeDigitThree"
+                        style="@style/Widget.Ouros.VerificationCodeInput"
+                        android:importantForAutofill="no" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editCodeDigitFour"
-                style="@style/Widget.Ouros.VerificationCodeInput"
-                android:importantForAutofill="no" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Ouros.VerificationCodeBox">
 
-        <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Ouros.VerificationCodeBox">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editCodeDigitFour"
+                        style="@style/Widget.Ouros.VerificationCodeInput"
+                        android:importantForAutofill="no" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editCodeDigitFive"
-                style="@style/Widget.Ouros.VerificationCodeInput"
-                android:importantForAutofill="no" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Ouros.VerificationCodeBox">
 
-        <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Ouros.VerificationCodeBox">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editCodeDigitFive"
+                        style="@style/Widget.Ouros.VerificationCodeInput"
+                        android:importantForAutofill="no" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editCodeDigitSix"
-                style="@style/Widget.Ouros.VerificationCodeInput"
-                android:importantForAutofill="no" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Ouros.VerificationCodeBox">
 
-    </LinearLayout>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editCodeDigitSix"
+                        style="@style/Widget.Ouros.VerificationCodeInput"
+                        android:importantForAutofill="no" />
 
-    <TextView
-        android:id="@+id/textCodeError"
-        style="@style/text"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="30dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="30dp"
-        android:textColor="@color/warning_red"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/codeInputContainer"
-        tools:text="Informe os 6 números do código."
-        tools:visibility="visible" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-    <Button
-        android:id="@+id/btnContinue"
-        style="@style/Widget.Ouros.Button.Big.Blue"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="30dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="30dp"
-        android:text="Continuar"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/textCodeError" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/textCodeError"
+                style="@style/text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="30dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="30dp"
+                android:textColor="@color/warning_red"
+                android:visibility="gone"
+                tools:text="Informe os 6 números do código."
+                tools:visibility="visible" />
+
+            <Button
+                android:id="@+id/btnContinue"
+                style="@style/Widget.Ouros.Button.Big.Blue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="30dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="30dp"
+                android:text="Continuar" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
     <TextView
         android:id="@+id/btnResendCode"
@@ -176,7 +187,7 @@
         android:layout_height="48dp"
         android:layout_marginStart="30dp"
         android:layout_marginEnd="30dp"
-        android:layout_marginBottom="70dp"
+        android:layout_marginBottom="24dp"
         android:clickable="true"
         android:focusable="true"
         android:gravity="center"

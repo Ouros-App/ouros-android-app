@@ -18,6 +18,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.ouros.app.R
+import com.ouros.app.core.util.applyBottomSystemBarMargin
+import com.ouros.app.core.util.applyImeAndNavigationPadding
 import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository
@@ -204,6 +206,14 @@ class LoginActivity :
             viewModel.onLoginClicked()
         }
 
+        findViewById<View>(
+            R.id.loginScrollContent
+        ).applyImeAndNavigationPadding()
+
+        findViewById<View>(
+            R.id.btnForgotPasswd
+        ).applyBottomSystemBarMargin()
+
         renderLoginLoading(false)
     }
 
@@ -255,6 +265,14 @@ class LoginActivity :
             viewModel
                 .onResendCodeClicked()
         }
+
+        findViewById<View>(
+            R.id.loginCodeScrollContent
+        ).applyImeAndNavigationPadding()
+
+        findViewById<View>(
+            R.id.btnResendCode
+        ).applyBottomSystemBarMargin()
 
         codeFields
             .firstOrNull {

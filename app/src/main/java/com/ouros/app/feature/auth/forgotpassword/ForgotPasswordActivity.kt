@@ -16,6 +16,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.ouros.app.R
+import com.ouros.app.core.util.applyBottomSystemBarMargin
+import com.ouros.app.core.util.applyImeAndNavigationPadding
 import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository
 import com.ouros.app.data.auth.SecureRefreshTokenStore
@@ -117,6 +119,10 @@ class ForgotPasswordActivity :
                 .activity_forgot_password_email
         )
 
+        findViewById<View>(
+            R.id.forgotEmailScroll
+        ).applyImeAndNavigationPadding()
+
         val inputEmail =
             findViewById<TextInputLayout>(
                 R.id.inputEmail
@@ -158,6 +164,14 @@ class ForgotPasswordActivity :
             R.layout
                 .activity_forgot_password_code
         )
+
+        findViewById<View>(
+            R.id.forgotCodeScroll
+        ).applyImeAndNavigationPadding()
+
+        findViewById<View>(
+            R.id.btnResendCode
+        ).applyBottomSystemBarMargin()
 
         codeFields = listOf(
             findViewById(
@@ -218,6 +232,10 @@ class ForgotPasswordActivity :
             R.layout
                 .activity_forgot_password_new_password
         )
+
+        findViewById<View>(
+            R.id.forgotPasswordScroll
+        ).applyImeAndNavigationPadding()
 
         val editNewPassword =
             findViewById<TextInputEditText>(

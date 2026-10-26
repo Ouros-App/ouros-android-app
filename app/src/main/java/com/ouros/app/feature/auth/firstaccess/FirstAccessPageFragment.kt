@@ -17,6 +17,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.ouros.app.R
+import com.ouros.app.core.util.applyBottomSystemBarMargin
+import com.ouros.app.core.util.applyImeAndNavigationPadding
 
 class FirstAccessPageFragment :
     Fragment() {
@@ -172,6 +174,10 @@ class FirstAccessPageFragment :
 
         inputEmail.error = null
         inputPassword.error = null
+
+        view.findViewById<View>(
+            R.id.firstAccessCredentialsScroll
+        )?.applyImeAndNavigationPadding()
     }
 
     private fun bindCode(view: View) {
@@ -198,6 +204,14 @@ class FirstAccessPageFragment :
 
         restoreVerificationCode()
         configureCodeFields()
+
+        view.findViewById<View>(
+            R.id.firstAccessCodeScroll
+        )?.applyImeAndNavigationPadding()
+
+        view.findViewById<View>(
+            R.id.btnResendCode
+        )?.applyBottomSystemBarMargin()
 
         renderCodeChallenge(
             maskedEmail =
@@ -427,6 +441,10 @@ class FirstAccessPageFragment :
         inputName.error = null
         inputCpf.error = null
         inputTelephone.error = null
+
+        view.findViewById<View>(
+            R.id.firstAccessPersonalScroll
+        )?.applyImeAndNavigationPadding()
     }
 
     private fun bindNewPassword(
@@ -466,6 +484,10 @@ class FirstAccessPageFragment :
         }
 
         inputNewPassword.error = null
+
+        view.findViewById<View>(
+            R.id.firstAccessPasswordScroll
+        )?.applyImeAndNavigationPadding()
     }
 
     fun renderCredentialsErrors(

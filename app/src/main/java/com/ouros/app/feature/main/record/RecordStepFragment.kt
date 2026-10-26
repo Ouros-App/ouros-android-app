@@ -62,6 +62,19 @@ abstract class RecordStepFragment(@LayoutRes layout: Int) : Fragment(layout) {
                     }
                 }
                 scroll.updatePadding(bottom = bottomPadding)
+
+                if (keyboardIsOpen && imeInsets.bottom > 0) {
+                    scroll.post {
+                        val focused = root.findFocus()
+                        if (focused != null && scroll is ViewGroup) {
+                            val rect = android.graphics.Rect()
+                            focused.getDrawingRect(rect)
+                            scroll.offsetDescendantRectToMyCoords(focused, rect)
+                            rect.bottom += 16
+                            scroll.requestRectangleOnScreen(rect, false)
+                        }
+                    }
+                }
             }
 
             insets

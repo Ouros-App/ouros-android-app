@@ -1,11 +1,19 @@
 package com.ouros.app.core.util
 
+import android.content.res.Resources
+import android.graphics.Rect
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
+
+/**
+ * Converte valor inteiro de dp para pixels (px) usando as métricas do sistema.
+ */
+val Int.dp: Int
+    get() = (this * Resources.getSystem().displayMetrics.density).toInt()
 
 /**
  * Ajusta a margem inferior de uma View com base nas barras de navegação do sistema.
@@ -39,8 +47,35 @@ fun View.applyBottomSystemBarMargin(baseMarginBottomPx: Int? = null) {
 }
 
 /**
+ * Ajusta o padding inferior de uma View (RecyclerView, ScrollView, etc.) com base
+ * nas barras de navegação do sistema, preservando o padding inferior original.
+ */
+fun View.applyBottomSystemBarPadding(basePaddingBottomPx: Int? = null) {
+    val initialBottomPadding = basePaddingBottomPx ?: paddingBottom
+
+    ViewCompat.setOnApplyWindowInsetsListener(this) { view, insets ->
+        val navBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+        view.updatePadding(bottom = initialBottomPadding + navBars.bottom)
+        insets
+    }
+
+    if (isAttachedToWindow) {
+        ViewCompat.requestApplyInsets(this)
+    } else {
+        addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(v: View) {
+                v.removeOnAttachStateChangeListener(this)
+                ViewCompat.requestApplyInsets(v)
+            }
+            override fun onViewDetachedFromWindow(v: View) = Unit
+        })
+    }
+}
+
+/**
  * Ajusta o padding inferior de uma View (como NestedScrollView ou ScrollView) quando o teclado (IME)
- * ou as barras de navegação do sistema aparecem.
+ * ou as barras de navegação do sistema aparecem. Ao detectar o teclado aberto, solicita scroll
+ * para manter o componente em foco visível na tela.
  */
 fun View.applyImeAndNavigationPadding(extraPaddingPx: Int = 0) {
     val initialPaddingBottom = paddingBottom
@@ -51,6 +86,20 @@ fun View.applyImeAndNavigationPadding(extraPaddingPx: Int = 0) {
         val bottomInset = maxOf(imeInsets.bottom, navInsets.bottom)
 
         view.updatePadding(bottom = initialPaddingBottom + bottomInset + extraPaddingPx)
+
+        if (imeInsets.bottom > 0) {
+            view.post {
+                val focused = view.findFocus()
+                if (focused != null && view is ViewGroup) {
+                    val rect = Rect()
+                    focused.getDrawingRect(rect)
+                    view.offsetDescendantRectToMyCoords(focused, rect)
+                    rect.bottom += extraPaddingPx
+                    view.requestRectangleOnScreen(rect, false)
+                }
+            }
+        }
+
         insets
     }
 
