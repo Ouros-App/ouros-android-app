@@ -130,7 +130,7 @@ fun View.applyImeFixedTranslation(
         val topMarginPx = statusBarTop + 8.dp
 
         val focused = findFocus()
-        val focusedShift = if (focused != null && isChildOrDescendant(focused)) {
+        val targetShift = if (focused != null && isChildOrDescendant(focused)) {
             val focusedField = (focused.parent?.parent as? View)?.takeIf { isChildOrDescendant(it) }
                 ?: (focused.parent as? View)?.takeIf { isChildOrDescendant(it) }
                 ?: focused
@@ -143,21 +143,16 @@ fun View.applyImeFixedTranslation(
             val shiftToClearKeyboard = fBottomOriginal - (keyboardTop - extraMarginPx)
             val maxShiftToKeepOnScreen = maxOf(0f, fTopOriginal - topMarginPx)
 
-            minOf(shiftToClearKeyboard.toFloat(), maxShiftToKeepOnScreen)
-        } else {
-            null
-        }
-
-        val baseShift = if (focusedShift != null) {
-            maxOf(neededShiftForAnchor.toFloat(), focusedShift)
+            val desiredShift = maxOf(neededShiftForAnchor.toFloat(), shiftToClearKeyboard.toFloat())
+            minOf(desiredShift, maxShiftToKeepOnScreen)
         } else {
             neededShiftForAnchor.toFloat()
         }
 
-        if (baseShift <= 0f) return 0f
+        if (targetShift <= 0f) return 0f
 
         val maxAllowedShift = maxOf(0f, containerTopOriginal - statusBarTop)
-        return minOf(baseShift, maxAllowedShift)
+        return minOf(targetShift, maxAllowedShift)
     }
 
     ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
