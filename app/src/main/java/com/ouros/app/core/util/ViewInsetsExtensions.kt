@@ -87,12 +87,26 @@ fun View.applyBottomSystemBarPadding(basePaddingBottomPx: Int? = null) {
  * @param extraMarginPx Espaçamento extra (respiro) acima do topo do teclado.
  * @param viewsToFadeOut Lista de views secundárias (ex: botões no rodapé como "Esqueci a senha")
  *                       que devem esmaecer suavemente (alpha de 1 para 0) enquanto o teclado sobe.
+ * @param collapsingViews Lista de views de topo (ex: fotos de perfil ou cards de métricas) que
+ *                        devem esmaecer e recolher quando o teclado subir.
  */
 fun View.applyImeFixedTranslation(
     bottomAnchorView: View? = null,
     extraMarginPx: Int = 16.dp,
-    viewsToFadeOut: List<View> = emptyList()
+    viewsToFadeOut: List<View> = emptyList(),
+    collapsingViews: List<View> = emptyList()
 ) {
+    val allFadeViews = (viewsToFadeOut + collapsingViews).distinct()
+
+    fun isChildOrDescendant(view: View): Boolean {
+        var currentParent = view.parent
+        while (currentParent != null) {
+            if (currentParent === this) return true
+            currentParent = currentParent.parent
+        }
+        return false
+    }
+
     fun calculateTargetTranslation(imeBottom: Int): Float {
         if (imeBottom <= 0) return 0f
 
@@ -106,17 +120,44 @@ fun View.applyImeFixedTranslation(
         val anchorSelfTranslation = if (anchor != this) anchor.translationY else 0f
         val anchorBottomOriginal = location[1] + anchor.height - translationY - anchorSelfTranslation
 
-        val neededShift = anchorBottomOriginal - (keyboardTop - extraMarginPx)
-        if (neededShift <= 0) return 0f
+        val neededShiftForAnchor = anchorBottomOriginal - (keyboardTop - extraMarginPx)
 
         val containerLocation = IntArray(2)
         getLocationInWindow(containerLocation)
         val containerTopOriginal = containerLocation[1] - translationY
         val insets = ViewCompat.getRootWindowInsets(this)
         val statusBarTop = insets?.getInsets(WindowInsetsCompat.Type.statusBars())?.top ?: 24.dp
-        val maxAllowedShift = maxOf(0f, containerTopOriginal - statusBarTop - 8.dp)
+        val topMarginPx = statusBarTop + 8.dp
 
-        return minOf(neededShift.toFloat(), maxAllowedShift)
+        val focused = findFocus()
+        val focusedShift = if (focused != null && isChildOrDescendant(focused)) {
+            val focusedField = (focused.parent?.parent as? View)?.takeIf { isChildOrDescendant(it) }
+                ?: (focused.parent as? View)?.takeIf { isChildOrDescendant(it) }
+                ?: focused
+
+            val fLocation = IntArray(2)
+            focusedField.getLocationInWindow(fLocation)
+            val fBottomOriginal = fLocation[1] + focusedField.height - translationY
+            val fTopOriginal = fLocation[1] - translationY
+
+            val shiftToClearKeyboard = fBottomOriginal - (keyboardTop - extraMarginPx)
+            val maxShiftToKeepOnScreen = maxOf(0f, fTopOriginal - topMarginPx)
+
+            minOf(shiftToClearKeyboard.toFloat(), maxShiftToKeepOnScreen)
+        } else {
+            null
+        }
+
+        val baseShift = if (focusedShift != null) {
+            maxOf(neededShiftForAnchor.toFloat(), focusedShift)
+        } else {
+            neededShiftForAnchor.toFloat()
+        }
+
+        if (baseShift <= 0f) return 0f
+
+        val maxAllowedShift = maxOf(0f, containerTopOriginal - statusBarTop)
+        return minOf(baseShift, maxAllowedShift)
     }
 
     ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
@@ -125,11 +166,19 @@ fun View.applyImeFixedTranslation(
 
         if (!imeVisible || imeInsets.bottom == 0) {
             animate().translationY(0f).setDuration(200).start()
-            viewsToFadeOut.forEach { it.animate().alpha(1f).setDuration(200).start() }
+            allFadeViews.forEach {
+                it.animate().alpha(1f).setDuration(200).withEndAction {
+                    it.visibility = View.VISIBLE
+                }.start()
+            }
         } else {
             val shift = calculateTargetTranslation(imeInsets.bottom)
             animate().translationY(-shift).setDuration(200).start()
-            viewsToFadeOut.forEach { it.animate().alpha(0f).setDuration(200).start() }
+            allFadeViews.forEach {
+                it.animate().alpha(0f).setDuration(200).withEndAction {
+                    if (it.alpha == 0f) it.visibility = View.INVISIBLE
+                }.start()
+            }
         }
 
         insets
@@ -138,6 +187,14 @@ fun View.applyImeFixedTranslation(
     ViewCompat.setWindowInsetsAnimationCallback(
         this,
         object : WindowInsetsAnimationCompat.Callback(DISPATCH_MODE_STOP) {
+            override fun onStart(
+                animation: WindowInsetsAnimationCompat,
+                bounds: WindowInsetsAnimationCompat.BoundsCompat
+            ): WindowInsetsAnimationCompat.BoundsCompat {
+                allFadeViews.forEach { it.visibility = View.VISIBLE }
+                return bounds
+            }
+
             override fun onProgress(
                 insets: WindowInsetsCompat,
                 runningAnimations: MutableList<WindowInsetsAnimationCompat>
@@ -153,7 +210,7 @@ fun View.applyImeFixedTranslation(
                     val fraction = imeAnim.interpolatedFraction
                     val isOpening = imeInsets.bottom > 0
                     val targetAlpha = if (isOpening) 1f - fraction else fraction
-                    viewsToFadeOut.forEach { it.alpha = targetAlpha.coerceIn(0f, 1f) }
+                    allFadeViews.forEach { it.alpha = targetAlpha.coerceIn(0f, 1f) }
                 }
                 return insets
             }
@@ -164,12 +221,34 @@ fun View.applyImeFixedTranslation(
                     val imeBottom = insets?.getInsets(WindowInsetsCompat.Type.ime())?.bottom ?: 0
                     if (imeBottom == 0) {
                         translationY = 0f
-                        viewsToFadeOut.forEach { it.alpha = 1f }
+                        allFadeViews.forEach {
+                            it.visibility = View.VISIBLE
+                            it.alpha = 1f
+                        }
+                    } else {
+                        allFadeViews.forEach {
+                            it.alpha = 0f
+                            it.visibility = View.INVISIBLE
+                        }
                     }
                 }
             }
         }
     )
+
+    viewTreeObserver.addOnGlobalFocusChangeListener { _, _ ->
+        if (isAttachedToWindow) {
+            val rootInsets = ViewCompat.getRootWindowInsets(this)
+            val imeBottom = rootInsets?.getInsets(WindowInsetsCompat.Type.ime())?.bottom ?: 0
+            val imeVisible = rootInsets?.isVisible(WindowInsetsCompat.Type.ime()) == true
+            if (imeVisible && imeBottom > 0) {
+                post {
+                    val shift = calculateTargetTranslation(imeBottom)
+                    animate().translationY(-shift).setDuration(200).start()
+                }
+            }
+        }
+    }
 
     if (isAttachedToWindow) {
         ViewCompat.requestApplyInsets(this)

@@ -11,7 +11,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.ouros.app.R
-import com.ouros.app.core.util.applyImeAndNavigationPadding
+import com.ouros.app.core.util.applyImeFixedTranslation
+import com.ouros.app.core.util.dp
 import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.SecureRefreshTokenStore
 import com.ouros.app.data.session.FarmSessionStore
@@ -65,7 +66,9 @@ class SimulatorActivity : AppCompatActivity() {
 
     private fun bindViews() {
         content = findViewById(R.id.simulatorContent)
-        content.applyImeAndNavigationPadding()
+        val kpiContainer = findViewById<View>(R.id.simulatorKpiContainer)
+        val formContainer = findViewById<View>(R.id.simulatorFormContainer)
+
         loading = findViewById(R.id.simulatorLoading)
         error = findViewById(R.id.simulatorError)
         retry = findViewById(R.id.simulatorRetry)
@@ -80,6 +83,12 @@ class SimulatorActivity : AppCompatActivity() {
         chickensInput = findViewById(R.id.inputChickens)
         targetEnergyInput = findViewById(R.id.inputTargetEnergy)
         simulateButton = findViewById(R.id.buttonSimulator)
+
+        formContainer.applyImeFixedTranslation(
+            bottomAnchorView = simulateButton,
+            extraMarginPx = 16.dp,
+            viewsToFadeOut = listOf(kpiContainer)
+        )
     }
 
     private fun configureActions() {

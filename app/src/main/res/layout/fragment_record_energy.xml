@@ -5,105 +5,93 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/recordScrollContent"
+    <LinearLayout
+        android:id="@+id/recordContentContainer"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:clipToPadding="false"
-        android:fillViewport="false"
-        android:overScrollMode="never"
-        android:scrollbars="none"
-        app:layout_constraintBottom_toTopOf="@id/recordReturnHome"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/header">
 
         <LinearLayout
+            android:id="@+id/linearLayout2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingBottom="24dp">
+            android:layout_marginStart="50dp"
+            android:layout_marginTop="90dp"
+            android:layout_marginEnd="50dp"
+            android:orientation="vertical">
 
-            <LinearLayout
-                android:id="@+id/linearLayout2"
+            <TextView
+                android:id="@+id/textView5"
+                style="@style/subtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="50dp"
-                android:layout_marginTop="90dp"
-                android:layout_marginEnd="50dp"
-                android:orientation="vertical">
+                android:text="Energia" />
 
-                <TextView
-                    android:id="@+id/textView5"
-                    style="@style/subtitle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Energia" />
-
-                <TextView
-                    android:id="@+id/textView6"
-                    style="@style/text"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Registre aqui as informações da sua conta de energia referente ao lote que você registrou." />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/linearLayout7"
+            <TextView
+                android:id="@+id/textView6"
+                style="@style/text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="30dp"
-                android:layout_marginTop="70dp"
-                android:layout_marginEnd="30dp"
-                android:orientation="vertical">
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/editEnergyDate"
-                    style="@style/Widget.App.TextInputLayout.Gold"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Data do registro">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/inputEnergyDate"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:clickable="true"
-                        android:focusable="false"
-                        android:inputType="none" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/editEnergyKwh"
-                    style="@style/Widget.App.TextInputLayout.Gold"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Consumo de energia"
-                    app:suffixText="kWh">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/inputEnergyKwh"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="numberDecimal" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <Button
-                    android:id="@+id/recordPrimary"
-                    style="@style/Widget.Ouros.Button.Big.Blue"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
-                    android:text="Continuar" />
-
-            </LinearLayout>
+                android:text="Registre aqui as informações da sua conta de energia referente ao lote que você registrou." />
 
         </LinearLayout>
 
-    </androidx.core.widget.NestedScrollView>
+        <LinearLayout
+            android:id="@+id/linearLayout7"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="30dp"
+            android:layout_marginTop="70dp"
+            android:layout_marginEnd="30dp"
+            android:orientation="vertical">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/editEnergyDate"
+                style="@style/Widget.App.TextInputLayout.Gold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Data do registro">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputEnergyDate"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="false"
+                    android:inputType="none" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/editEnergyKwh"
+                style="@style/Widget.App.TextInputLayout.Gold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Consumo de energia"
+                app:suffixText="kWh">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputEnergyKwh"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/recordPrimary"
+                style="@style/Widget.Ouros.Button.Big.Blue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="Continuar" />
+
+        </LinearLayout>
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/recordReturnHome"

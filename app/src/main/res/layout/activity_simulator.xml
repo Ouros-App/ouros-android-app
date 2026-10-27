@@ -8,31 +8,62 @@
     android:background="#F4F7F9"
     tools:context=".feature.secondary.simulator.SimulatorActivity">
 
-    <androidx.core.widget.NestedScrollView
+    <TextView
+        android:id="@+id/header"
+        style="@style/subtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="70dp"
+        android:text="Simulador"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/imageView9"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="-18dp"
+        android:layout_marginTop="-5dp"
+        android:contentDescription="Asas de Ouros"
+        app:layout_constraintStart_toEndOf="@+id/header"
+        app:layout_constraintTop_toTopOf="@+id/header"
+        app:srcCompat="@drawable/ouros_goldwings" />
+
+    <ImageView
+        android:id="@+id/btnSimulatorBack"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="25dp"
+        android:layout_marginTop="5dp"
+        android:contentDescription="Voltar"
+        android:padding="10dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/header"
+        app:srcCompat="@drawable/ic_arrow_left" />
+
+    <LinearLayout
         android:id="@+id/simulatorContent"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:clipToPadding="false"
-        android:fillViewport="true"
-        android:overScrollMode="never"
-        android:scrollbars="none"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="30dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="30dp"
+        android:paddingBottom="24dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/header">
 
         <LinearLayout
+            android:id="@+id/simulatorKpiContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingStart="30dp"
-            android:paddingTop="40dp"
-            android:paddingEnd="30dp"
-            android:paddingBottom="32dp">
+            android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="92dp"
+                android:layout_height="88dp"
                 android:baselineAligned="false"
                 android:orientation="horizontal">
 
@@ -127,9 +158,9 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="92dp"
+                android:layout_height="88dp"
                 android:layout_marginTop="8dp"
-                android:layout_marginBottom="32dp"
+                android:layout_marginBottom="16dp"
                 android:baselineAligned="false"
                 android:orientation="horizontal">
 
@@ -224,146 +255,126 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
+        </LinearLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/layoutCurrentCgi"
-            style="@style/Widget.App.TextInputLayout.Gold"
+        <LinearLayout
+            android:id="@+id/simulatorFormContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Consumo atual"
-            app:suffixText="CGI">
+            android:orientation="vertical">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/inputCurrentCgi"
-                style="@style/text"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutCurrentCgi"
+                style="@style/Widget.App.TextInputLayout.Gold"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="numberDecimal" />
+                android:hint="Consumo atual"
+                app:suffixText="CGI">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputCurrentCgi"
+                    style="@style/text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/layoutTargetCgi"
-            style="@style/Widget.App.TextInputLayout.Gold"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Consumo alvo"
-            app:suffixText="CGI">
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/inputTargetCgi"
-                style="@style/text"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutTargetCgi"
+                style="@style/Widget.App.TextInputLayout.Gold"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="numberDecimal" />
+                android:hint="Consumo alvo"
+                app:suffixText="CGI">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputTargetCgi"
+                    style="@style/text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/layoutWaterPrice"
-            style="@style/Widget.App.TextInputLayout.Gold"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Preço por m³ da água"
-            app:prefixText="R$">
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/inputWaterPrice"
-                style="@style/text"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutWaterPrice"
+                style="@style/Widget.App.TextInputLayout.Gold"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="numberDecimal" />
+                android:hint="Preço por m³ da água"
+                app:prefixText="R$">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputWaterPrice"
+                    style="@style/text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/layoutEnergyPrice"
-            style="@style/Widget.App.TextInputLayout.Gold"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Preço da energia"
-            app:prefixText="R$">
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/inputEnergyPrice"
-                style="@style/text"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutEnergyPrice"
+                style="@style/Widget.App.TextInputLayout.Gold"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="numberDecimal" />
+                android:hint="Preço da energia"
+                app:prefixText="R$">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputEnergyPrice"
+                    style="@style/text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/layoutChickens"
-            style="@style/Widget.App.TextInputLayout.Gold"
-            android:hint="Quantidade de aves">
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/inputChickens"
-                style="@style/text"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutChickens"
+                style="@style/Widget.App.TextInputLayout.Gold"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="number" />
+                android:hint="Quantidade de aves">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputChickens"
+                    style="@style/text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/layoutTargetEnergy"
-            style="@style/Widget.App.TextInputLayout.Gold"
-            android:hint="Gasto alvo de energia por ave"
-            app:suffixText="kWh">
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/inputTargetEnergy"
-                style="@style/text"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutTargetEnergy"
+                style="@style/Widget.App.TextInputLayout.Gold"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="numberDecimal" />
+                android:hint="Gasto alvo de energia por ave"
+                app:suffixText="kWh">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputTargetEnergy"
+                    style="@style/text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal" />
 
-        <Button
-            android:id="@+id/buttonSimulator"
-            style="@style/Widget.Ouros.Button.Big.Blue"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:text="Simular" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/buttonSimulator"
+                style="@style/Widget.Ouros.Button.Big.Blue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="Simular" />
 
         </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
 
-    <TextView
-        android:id="@+id/header"
-        style="@style/subtitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="100dp"
-        android:text="Simulador"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageView
-        android:id="@+id/imageView9"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="-18dp"
-        android:layout_marginTop="-5dp"
-        app:layout_constraintStart_toEndOf="@+id/header"
-        app:layout_constraintTop_toTopOf="@+id/header"
-        app:srcCompat="@drawable/ouros_goldwings" />
-
-    <ImageView
-        android:id="@+id/btnSimulatorBack"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginStart="25dp"
-        android:layout_marginTop="5dp"
-        android:padding="10dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/header"
-        app:srcCompat="@drawable/ic_arrow_left" />
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="0dp"

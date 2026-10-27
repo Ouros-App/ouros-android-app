@@ -3,19 +3,17 @@ package com.ouros.app.feature.main.record
 import android.app.DatePickerDialog
 import android.os.Bundle
 import android.view.View
-import android.view.ViewGroup
-import androidx.core.view.WindowInsetsControllerCompat
-import androidx.core.view.updateLayoutParams
-import androidx.core.view.updatePadding
 import android.widget.Button
 import android.widget.EditText
 import androidx.annotation.LayoutRes
-import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.isVisible
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import com.ouros.app.R
+import com.ouros.app.core.util.applyBottomSystemBarMargin
+import com.ouros.app.core.util.applyImeFixedTranslation
+import com.ouros.app.core.util.dp
 import com.ouros.app.data.record.RecordDraft
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -32,53 +30,15 @@ abstract class RecordStepFragment(@LayoutRes layout: Int) : Fragment(layout) {
     }
 
     private fun configureKeyboardBehavior(root: View, returnHome: View?) {
-        val scrollContent = root.findViewById<View>(R.id.recordScrollContent)
-        val initialScrollPaddingBottom = scrollContent?.paddingBottom ?: 0
-        val initialReturnHomeBottomMargin =
-            (returnHome?.layoutParams as? ViewGroup.MarginLayoutParams)?.bottomMargin ?: 0
+        val contentContainer = root.findViewById<View>(R.id.recordContentContainer)
+        val primaryButton = root.findViewById<View>(R.id.recordPrimary)
 
-        ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
-            val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
-            val navInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
-            val keyboardIsOpen = insets.isVisible(WindowInsetsCompat.Type.ime())
-
-            if (returnHome != null) {
-                returnHome.isVisible = !keyboardIsOpen
-                if (!keyboardIsOpen) {
-                    returnHome.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                        bottomMargin = initialReturnHomeBottomMargin + navInsets.bottom
-                    }
-                }
-            }
-
-            scrollContent?.let { scroll ->
-                val bottomPadding = if (keyboardIsOpen) {
-                    initialScrollPaddingBottom + imeInsets.bottom
-                } else {
-                    if (returnHome != null) {
-                        initialScrollPaddingBottom
-                    } else {
-                        initialScrollPaddingBottom + navInsets.bottom
-                    }
-                }
-                scroll.updatePadding(bottom = bottomPadding)
-
-                if (keyboardIsOpen && imeInsets.bottom > 0) {
-                    scroll.post {
-                        val focused = root.findFocus()
-                        if (focused != null && scroll is ViewGroup) {
-                            val rect = android.graphics.Rect()
-                            focused.getDrawingRect(rect)
-                            scroll.offsetDescendantRectToMyCoords(focused, rect)
-                            rect.bottom += 16
-                            scroll.requestRectangleOnScreen(rect, false)
-                        }
-                    }
-                }
-            }
-
-            insets
-        }
+        contentContainer?.applyImeFixedTranslation(
+            bottomAnchorView = primaryButton,
+            extraMarginPx = 16.dp,
+            viewsToFadeOut = listOfNotNull(returnHome)
+        )
+        returnHome?.applyBottomSystemBarMargin()
 
         root.post {
             root.isFocusableInTouchMode = true
@@ -86,7 +46,6 @@ abstract class RecordStepFragment(@LayoutRes layout: Int) : Fragment(layout) {
             activity?.window?.let { window ->
                 WindowInsetsControllerCompat(window, root).hide(WindowInsetsCompat.Type.ime())
             }
-            ViewCompat.requestApplyInsets(root)
         }
     }
 
