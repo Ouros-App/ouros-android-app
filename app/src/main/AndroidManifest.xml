@@ -70,7 +70,8 @@
             android:exported="false" />
         <activity
             android:name=".feature.secondary.chatbot.ChatbotActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".feature.error.ErrorActivity"
             android:exported="false" />
