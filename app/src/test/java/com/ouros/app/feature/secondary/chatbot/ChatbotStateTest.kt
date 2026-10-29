@@ -389,6 +389,33 @@ class ChatbotStateTest {
         )
     }
 
+    @Test
+    fun confirmImportWithoutPreview_doesNothing() {
+        val api = FakeChatbotApi()
+        val viewModel = newViewModel(api)
+        val initial = viewModel.state.value
+
+        viewModel.confirmImport()
+
+        assertEquals(initial, viewModel.state.value)
+        assertEquals(0, api.importCalls)
+    }
+
+    @Test
+    fun sendWithSuccessfulResponseWithoutBody_reportsFailure() {
+        session.setAccessToken("test-token", TimeUnit.HOURS.toSeconds(1))
+        val api = FakeChatbotApi().apply {
+            chatResponse = Response.success(200, null)
+        }
+        val viewModel = newViewModel(api)
+
+        viewModel.send("hello", attachment = null)
+
+        assertEquals(1, api.chatCalls)
+        assertFalse(viewModel.state.value!!.sending)
+        assertTrue(viewModel.state.value!!.error!!.contains("HTTP 200"))
+    }
+
     private fun newViewModel(api: FakeChatbotApi) = ChatbotViewModel(
         RuntimeEnvironment.getApplication(),
         SavedStateHandle(),
