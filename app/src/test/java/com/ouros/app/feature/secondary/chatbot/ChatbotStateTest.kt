@@ -405,7 +405,7 @@ class ChatbotStateTest {
     fun sendWithSuccessfulResponseWithoutBody_reportsFailure() {
         session.setAccessToken("test-token", TimeUnit.HOURS.toSeconds(1))
         val api = FakeChatbotApi().apply {
-            chatResponse = Response.success(200, null)
+            chatResponse = Response.success<ChatResponse>(200, null)
         }
         val viewModel = newViewModel(api)
 
