@@ -224,7 +224,10 @@ class ChatbotStateTest {
         assertEquals(0, api.importCalls)
         assertFalse(viewModel.state.value!!.importing)
         assertTrue(viewModel.state.value!!.importAttemptFailed)
-        assertEquals("Não há registros válidos para importar.", viewModel.state.value!!.error)
+        assertEquals(
+            "Não foi possível confirmar se a importação foi concluída. Confira os registros da fazenda antes de tentar novamente.",
+            viewModel.state.value!!.error
+        )
     }
 
     @Test
