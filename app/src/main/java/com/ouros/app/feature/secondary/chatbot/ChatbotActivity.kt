@@ -18,6 +18,9 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import com.ouros.app.R
 
+internal fun composerBottomInset(systemBarBottom: Int, imeBottom: Int): Int =
+    maxOf(systemBarBottom, imeBottom)
+
 class ChatbotActivity : AppCompatActivity() {
     private lateinit var viewModel: ChatbotViewModel
     private var renderedState: ChatState? = null
@@ -73,11 +76,12 @@ class ChatbotActivity : AppCompatActivity() {
         )
         ViewCompat.setOnApplyWindowInsetsListener(chatRoot) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
             view.setPadding(
                 rootPadding[0],
                 rootPadding[1] + bars.top,
                 rootPadding[2],
-                rootPadding[3] + bars.bottom
+                rootPadding[3] + composerBottomInset(bars.bottom, ime.bottom)
             )
             insets
         }

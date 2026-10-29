@@ -22,10 +22,15 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.util.UUID
 
-class ChatbotViewModel(
+class ChatbotViewModel internal constructor(
     application: Application,
-    private val savedState: SavedStateHandle
+    private val savedState: SavedStateHandle,
+    private val aiApi: ChatbotApi,
+    private val springApi: ChatbotApi
 ) : AndroidViewModel(application) {
+    constructor(application: Application, savedState: SavedStateHandle) :
+        this(application, savedState, ChatbotNetwork.aiApi, ChatbotNetwork.springApi)
+
     val state = MutableLiveData(ChatState(threadId = savedState.get<String>(THREAD_ID) ?: UUID.randomUUID().toString()))
     private val session = AppSession.sessionManager
     private val authRepository = AuthRepository(
@@ -78,7 +83,7 @@ class ChatbotViewModel(
                     MultipartBody.Part.createFormData("attachment", name, body)
                 }
                 val response = authorized { authorization ->
-                    ChatbotNetwork.aiApi.chat(
+                    aiApi.chat(
                         authorization,
                         text.toRequestBody("text/plain".toMediaTypeOrNull()),
                         state.value!!.threadId.toRequestBody("text/plain".toMediaTypeOrNull()),
@@ -87,16 +92,7 @@ class ChatbotViewModel(
                 }
                 val body = response.body()
                 if (!response.isSuccessful || body == null) throw IOException("Não foi possível enviar a mensagem (HTTP ${response.code()}).")
-                update {
-                    copy(
-                        messages = messages + ChatLine(body.message ?: body.response ?: "Recebi sua mensagem.", false),
-                        preview = body.preview,
-                        imported = false,
-                        importAttemptFailed = false,
-                        selectedAttachment = null,
-                        error = null
-                    )
-                }
+                update { completeChatSend(body) }
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
@@ -143,7 +139,7 @@ class ChatbotViewModel(
                     throw IllegalStateException("Não há registros válidos para importar.")
                 }
                 val response = authorized { authorization ->
-                    ChatbotNetwork.springApi.importMeasurements(authorization, request)
+                    springApi.importMeasurements(authorization, request)
                 }
                 if (!response.isSuccessful || response.body() == null) {
                     throw IOException(
@@ -241,3 +237,17 @@ data class ChatState(
     val error: String? = null
 )
 data class ChatLine(val text: String, val user: Boolean)
+
+internal fun ChatState.completeChatSend(response: ChatResponse): ChatState = copy(
+    messages = messages + ChatLine(
+        response.message ?: response.response ?: "Recebi sua mensagem.",
+        false
+    ),
+    sending = false,
+    preview = response.preview,
+    imported = false,
+    importAttemptFailed = false,
+    selectedAttachment = null,
+    error = null
+)
+
