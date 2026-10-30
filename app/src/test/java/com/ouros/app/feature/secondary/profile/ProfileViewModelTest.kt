@@ -113,8 +113,6 @@ class ProfileViewModelTest {
         viewModel.saveProfile(
             name = "Produtor Rural",
             email = "produtor@fazenda.com",
-            password = "",
-            cpf = "52998224725",
             telephone = "11987654321",
             photoChange = ProfilePhotoChange.UploadNew(photoFile)
         )
@@ -123,6 +121,8 @@ class ProfileViewModelTest {
             "https://res.cloudinary.com/test_cloud/image/upload/v1/ouros/profiles/avatar.jpg",
             capturedUpdateRequest?.photoUrl
         )
+        assertNull(capturedUpdateRequest?.documentNumber)
+        assertNull(capturedUpdateRequest?.password)
         assertEquals(
             "https://res.cloudinary.com/test_cloud/image/upload/v1/ouros/profiles/avatar.jpg",
             listener.savedProfile?.photoUrl
@@ -186,8 +186,6 @@ class ProfileViewModelTest {
         viewModel.saveProfile(
             name = "Produtor Rural",
             email = "produtor@fazenda.com",
-            password = "",
-            cpf = "52998224725",
             telephone = "11987654321",
             photoChange = ProfilePhotoChange.UploadNew(photoFile)
         )
@@ -250,8 +248,6 @@ class ProfileViewModelTest {
         viewModel.saveProfile(
             name = "Produtor Rural",
             email = "produtor@fazenda.com",
-            password = "",
-            cpf = "52998224725",
             telephone = "11987654321",
             photoChange = ProfilePhotoChange.Remove
         )
@@ -310,8 +306,6 @@ class ProfileViewModelTest {
         viewModel.saveProfile(
             name = "Produtor Rural",
             email = "produtor@fazenda.com",
-            password = "",
-            cpf = "52998224725",
             telephone = "11987654321",
             photoChange = ProfilePhotoChange.KeepCurrent
         )
@@ -349,8 +343,6 @@ class ProfileViewModelTest {
         override fun onProfileErrors(
             nameMessage: String?,
             emailMessage: String?,
-            passwordMessage: String?,
-            cpfMessage: String?,
             telephoneMessage: String?
         ) = Unit
 

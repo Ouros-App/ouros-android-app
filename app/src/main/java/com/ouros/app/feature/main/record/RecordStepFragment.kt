@@ -11,9 +11,6 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import com.ouros.app.R
-import com.ouros.app.core.util.applyBottomSystemBarMargin
-import com.ouros.app.core.util.applyImeFixedTranslation
-import com.ouros.app.core.util.dp
 import com.ouros.app.data.record.RecordDraft
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -37,13 +34,6 @@ abstract class RecordStepFragment(@LayoutRes layout: Int) : Fragment(layout) {
         val headerInfo = root.findViewById<View>(R.id.recordHeaderInfo)
             ?: root.findViewById<View>(R.id.linearLayout2)
         val primaryButton = root.findViewById<View>(R.id.recordPrimary)
-
-        formContainer?.applyImeFixedTranslation(
-            bottomAnchorView = primaryButton,
-            extraMarginPx = 16.dp,
-            viewsToFadeOut = listOfNotNull(returnHome, headerInfo)
-        )
-        returnHome?.applyBottomSystemBarMargin()
 
         root.post {
             val currentFocus = root.findFocus()

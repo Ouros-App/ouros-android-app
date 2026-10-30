@@ -26,8 +26,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import coil.load
 import com.ouros.app.R
-import com.ouros.app.core.util.applyBottomSystemBarPadding
-import com.ouros.app.core.util.dp
 import com.ouros.app.data.tip.TipDetailResponse
 import io.noties.markwon.Markwon
 import kotlinx.coroutines.launch
@@ -104,7 +102,6 @@ class TipDetailActivity : AppCompatActivity() {
         layoutError = findViewById(R.id.layoutError)
         txtErrorMessage = findViewById(R.id.txtErrorMessage)
         btnRetry = findViewById(R.id.btnRetry)
-        scrollTipContent.applyBottomSystemBarPadding(32.dp)
     }
 
     private fun setupListeners() {

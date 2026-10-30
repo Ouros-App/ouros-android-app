@@ -19,8 +19,6 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.ouros.app.R
-import com.ouros.app.core.util.applyImeFixedTranslation
-import com.ouros.app.core.util.dp
 import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository
@@ -55,14 +53,10 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
 
     private lateinit var inputName: TextInputLayout
     private lateinit var inputEmail: TextInputLayout
-    private lateinit var inputPassword: TextInputLayout
-    private lateinit var inputCpf: TextInputLayout
     private lateinit var inputTelephone: TextInputLayout
 
     private lateinit var editName: TextInputEditText
     private lateinit var editEmail: TextInputEditText
-    private lateinit var editPassword: TextInputEditText
-    private lateinit var editCpf: TextInputEditText
     private lateinit var editTelephone: TextInputEditText
 
     private lateinit var imgProfilePhoto: ImageView
@@ -169,29 +163,16 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     private fun bindViews() {
-        val cardView = findViewById<View>(R.id.materialCardView)
         inputName = findViewById(R.id.inputName)
         inputEmail = findViewById(R.id.inputEmail)
-        inputPassword = findViewById(R.id.inputPassword)
-        inputCpf = findViewById(R.id.inputCPF)
         inputTelephone = findViewById(R.id.inputTelephone)
 
         editName = findViewById(R.id.editName)
         editEmail = findViewById(R.id.editEmail)
-        editPassword = findViewById(R.id.editPassword)
-        editCpf = findViewById(R.id.editCPF)
         editTelephone = findViewById(R.id.editTelephone)
 
         imgProfilePhoto = findViewById(R.id.imgProfilePhoto)
         btnSave = findViewById(R.id.btnSave)
-        val txtLogout = findViewById<View>(R.id.txtLogout)
-        val btnEditPhoto = findViewById<View>(R.id.btnEditPhoto)
-
-        cardView.applyImeFixedTranslation(
-            bottomAnchorView = btnSave,
-            extraMarginPx = 16.dp,
-            viewsToFadeOut = listOf(txtLogout, imgProfilePhoto, btnEditPhoto)
-        )
     }
 
     private fun configureViewModel() {
@@ -240,8 +221,6 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
             viewModel.saveProfile(
                 name = editName.text?.toString().orEmpty(),
                 email = editEmail.text?.toString().orEmpty(),
-                password = editPassword.text?.toString().orEmpty(),
-                cpf = editCpf.text?.toString().orEmpty(),
                 telephone = editTelephone.text?.toString().orEmpty(),
                 photoChange = photoChange
             )
@@ -415,12 +394,6 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
 
     private fun configureMasks() {
         installMask(
-            editText = editCpf,
-            maxDigits = 11,
-            formatter = ::formatCpf
-        )
-
-        installMask(
             editText = editTelephone,
             maxDigits = 13,
             formatter = ::formatTelephone
@@ -448,8 +421,6 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         btnSave.isEnabled = !isLoading
         editName.isEnabled = !isLoading
         editEmail.isEnabled = !isLoading
-        editPassword.isEnabled = !isLoading
-        editCpf.isEnabled = !isLoading
         editTelephone.isEnabled = !isLoading
     }
 
@@ -472,7 +443,6 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         pendingPhotoChange = ProfilePhotoChange.KeepCurrent
         clearPendingCrop()
         renderProfile(profile)
-        editPassword.text?.clear()
 
         Toast.makeText(this, "Perfil atualizado com sucesso.", Toast.LENGTH_SHORT).show()
     }
@@ -480,14 +450,10 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     override fun onProfileErrors(
         nameMessage: String?,
         emailMessage: String?,
-        passwordMessage: String?,
-        cpfMessage: String?,
         telephoneMessage: String?
     ) {
         inputName.error = nameMessage
         inputEmail.error = emailMessage
-        inputPassword.error = passwordMessage
-        inputCpf.error = cpfMessage
         inputTelephone.error = telephoneMessage
     }
 
@@ -511,13 +477,6 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         editName.setText(profile.name.orEmpty())
         editEmail.setText(profile.email.orEmpty())
 
-        editCpf.setText(
-            formatCpf(profile.documentNumber
-                .orEmpty()
-                .filter(Char::isDigit)
-            )
-        )
-
         editTelephone.setText(
             formatTelephone(profile.telephone
                 .orEmpty()
@@ -525,7 +484,6 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
             )
         )
 
-        editPassword.text?.clear()
         renderProfilePhoto(profile.photoUrl)
     }
 
@@ -648,8 +606,6 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     private fun clearErrors() {
         inputName.error = null
         inputEmail.error = null
-        inputPassword.error = null
-        inputCpf.error = null
         inputTelephone.error = null
     }
 
@@ -673,23 +629,6 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         })
         finish()
-    }
-
-    private fun formatCpf(digits: String): String {
-        val value = digits
-            .filter(Char::isDigit)
-            .take(11)
-
-        return buildString {
-            value.forEachIndexed { index, char ->
-                append(char)
-
-                when (index) {
-                    2, 5 -> {if (index < value.lastIndex) { append('.') }}
-                    8 -> { if (index < value.lastIndex) { append('-') }}
-                }
-            }
-        }
     }
 
     private fun formatTelephone(digits: String): String {

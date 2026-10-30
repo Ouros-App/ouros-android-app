@@ -6,15 +6,12 @@ import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.ouros.app.R
-import com.ouros.app.core.util.applyBottomSystemBarMargin
 
 class ErrorActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_error)
-
-        findViewById<ImageView>(R.id.imageView7).applyBottomSystemBarMargin()
 
         findViewById<TextView>(R.id.txtErrorMessage).text =
             intent.getStringExtra(EXTRA_MESSAGE)

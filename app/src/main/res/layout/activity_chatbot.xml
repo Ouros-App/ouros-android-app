@@ -21,42 +21,40 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
-            android:id="@+id/btnBack"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Voltar"
-            android:padding="8dp"
-            android:src="@drawable/ic_arrow_left"
-            app:layout_constraintBottom_toBottomOf="@id/txtChatTitle"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@id/txtChatTitle" />
-
-        <TextView
-            android:id="@+id/txtChatTitle"
+            android:id="@+id/imageView11"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/poppins_semibold"
-            android:includeFontPadding="false"
-            android:letterSpacing="-0.05"
+            android:layout_marginStart="-20dp"
+            android:layout_marginTop="5dp"
+            android:contentDescription="Asas de Ouros"
+            app:layout_constraintStart_toEndOf="@+id/header"
+            app:layout_constraintTop_toTopOf="@+id/header"
+            app:srcCompat="@drawable/ouros_goldwings" />
+
+        <TextView
+            android:id="@+id/header"
+            style="@style/subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:letterSpacing="-0.07"
             android:text="Midas, seu assistente favorito"
-            android:textColor="@color/black"
-            android:textSize="20sp"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.498"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageView
-            android:id="@+id/imgMidasWings"
-            android:layout_width="38dp"
-            android:layout_height="34dp"
-            android:layout_marginStart="-15dp"
-            android:contentDescription="Asas do Midas"
-            android:src="@drawable/ouros_goldwings"
-            app:layout_constraintBottom_toBottomOf="@id/txtChatTitle"
-            app:layout_constraintStart_toEndOf="@id/txtChatTitle"
-            app:layout_constraintTop_toTopOf="@id/txtChatTitle" />
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:contentDescription="Voltar"
+            android:padding="10dp"
+            app:layout_constraintEnd_toStartOf="@+id/header"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/header"
+            app:srcCompat="@drawable/ic_arrow_left" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <ScrollView

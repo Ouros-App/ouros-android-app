@@ -17,8 +17,6 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.ouros.app.R
-import com.ouros.app.core.util.applyBottomSystemBarMargin
-import com.ouros.app.core.util.applyImeFixedTranslation
 
 class FirstAccessPageFragment :
     Fragment() {
@@ -175,14 +173,6 @@ class FirstAccessPageFragment :
         inputEmail.error = null
         inputPassword.error = null
 
-        val btnContinueCred = view.findViewById<View>(R.id.btnContinue)
-        val headerInfoCred = view.findViewById<View>(R.id.linearLayout2)
-        val formContainerCred = view.findViewById<View>(R.id.firstAccessCredentialsFormContainer)
-            ?: view.findViewById<View>(R.id.firstAccessCredentialsContentContainer)
-        formContainerCred?.applyImeFixedTranslation(
-            bottomAnchorView = btnContinueCred,
-            viewsToFadeOut = listOfNotNull(headerInfoCred)
-        )
     }
 
     private fun bindCode(view: View) {
@@ -209,17 +199,6 @@ class FirstAccessPageFragment :
 
         restoreVerificationCode()
         configureCodeFields()
-
-        val btnResend = view.findViewById<View>(R.id.btnResendCode)
-        val btnContinueCode = view.findViewById<View>(R.id.btnContinue)
-        view.findViewById<View>(
-            R.id.firstAccessCodeContentContainer
-        )?.applyImeFixedTranslation(
-            bottomAnchorView = btnContinueCode,
-            viewsToFadeOut = listOfNotNull(btnResend)
-        )
-
-        btnResend?.applyBottomSystemBarMargin()
 
         renderCodeChallenge(
             maskedEmail =
@@ -371,7 +350,7 @@ class FirstAccessPageFragment :
 
         val inputCpf =
             view.findViewById<TextInputLayout>(
-                R.id.inputCPF
+                R.id.inputCpf
             )
 
         val inputTelephone =
@@ -386,7 +365,7 @@ class FirstAccessPageFragment :
 
         val editCpf =
             view.findViewById<TextInputEditText>(
-                R.id.editCPF
+                R.id.editCpf
             )
 
         val editTelephone =
@@ -450,14 +429,6 @@ class FirstAccessPageFragment :
         inputCpf.error = null
         inputTelephone.error = null
 
-        val btnContinuePersonal = view.findViewById<View>(R.id.btnContinue)
-        val headerInfoPersonal = view.findViewById<View>(R.id.linearLayout2)
-        val formContainerPersonal = view.findViewById<View>(R.id.firstAccessPersonalFormContainer)
-            ?: view.findViewById<View>(R.id.firstAccessPersonalContentContainer)
-        formContainerPersonal?.applyImeFixedTranslation(
-            bottomAnchorView = btnContinuePersonal,
-            viewsToFadeOut = listOfNotNull(headerInfoPersonal)
-        )
     }
 
     private fun bindNewPassword(
@@ -498,14 +469,6 @@ class FirstAccessPageFragment :
 
         inputNewPassword.error = null
 
-        val imgMidas = view.findViewById<View>(R.id.imageView3)
-        val textMidas = view.findViewById<View>(R.id.textView22)
-        view.findViewById<View>(
-            R.id.firstAccessPasswordContentContainer
-        )?.applyImeFixedTranslation(
-            bottomAnchorView = btnFinish,
-            viewsToFadeOut = listOfNotNull(imgMidas, textMidas)
-        )
     }
 
     fun renderCredentialsErrors(
@@ -588,7 +551,7 @@ class FirstAccessPageFragment :
         )?.error = nameMessage
 
         view?.findViewById<TextInputLayout>(
-            R.id.inputCPF
+            R.id.inputCpf
         )?.error = cpfMessage
 
         view?.findViewById<TextInputLayout>(
@@ -658,7 +621,7 @@ class FirstAccessPageFragment :
                 ).isEnabled = enabled
 
                 root.findViewById<View>(
-                    R.id.editCPF
+                    R.id.editCpf
                 ).isEnabled = enabled
 
                 root.findViewById<View>(
