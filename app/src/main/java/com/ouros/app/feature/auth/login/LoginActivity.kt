@@ -18,6 +18,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.ouros.app.R
+import com.ouros.app.core.util.applyBottomSystemBarMargin
+import com.ouros.app.core.util.applyImeFixedTranslation
 import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository
@@ -204,6 +206,16 @@ class LoginActivity :
             viewModel.onLoginClicked()
         }
 
+        val btnForgot = findViewById<View>(R.id.btnForgotPasswd)
+        findViewById<View>(
+            R.id.loginContentContainer
+        ).applyImeFixedTranslation(
+            bottomAnchorView = btnLogin,
+            viewsToFadeOut = listOf(btnForgot)
+        )
+
+        btnForgot.applyBottomSystemBarMargin()
+
         renderLoginLoading(false)
     }
 
@@ -255,6 +267,17 @@ class LoginActivity :
             viewModel
                 .onResendCodeClicked()
         }
+
+        val btnResend = findViewById<View>(R.id.btnResendCode)
+        val btnContinueCode = findViewById<View>(R.id.btnContinue)
+        findViewById<View>(
+            R.id.loginCodeContentContainer
+        ).applyImeFixedTranslation(
+            bottomAnchorView = btnContinueCode,
+            viewsToFadeOut = listOf(btnResend)
+        )
+
+        btnResend.applyBottomSystemBarMargin()
 
         codeFields
             .firstOrNull {

@@ -115,10 +115,10 @@ jobs:
           {
             echo "sonar.organization=${SONAR_ORGANIZATION:-$owner}"
             echo "sonar.projectKey=${SONAR_PROJECT_KEY:-${owner}_${repo}}"
-            echo "sonar.sources=app/src/main"
-            echo "sonar.tests=app/src/test,app/src/androidTest"
+            echo "sonar.sources=app/src/main/java"
+            echo "sonar.tests=app/src/test/java,app/src/androidTest/java"
             echo "sonar.exclusions=.git/**,.github/**,**/build/**"
-            echo "sonar.coverage.exclusions=**/*Activity.kt,**/*Fragment.kt,**/*Api.kt,**/*Network.kt,**/*ViewModelFactory.kt,**/*Service.kt,**/*Receiver.kt,**/*Adapter.kt,**/*View.kt"
+            echo "sonar.coverage.exclusions=**/*Activity.kt,**/*Fragment.kt,**/*Api.kt,**/*Network.kt,**/*ViewModelFactory.kt,**/*Service.kt,**/*Receiver.kt,**/*Adapter.kt,**/*View.kt,**/*Extensions.kt,**/core/util/**"
             echo "sonar.coverage.jacoco.xmlReportPaths=coverage/report.xml"
             echo "sonar.sourceEncoding=UTF-8"
             if [ "$GITHUB_EVENT_NAME" != "pull_request" ]; then

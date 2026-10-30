@@ -6,12 +6,14 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import androidx.annotation.LayoutRes
-import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.isVisible
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import com.ouros.app.R
+import com.ouros.app.core.util.applyBottomSystemBarMargin
+import com.ouros.app.core.util.applyImeFixedTranslation
+import com.ouros.app.core.util.dp
 import com.ouros.app.data.record.RecordDraft
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -23,24 +25,35 @@ abstract class RecordStepFragment(@LayoutRes layout: Int) : Fragment(layout) {
     protected val wizard: RecordWizardViewModel get() = host.wizardViewModel
 
     protected fun bindNavigation(root: View) {
-        root.findViewById<View>(R.id.recordBack).setOnClickListener { host.previousStep() }
-        root.findViewById<View>(R.id.recordReturnHome)?.setOnClickListener { host.finishKeepingDraft() }
+        root.findViewById<View>(R.id.recordBack)?.setOnClickListener { host.previousStep() }
+        val returnHome = root.findViewById<View>(R.id.recordReturnHome)
+        returnHome?.setOnClickListener { host.finishKeepingDraft() }
+        configureKeyboardBehavior(root, returnHome)
     }
 
     private fun configureKeyboardBehavior(root: View, returnHome: View?) {
-        if (returnHome != null) {
-            ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
-                val keyboardIsOpen = insets.isVisible(WindowInsetsCompat.Type.ime())
-                returnHome.isVisible = !keyboardIsOpen
-                insets
-            }
-        }
+        val formContainer = root.findViewById<View>(R.id.recordFormContainer)
+            ?: root.findViewById<View>(R.id.recordContentContainer)
+        val headerInfo = root.findViewById<View>(R.id.recordHeaderInfo)
+            ?: root.findViewById<View>(R.id.linearLayout2)
+        val primaryButton = root.findViewById<View>(R.id.recordPrimary)
+
+        formContainer?.applyImeFixedTranslation(
+            bottomAnchorView = primaryButton,
+            extraMarginPx = 16.dp,
+            viewsToFadeOut = listOfNotNull(returnHome, headerInfo)
+        )
+        returnHome?.applyBottomSystemBarMargin()
 
         root.post {
-            root.isFocusableInTouchMode = true
-            root.requestFocus()
-            ViewCompat.getWindowInsetsController(root)?.hide(WindowInsetsCompat.Type.ime())
-            ViewCompat.requestApplyInsets(root)
+            val currentFocus = root.findFocus()
+            if (currentFocus == null || currentFocus === root) {
+                root.isFocusableInTouchMode = true
+                root.requestFocus()
+                activity?.window?.let { window ->
+                    WindowInsetsControllerCompat(window, root).hide(WindowInsetsCompat.Type.ime())
+                }
+            }
         }
     }
 
