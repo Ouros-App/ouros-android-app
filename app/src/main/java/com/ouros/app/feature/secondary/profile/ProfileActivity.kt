@@ -19,6 +19,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.ouros.app.R
+import com.ouros.app.core.util.applyImeFixedTranslation
+import com.ouros.app.core.util.dp
 import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository
@@ -166,6 +168,7 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     private fun bindViews() {
+        val cardView = findViewById<View>(R.id.materialCardView)
         inputName = findViewById(R.id.inputName)
         inputEmail = findViewById(R.id.inputEmail)
         inputPassword = findViewById(R.id.inputPassword)
@@ -180,6 +183,14 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
 
         imgProfilePhoto = findViewById(R.id.imgProfilePhoto)
         btnSave = findViewById(R.id.btnSave)
+        val txtLogout = findViewById<View>(R.id.txtLogout)
+        val btnEditPhoto = findViewById<View>(R.id.btnEditPhoto)
+
+        cardView.applyImeFixedTranslation(
+            bottomAnchorView = btnSave,
+            extraMarginPx = 16.dp,
+            viewsToFadeOut = listOf(txtLogout, imgProfilePhoto, btnEditPhoto)
+        )
     }
 
     private fun configureViewModel() {

@@ -16,7 +16,6 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:srcCompat="@tools:sample/avatars" />
 
-
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/btnEditPhoto"
         android:layout_width="38dp"
@@ -87,29 +86,31 @@
                 android:id="@+id/btnBack"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
+                android:layout_marginStart="20dp"
                 android:layout_marginTop="5dp"
                 android:padding="10dp"
-                app:layout_constraintStart_toStartOf="@+id/linearLayout5"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="@+id/header"
                 app:srcCompat="@drawable/ic_arrow_left" />
 
             <LinearLayout
-                android:id="@+id/linearLayout5"
-                android:layout_width="match_parent"
+                android:id="@+id/profileContentContainer"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
-                android:layout_marginTop="60dp"
-                android:layout_marginEnd="20dp"
+                android:layout_marginTop="12dp"
                 android:orientation="vertical"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="16dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
+                app:layout_constraintTop_toBottomOf="@+id/header">
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/inputName"
                     style="@style/Widget.App.TextInputLayout.Gold"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:hint="Nome"
                     app:boxCornerRadiusBottomEnd="12dp"
                     app:boxCornerRadiusBottomStart="12dp"
@@ -132,7 +133,7 @@
                     android:id="@+id/inputEmail"
                     style="@style/Widget.App.TextInputLayout.Gold"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
                     android:hint="E-mail"
                     app:boxCornerRadiusBottomEnd="12dp"
@@ -157,7 +158,7 @@
                     android:id="@+id/inputPassword"
                     style="@style/Widget.App.TextInputLayout.Gold"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
                     android:hint="Senha"
                     app:endIconMode="password_toggle">
@@ -200,7 +201,7 @@
                     android:id="@+id/inputTelephone"
                     style="@style/Widget.App.TextInputLayout.Gold"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
                     android:hint="Telefone"
                     app:boxCornerRadiusBottomEnd="12dp"
@@ -226,21 +227,20 @@
                     style="@style/Widget.Ouros.Button.Big.Blue"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
+                    android:layout_marginTop="8dp"
                     android:text="Salvar" />
 
-            </LinearLayout>
+                <TextView
+                    android:id="@+id/txtLogout"
+                    style="@style/text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="Cansou do Midas? Sair da conta" />
 
-            <TextView
-                android:id="@+id/txtLogout"
-                style="@style/text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Cansou do Midas? Sair da conta"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/linearLayout5" />
+            </LinearLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.widget.ViewPager2
 import com.ouros.app.R
+import com.ouros.app.core.util.applyBottomSystemBarMargin
 import com.ouros.app.feature.auth.choose.ChooseActivity
 import com.ouros.app.feature.onboarding.tutorial.view.TutorialPagerAdapter
 
@@ -27,6 +28,8 @@ class TutorialActivity : AppCompatActivity(), TutorialViewModel.Listener {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_tutorial)
+
+        findViewById<View>(R.id.bottomTutorialNav).applyBottomSystemBarMargin()
 
         viewModel = ViewModelProvider(this)[TutorialViewModel::class.java]
         viewModel.setListener(this)

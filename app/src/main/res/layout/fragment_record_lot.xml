@@ -1,83 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-    <LinearLayout
-        android:id="@+id/linearLayout2"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginTop="90dp"
-        android:layout_marginEnd="50dp"
-        android:orientation="vertical"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/header">
-
-        <TextView
-            android:id="@+id/textView5"
-            style="@style/subtitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Registro" />
-
-        <TextView
-            android:id="@+id/textView6"
-            style="@style/text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Registre os dados dos seus lotes aqui. Essas informações contribuiram para ampliar os dados do seu dashboard e aumentar sua posição no ranking. \n\nVocê pode continuar depois, essas informações serão armazenadas por um mês." />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="30dp"
-        android:layout_marginTop="70dp"
-        android:layout_marginEnd="30dp"
-        android:orientation="vertical"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout2">
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/editLotId"
-            style="@style/Widget.App.TextInputLayout.Gold"
-            android:hint="ID do lote">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/inputLotId"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="number" />
-
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/editLotCost"
-            style="@style/Widget.App.TextInputLayout.Gold"
-            android:hint="Custo do lote"
-            app:prefixText="R$">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/inputLotCost"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="numberDecimal" />
-
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <Button
-            android:id="@+id/recordPrimary"
-            style="@style/Widget.Ouros.Button.Big.Blue"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:text="Iniciar" />
-
-    </LinearLayout>
+    android:layout_height="match_parent"
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
     <TextView
         android:id="@+id/header"
@@ -95,6 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="-18dp"
         android:layout_marginTop="-5dp"
+        android:contentDescription="Asas de Ouros"
         app:layout_constraintStart_toEndOf="@+id/header"
         app:layout_constraintTop_toTopOf="@+id/header"
         app:srcCompat="@drawable/ouros_goldwings" />
@@ -105,9 +34,93 @@
         android:layout_height="40dp"
         android:layout_marginStart="25dp"
         android:layout_marginTop="5dp"
+        android:contentDescription="Voltar"
         android:padding="10dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/header"
         app:srcCompat="@drawable/ic_arrow_left" />
+
+    <LinearLayout
+        android:id="@+id/recordContentContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/header">
+
+        <LinearLayout
+            android:id="@+id/recordHeaderInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="50dp"
+            android:layout_marginTop="90dp"
+            android:layout_marginEnd="50dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/textView5"
+                style="@style/subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Registro" />
+
+            <TextView
+                android:id="@+id/textView6"
+                style="@style/text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Registre os dados dos seus lotes aqui. Essas informações contribuiram para ampliar os dados do seu dashboard e aumentar sua posição no ranking. \n\nVocê pode continuar depois, essas informações serão armazenadas por um mês." />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/recordFormContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="30dp"
+            android:layout_marginTop="70dp"
+            android:layout_marginEnd="30dp"
+            android:orientation="vertical">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/editLotId"
+                style="@style/Widget.App.TextInputLayout.Gold"
+                android:hint="ID do lote">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputLotId"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/editLotCost"
+                style="@style/Widget.App.TextInputLayout.Gold"
+                android:hint="Custo do lote"
+                app:prefixText="R$">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputLotCost"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/recordPrimary"
+                style="@style/Widget.Ouros.Button.Big.Blue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="Iniciar" />
+
+        </LinearLayout>
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
