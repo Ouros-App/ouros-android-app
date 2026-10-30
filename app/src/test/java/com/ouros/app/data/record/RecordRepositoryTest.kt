@@ -219,27 +219,27 @@ class RecordRepositoryTest {
         // 400
         fakeApi.waterListResponse = Response.error(400, "".toResponseBody(null))
         val res400 = repository.load(1L)
-        assertEquals(RecordResult.Error("Confira os dados informados.", false), res400)
+        assertEquals(RecordResult.Error("Confira os dados ao tentar carregar os registros de água.", false), res400)
 
         // 422
         fakeApi.waterListResponse = Response.error(422, "".toResponseBody(null))
         val res422 = repository.load(1L)
-        assertEquals(RecordResult.Error("Confira os dados informados.", false), res422)
+        assertEquals(RecordResult.Error("Confira os dados ao tentar carregar os registros de água.", false), res422)
 
         // 403
         fakeApi.waterListResponse = Response.error(403, "".toResponseBody(null))
         val res403 = repository.load(1L)
-        assertEquals(RecordResult.Error("Seu usuário não possui permissão para registrar dados.", false), res403)
+        assertEquals(RecordResult.Error("Seu usuário não tem permissão para carregar os registros de água.", false), res403)
 
         // 404
         fakeApi.waterListResponse = Response.error(404, "".toResponseBody(null))
         val res404 = repository.load(1L)
-        assertEquals(RecordResult.Error("Fazenda, lote ou registro não encontrado.", false), res404)
+        assertEquals(RecordResult.Error("Não foi possível carregar os registros de água: item não encontrado.", false), res404)
 
         // 409
         fakeApi.waterListResponse = Response.error(409, "".toResponseBody(null))
         val res409 = repository.load(1L)
-        assertEquals(RecordResult.Error("Os dados entram em conflito com um registro existente.", false), res409)
+        assertEquals(RecordResult.Error("Já existe um registro para esses dados. Recarregue o histórico.", false), res409)
 
         // 429
         fakeApi.waterListResponse = Response.error(429, "".toResponseBody(null))
@@ -249,7 +249,7 @@ class RecordRepositoryTest {
         // 500
         fakeApi.waterListResponse = Response.error(500, "".toResponseBody(null))
         val res500 = repository.load(1L)
-        assertEquals(RecordResult.Error("O serviço está indisponível. Tente novamente."), res500)
+        assertEquals(RecordResult.Error("Não foi possível carregar os registros de água. Tente novamente."), res500)
     }
 
     @Test
@@ -396,9 +396,9 @@ class RecordRepositoryTest {
         assertNotNull(fakeApi.lastCreatedChickenLeftRequest)
         assertEquals(12, fakeApi.lastCreatedChickenLeftRequest?.chickensCount)
 
-        // Verify farm updated
-        assertEquals(1L, fakeApi.lastUpdatedFarmId)
-        assertEquals(2988, fakeApi.lastUpdatedFarmBody?.chickensNow)
+        // Current chicken count is updated by the lot operation on the server.
+        assertNull(fakeApi.lastUpdatedFarmId)
+        assertNull(fakeApi.lastUpdatedFarmBody)
 
         // Verify draft cleared
         assertNull(draftStore.load())
@@ -507,14 +507,17 @@ class RecordRepositoryTest {
         )
 
         val result = repository.submit(1L, draft)
-        assertEquals(RecordResult.Error("Confira os dados informados.", false), result)
+        assertEquals(RecordResult.Error("Confira os dados ao tentar atualizar o lote.", false), result)
     }
 
     @Test
     fun load_whenBodyIsNull_returnsIndisponivelError() = runBlocking {
         fakeApi.waterListResponse = Response.success(null)
         val result = repository.load(1L)
-        assertEquals(RecordResult.Error("O serviço está indisponível. Tente novamente."), result)
+        assertEquals(
+            RecordResult.Error("Não foi possível carregar os registros de água. Tente novamente."),
+            result
+        )
     }
 
     @Test

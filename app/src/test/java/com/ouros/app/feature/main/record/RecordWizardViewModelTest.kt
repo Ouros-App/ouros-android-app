@@ -76,15 +76,18 @@ class RecordWizardViewModelTest {
         var updateFarmResponse: Response<FarmResponse> = Response.success(FarmResponse(1L, 100))
         var onUpdateLot: (() -> Unit)? = null
 
-        override suspend fun getWater(farmId: Long): Response<List<WaterRegistryResponse>> = error("unused")
+        override suspend fun getWater(farmId: Long): Response<List<WaterRegistryResponse>> =
+            Response.success(emptyList())
         override suspend fun createWater(body: WaterRegistryRequest): Response<WaterRegistryResponse> = createWaterResponse
         override suspend fun updateWater(id: Long, body: WaterRegistryUpdate): Response<WaterRegistryResponse> = updateWaterResponse
 
-        override suspend fun getEnergy(farmId: Long): Response<List<EnergyRegistryResponse>> = error("unused")
+        override suspend fun getEnergy(farmId: Long): Response<List<EnergyRegistryResponse>> =
+            Response.success(emptyList())
         override suspend fun createEnergy(body: EnergyRegistryRequest): Response<EnergyRegistryResponse> = createEnergyResponse
         override suspend fun updateEnergy(id: Long, body: EnergyRegistryUpdate): Response<EnergyRegistryResponse> = updateEnergyResponse
 
-        override suspend fun getChickenLeft(farmId: Long): Response<List<ChickenLeftResponse>> = error("unused")
+        override suspend fun getChickenLeft(farmId: Long): Response<List<ChickenLeftResponse>> =
+            Response.success(emptyList())
         override suspend fun createChickenLeft(body: ChickenLeftRequest): Response<ChickenLeftResponse> = createChickenResponse
         override suspend fun updateChickenLeft(id: Long, body: ChickenLeftUpdate): Response<ChickenLeftResponse> = updateChickenResponse
         override suspend fun deleteChickenLeft(id: Long): Response<Unit> = deleteChickenResponse
@@ -227,7 +230,7 @@ class RecordWizardViewModelTest {
 
         viewModel.submit()
 
-        assertEquals(RecordWizardEvent.Error("Confira os dados informados."), viewModel.event.value)
+        assertEquals(RecordWizardEvent.Error("Confira os dados ao tentar atualizar o lote."), viewModel.event.value)
         assertFalse(viewModel.state.value?.submitting == true)
     }
 

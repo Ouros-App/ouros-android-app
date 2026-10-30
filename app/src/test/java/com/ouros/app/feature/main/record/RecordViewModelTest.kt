@@ -140,7 +140,7 @@ class RecordViewModelTest {
         viewModel.load()
 
         val state = viewModel.state.value
-        assertEquals("O serviço está indisponível. Tente novamente.", state?.error)
+        assertEquals("Não foi possível carregar os registros de água. Tente novamente.", state?.error)
         assertFalse(state?.loading == true)
     }
 

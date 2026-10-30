@@ -84,7 +84,7 @@ class ChatbotActivity : AppCompatActivity() {
                 rootPadding[0],
                 rootPadding[1] + bars.top,
                 rootPadding[2],
-                rootPadding[3] + composerBottomInset(bars.bottom, ime.bottom)
+                rootPadding[3] + dp(16) + composerBottomInset(bars.bottom, ime.bottom)
             )
             insets
         }
