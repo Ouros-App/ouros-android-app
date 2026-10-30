@@ -17,7 +17,7 @@
         android:visibility="invisible"
         tools:visibility="visible"
 
-        android:paddingBottom="170dp"
+        android:paddingBottom="140dp"
         android:clipToPadding="false">
 
         <LinearLayout

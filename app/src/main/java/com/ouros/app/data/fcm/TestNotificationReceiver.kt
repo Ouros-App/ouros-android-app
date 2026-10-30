@@ -1,4 +1,4 @@
-package com.ouros.app.core.fcm
+package com.ouros.app.data.fcm
 
 import android.content.BroadcastReceiver
 import android.content.Context

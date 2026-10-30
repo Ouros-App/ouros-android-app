@@ -3,10 +3,12 @@ package com.ouros.app.feature.secondary.chatbot
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -39,7 +41,8 @@ class ChatbotActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this)[ChatbotViewModel::class.java]
 
         val input = findViewById<EditText>(R.id.messageInput)
-        findViewById<Button>(R.id.attachFile).setOnClickListener {
+        findViewById<View>(R.id.btnBack).setOnClickListener { finish() }
+        findViewById<ImageButton>(R.id.attachFile).setOnClickListener {
             documentPicker.launch(
                 arrayOf(
                     "text/csv",
@@ -53,7 +56,7 @@ class ChatbotActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.selectedFile).setOnClickListener {
             viewModel.discardAttachment()
         }
-        findViewById<Button>(R.id.sendMessage).setOnClickListener {
+        findViewById<ImageButton>(R.id.sendMessage).setOnClickListener {
             viewModel.send(input.text?.toString().orEmpty())
             input.text?.clear()
         }
@@ -81,7 +84,7 @@ class ChatbotActivity : AppCompatActivity() {
                 rootPadding[0],
                 rootPadding[1] + bars.top,
                 rootPadding[2],
-                rootPadding[3] + composerBottomInset(bars.bottom, ime.bottom)
+                rootPadding[3] + dp(16) + composerBottomInset(bars.bottom, ime.bottom)
             )
             insets
         }
@@ -96,12 +99,20 @@ class ChatbotActivity : AppCompatActivity() {
         state.messages.forEach { line ->
             val text = TextView(this).apply {
                 this.text = line.text
-                textSize = 16f
-                setTextColor(getColor(R.color.black))
-                setPadding(dp(12), dp(10), dp(12), dp(10))
-                setBackgroundColor(if (line.user) getColor(R.color.white) else 0xFFEAF0F3.toInt())
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                textSize = 14f
+                setTextColor(getColor(android.R.color.white))
+                setPadding(dp(14), dp(10), dp(14), dp(10))
+                setBackgroundResource(
+                    if (line.user) R.drawable.bg_chat_balloon_user
+                    else R.drawable.bg_chat_balloon_assistant
+                )
+                maxWidth = resources.displayMetrics.widthPixels - dp(96)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
                     topMargin = dp(8)
+                    gravity = if (line.user) Gravity.END else Gravity.START
                 }
             }
             messages.addView(text)
@@ -118,11 +129,11 @@ class ChatbotActivity : AppCompatActivity() {
                 View.GONE
             }
         findViewById<Button>(R.id.chatRetry).isEnabled = !state.sending && !state.importing
-        findViewById<Button>(R.id.sendMessage).apply {
+        findViewById<ImageButton>(R.id.sendMessage).apply {
             isEnabled = !state.sending && state.preview == null
-            text = if (state.sending) "Enviando…" else "Enviar"
+            alpha = if (isEnabled) 1f else 0.55f
         }
-        findViewById<Button>(R.id.attachFile).isEnabled = !state.sending && state.preview == null
+        findViewById<ImageButton>(R.id.attachFile).isEnabled = !state.sending && state.preview == null
         findViewById<EditText>(R.id.messageInput).isEnabled =
             !state.sending && state.preview == null
         findViewById<TextView>(R.id.selectedFile).apply {

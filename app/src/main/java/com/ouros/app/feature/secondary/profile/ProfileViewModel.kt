@@ -30,8 +30,6 @@ class ProfileViewModel(
         fun onProfileErrors(
             nameMessage: String?,
             emailMessage: String?,
-            passwordMessage: String?,
-            cpfMessage: String?,
             telephoneMessage: String?
         )
 
@@ -105,8 +103,6 @@ class ProfileViewModel(
     fun saveProfile(
         name: String,
         email: String,
-        password: String,
-        cpf: String,
         telephone: String,
         photoChange: ProfilePhotoChange = ProfilePhotoChange.KeepCurrent
     ) {
@@ -118,8 +114,6 @@ class ProfileViewModel(
             !validate(
                 name = name,
                 email = email,
-                password = password,
-                cpf = cpf,
                 telephone = telephone
             )
         ) {
@@ -166,13 +160,8 @@ class ProfileViewModel(
                 val request = FarmOwnerUpdateRequest(
                     name = name.trim(),
                     email = email.trim().lowercase(),
-                    documentNumber =
-                        cpf.filter(Char::isDigit),
                     telephone =
                         telephone.filter(Char::isDigit),
-                    password = password.takeIf {
-                        it.isNotBlank()
-                    },
                     photoUrl = resolvedPhotoUrl
                 )
 
@@ -207,8 +196,6 @@ class ProfileViewModel(
     private fun validate(
         name: String,
         email: String,
-        password: String,
-        cpf: String,
         telephone: String
     ): Boolean {
         val nameMessage = if (
@@ -227,24 +214,6 @@ class ProfileViewModel(
             "Informe um e-mail válido."
         }
 
-        val passwordMessage = when {
-            password.isBlank() -> null
-
-            !ProfileValidator.isValidPassword(password) -> {
-                "Use de 8 a 20 caracteres, com letra maiúscula, minúscula, número e caractere especial."
-            }
-
-            else -> null
-        }
-
-        val cpfMessage = if (
-            ProfileValidator.isValidCpf(cpf)
-        ) {
-            null
-        } else {
-            "Informe um CPF válido."
-        }
-
         val telephoneMessage = if (
             ProfileValidator.isValidTelephone(telephone)
         ) {
@@ -256,15 +225,11 @@ class ProfileViewModel(
         listener?.onProfileErrors(
             nameMessage = nameMessage,
             emailMessage = emailMessage,
-            passwordMessage = passwordMessage,
-            cpfMessage = cpfMessage,
             telephoneMessage = telephoneMessage
         )
 
         return nameMessage == null &&
                 emailMessage == null &&
-                passwordMessage == null &&
-                cpfMessage == null &&
                 telephoneMessage == null
     }
 

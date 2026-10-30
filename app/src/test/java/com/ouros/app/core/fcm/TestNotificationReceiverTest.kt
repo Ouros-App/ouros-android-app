@@ -3,6 +3,7 @@ package com.ouros.app.core.fcm
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import com.ouros.app.data.fcm.TestNotificationReceiver
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith

@@ -2,6 +2,7 @@ package com.ouros.app.core.fcm
 
 import android.app.NotificationManager
 import android.content.Context
+import com.ouros.app.data.fcm.OurosFirebaseMessagingService
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test

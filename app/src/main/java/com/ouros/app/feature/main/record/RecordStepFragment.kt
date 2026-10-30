@@ -11,12 +11,11 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import com.ouros.app.R
-import com.ouros.app.core.util.applyBottomSystemBarMargin
-import com.ouros.app.core.util.applyImeFixedTranslation
-import com.ouros.app.core.util.dp
 import com.ouros.app.data.record.RecordDraft
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import com.ouros.app.core.BrazilianMoney
+import com.ouros.app.core.BrazilianMoneyTextWatcher
 
 abstract class RecordStepFragment(@LayoutRes layout: Int) : Fragment(layout) {
     protected val host: RecordWizardActivity get() = requireActivity() as RecordWizardActivity
@@ -35,13 +34,6 @@ abstract class RecordStepFragment(@LayoutRes layout: Int) : Fragment(layout) {
         val headerInfo = root.findViewById<View>(R.id.recordHeaderInfo)
             ?: root.findViewById<View>(R.id.linearLayout2)
         val primaryButton = root.findViewById<View>(R.id.recordPrimary)
-
-        formContainer?.applyImeFixedTranslation(
-            bottomAnchorView = primaryButton,
-            extraMarginPx = 16.dp,
-            viewsToFadeOut = listOfNotNull(returnHome, headerInfo)
-        )
-        returnHome?.applyBottomSystemBarMargin()
 
         root.post {
             val currentFocus = root.findFocus()
@@ -87,15 +79,7 @@ abstract class RecordStepFragment(@LayoutRes layout: Int) : Fragment(layout) {
     }
 
     protected fun EditText.moneyOrNull(): Double? {
-        val cleaned = text.toString().filter {
-            it.isDigit() || it == ',' || it == '.' || it == '-'
-        }
-        val normalized = if (cleaned.contains(',')) {
-            cleaned.replace(".", "").replace(',', '.')
-        } else {
-            cleaned
-        }
-        return normalized.toDoubleOrNull()
+        return BrazilianMoney.parse(text.toString())?.toDouble()
     }
 
     protected fun EditText.nonNegativeInt(): Int? {
@@ -135,11 +119,15 @@ class RecordLotFragment : RecordStepFragment(R.layout.fragment_record_lot) {
         val draft = wizard.currentDraft()
 
         lotId.setText(draft.lotId)
-        lotCost.setText(draft.lotCost)
+        lotCost.setText(BrazilianMoney.format(draft.lotCost))
 
-        watch(lotId) { current, value ->
-            current.copy(lotId = value)
-        }
+        lotCost.addTextChangedListener(
+            BrazilianMoneyTextWatcher(lotCost) { formatted ->
+                wizard.update { current ->
+                    current.copy(lotCost = formatted)
+                }
+            }
+        )
 
         watch(lotCost) { current, value ->
             current.copy(lotCost = value)

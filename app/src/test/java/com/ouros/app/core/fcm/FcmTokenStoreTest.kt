@@ -1,5 +1,6 @@
 package com.ouros.app.core.fcm
 
+import com.ouros.app.data.fcm.FcmTokenStore
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

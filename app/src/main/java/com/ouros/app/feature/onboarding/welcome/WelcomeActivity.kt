@@ -7,7 +7,6 @@ import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.ouros.app.R
-import com.ouros.app.core.util.applyBottomSystemBarMargin
 import com.ouros.app.feature.onboarding.tutorial.TutorialActivity
 
 class WelcomeActivity : AppCompatActivity() {
@@ -16,8 +15,6 @@ class WelcomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_welcome)
-
-        findViewById<View>(R.id.linearLayout).applyBottomSystemBarMargin()
 
         findViewById<Button>(R.id.btnStart).setOnClickListener {
             startActivity(Intent(this, TutorialActivity::class.java))

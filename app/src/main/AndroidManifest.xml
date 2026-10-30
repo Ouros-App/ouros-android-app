@@ -30,7 +30,7 @@
         </provider>
 
         <service
-            android:name=".core.fcm.OurosFirebaseMessagingService"
+            android:name=".data.fcm.OurosFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
@@ -38,7 +38,7 @@
         </service>
 
         <receiver
-            android:name=".core.fcm.TestNotificationReceiver"
+            android:name=".data.fcm.TestNotificationReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.ouros.app.TEST_NOTIFICATION" />

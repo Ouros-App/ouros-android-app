@@ -12,7 +12,7 @@
         android:clipToPadding="false"
         android:fillViewport="true"
         android:overScrollMode="never"
-        android:paddingBottom="170dp"
+        android:paddingBottom="140dp"
         android:scrollbars="none"
         android:visibility="invisible">
 

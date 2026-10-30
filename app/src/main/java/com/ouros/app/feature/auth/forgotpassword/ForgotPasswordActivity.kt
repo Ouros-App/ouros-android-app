@@ -16,8 +16,6 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.ouros.app.R
-import com.ouros.app.core.util.applyBottomSystemBarMargin
-import com.ouros.app.core.util.applyImeFixedTranslation
 import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository
 import com.ouros.app.data.auth.SecureRefreshTokenStore
@@ -119,11 +117,6 @@ class ForgotPasswordActivity :
                 .activity_forgot_password_email
         )
 
-        val btnContinueEmail = findViewById<View>(R.id.btnContinue)
-        findViewById<View>(
-            R.id.forgotEmailContentContainer
-        ).applyImeFixedTranslation(bottomAnchorView = btnContinueEmail)
-
         val inputEmail =
             findViewById<TextInputLayout>(
                 R.id.inputEmail
@@ -165,17 +158,6 @@ class ForgotPasswordActivity :
             R.layout
                 .activity_forgot_password_code
         )
-
-        val btnResend = findViewById<View>(R.id.btnResendCode)
-        val btnContinueCode = findViewById<View>(R.id.btnContinue)
-        findViewById<View>(
-            R.id.forgotCodeContentContainer
-        ).applyImeFixedTranslation(
-            bottomAnchorView = btnContinueCode,
-            viewsToFadeOut = listOf(btnResend)
-        )
-
-        btnResend.applyBottomSystemBarMargin()
 
         codeFields = listOf(
             findViewById(
@@ -235,16 +217,6 @@ class ForgotPasswordActivity :
         setContentView(
             R.layout
                 .activity_forgot_password_new_password
-        )
-
-        val btnFinish = findViewById<View>(R.id.btnFinish)
-        val imgMidas = findViewById<View>(R.id.imageView3)
-        val textMidas = findViewById<View>(R.id.textView22)
-        findViewById<View>(
-            R.id.forgotPasswordContentContainer
-        ).applyImeFixedTranslation(
-            bottomAnchorView = btnFinish,
-            viewsToFadeOut = listOfNotNull(imgMidas, textMidas)
         )
 
         val editNewPassword =

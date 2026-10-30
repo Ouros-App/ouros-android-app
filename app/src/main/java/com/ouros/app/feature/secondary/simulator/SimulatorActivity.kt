@@ -11,8 +11,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.ouros.app.R
-import com.ouros.app.core.util.applyImeFixedTranslation
-import com.ouros.app.core.util.dp
+import com.ouros.app.core.BrazilianMoney
+import com.ouros.app.core.BrazilianMoneyTextWatcher
 import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.SecureRefreshTokenStore
 import com.ouros.app.data.session.FarmSessionStore
@@ -84,11 +84,9 @@ class SimulatorActivity : AppCompatActivity() {
         targetEnergyInput = findViewById(R.id.inputTargetEnergy)
         simulateButton = findViewById(R.id.buttonSimulator)
 
-        formContainer.applyImeFixedTranslation(
-            bottomAnchorView = simulateButton,
-            extraMarginPx = 16.dp,
-            viewsToFadeOut = listOf(kpiContainer)
-        )
+        waterPriceInput.addTextChangedListener(BrazilianMoneyTextWatcher(waterPriceInput) {})
+        energyPriceInput.addTextChangedListener(BrazilianMoneyTextWatcher(energyPriceInput) {})
+
     }
 
     private fun configureActions() {
@@ -170,6 +168,9 @@ class SimulatorActivity : AppCompatActivity() {
     }
 
     private fun TextInputEditText.decimalValue(): Double? {
+        if (this === waterPriceInput || this === energyPriceInput) {
+            return BrazilianMoney.parse(text?.toString().orEmpty())?.toDouble()
+        }
         val raw = text?.toString().orEmpty().trim()
             .replace("R$", "", ignoreCase = true)
             .replace(" ", "")

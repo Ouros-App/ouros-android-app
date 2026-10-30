@@ -39,35 +39,65 @@ class RecordFragment : Fragment() {
     private lateinit var waterAdapter: RecordHistoryAdapter
     private lateinit var energyAdapter: RecordHistoryAdapter
     private var successDialog: Dialog? = null
+    private var deleteDialog: Dialog? = null
 
-    private val wizardLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    private val wizardLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
-            viewModel.load()
+            draftStore.clear()
             renderDraftCard()
+            viewModel.load()
             showSuccessPopup()
         }
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
-        inflater.inflate(R.layout.fragment_record, container, false)
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ) = inflater.inflate(R.layout.fragment_record, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         val appContext = requireContext().applicationContext
         draftStore = RecordDraftStore(appContext)
         val repository = RecordRepository(RecordNetwork.api, draftStore)
         viewModel = ViewModelProvider(
             this,
-            RecordViewModelFactory(repository, draftStore, FarmSessionStore(appContext).farmId())
+            RecordViewModelFactory(
+                repository,
+                draftStore,
+                FarmSessionStore(appContext).farmId()
+            )
         )[RecordViewModel::class.java]
 
         bind(view)
         configureLists(view)
-        view.findViewById<View>(R.id.recordStartCard).setOnClickListener { viewModel.newOrResume() }
+
+        view.findViewById<View>(R.id.recordStartCard).apply {
+            setOnClickListener {
+                viewModel.newOrResume()
+            }
+            setOnLongClickListener {
+                if (draftStore.load()?.hasContent() == true) {
+                    showDeleteDraftPopup()
+                    true
+                } else {
+                    false
+                }
+            }
+        }
+
         view.findViewById<View>(R.id.recordSimulatorCard).setOnClickListener {
             startActivity(Intent(requireContext(), SimulatorActivity::class.java))
         }
-        retry.setOnClickListener { viewModel.load() }
+
+        retry.setOnClickListener {
+            viewModel.load()
+        }
+
         observe()
     }
 
@@ -93,11 +123,13 @@ class RecordFragment : Fragment() {
     private fun configureLists(root: View) {
         waterAdapter = RecordHistoryAdapter(viewModel::edit)
         energyAdapter = RecordHistoryAdapter(viewModel::edit)
+
         root.findViewById<RecyclerView>(R.id.waterHistoryList).apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = waterAdapter
             isNestedScrollingEnabled = false
         }
+
         root.findViewById<RecyclerView>(R.id.energyHistoryList).apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = energyAdapter
@@ -112,27 +144,43 @@ class RecordFragment : Fragment() {
             error.visibility = if (state.error != null) View.VISIBLE else View.GONE
             retry.visibility = if (state.error != null) View.VISIBLE else View.GONE
             error.text = state.error
+
             waterAdapter.submitList(state.water)
             energyAdapter.submitList(state.energy)
-            emptyWater.visibility = if (!state.loading && state.water.isEmpty()) View.VISIBLE else View.GONE
-            emptyEnergy.visibility = if (!state.loading && state.energy.isEmpty()) View.VISIBLE else View.GONE
+
+            emptyWater.visibility =
+                if (!state.loading && state.water.isEmpty()) View.VISIBLE else View.GONE
+            emptyEnergy.visibility =
+                if (!state.loading && state.energy.isEmpty()) View.VISIBLE else View.GONE
         }
+
         viewModel.event.observe(viewLifecycleOwner) { event ->
             when (event) {
-                RecordEvent.OpenWizard -> wizardLauncher.launch(Intent(requireContext(), RecordWizardActivity::class.java))
-                RecordEvent.AuthenticationRequired -> startActivity(
-                    Intent(requireContext(), LoginActivity::class.java).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    }
-                )
+                RecordEvent.OpenWizard -> {
+                    wizardLauncher.launch(
+                        Intent(requireContext(), RecordWizardActivity::class.java)
+                    )
+                }
+
+                RecordEvent.AuthenticationRequired -> {
+                    startActivity(
+                        Intent(requireContext(), LoginActivity::class.java).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                                    Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        }
+                    )
+                }
+
                 null -> Unit
             }
+
             if (event != null) viewModel.consumeEvent()
         }
     }
 
     private fun renderDraftCard() {
         val draft = draftStore.load()?.takeIf { it.hasContent() }
+
         draftTitle.text = if (draft == null) "Preparado?" else "Pronto?"
         draftSubtitle.text = if (draft == null) {
             "Vamos começar um novo registro."
@@ -141,23 +189,89 @@ class RecordFragment : Fragment() {
         }
     }
 
+    private fun showDeleteDraftPopup() {
+        if (deleteDialog?.isShowing == true) return
+
+        val popupContent = layoutInflater.inflate(
+            R.layout.popup_record_delete,
+            null
+        )
+
+        val popup = Dialog(requireContext()).apply {
+            requestWindowFeature(Window.FEATURE_NO_TITLE)
+            setContentView(popupContent)
+            setCancelable(true)
+            setCanceledOnTouchOutside(true)
+            window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+            popupContent.findViewById<Button>(R.id.buttonRecordYes).setOnClickListener {
+                draftStore.clear()
+                renderDraftCard()
+                dismiss()
+            }
+
+            popupContent.findViewById<Button>(R.id.buttonRecordNo).setOnClickListener {
+                dismiss()
+            }
+
+            popupContent.findViewById<View>(R.id.recordConfirmBack).setOnClickListener {
+                dismiss()
+            }
+
+            setOnDismissListener {
+                deleteDialog = null
+            }
+        }
+
+        deleteDialog = popup
+        popup.show()
+
+        popup.window?.apply {
+            setLayout(
+                (resources.displayMetrics.widthPixels * 0.72f).toInt(),
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            addFlags(
+                WindowManager.LayoutParams.FLAG_DIM_BEHIND or
+                        WindowManager.LayoutParams.FLAG_BLUR_BEHIND
+            )
+            attributes = attributes.apply {
+                dimAmount = 0.18f
+                blurBehindRadius = 35
+            }
+        }
+    }
+
     private fun showSuccessPopup() {
         if (successDialog?.isShowing == true) return
+
         val popup = Dialog(requireContext()).apply {
             requestWindowFeature(Window.FEATURE_NO_TITLE)
             setContentView(layoutInflater.inflate(R.layout.popup_record_success, null))
             setCancelable(true)
             window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-            findViewById<Button>(R.id.buttonRecordOkay).setOnClickListener { dismiss() }
-            setOnDismissListener { successDialog = null }
+            findViewById<Button>(R.id.buttonRecordOkay).setOnClickListener {
+                dismiss()
+            }
+            setOnDismissListener {
+                successDialog = null
+            }
         }
+
         successDialog = popup
         popup.show()
+
         popup.window?.apply {
-            setLayout((resources.displayMetrics.widthPixels * .72f).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
-            addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND or WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+            setLayout(
+                (resources.displayMetrics.widthPixels * 0.72f).toInt(),
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            addFlags(
+                WindowManager.LayoutParams.FLAG_DIM_BEHIND or
+                        WindowManager.LayoutParams.FLAG_BLUR_BEHIND
+            )
             attributes = attributes.apply {
-                dimAmount = .18f
+                dimAmount = 0.18f
                 blurBehindRadius = 35
             }
         }
@@ -166,6 +280,8 @@ class RecordFragment : Fragment() {
     override fun onDestroyView() {
         successDialog?.dismiss()
         successDialog = null
+        deleteDialog?.dismiss()
+        deleteDialog = null
         super.onDestroyView()
     }
 }

@@ -1,4 +1,4 @@
-package com.ouros.app.core.fcm
+package com.ouros.app.data.fcm
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -79,7 +79,7 @@ class OurosFirebaseMessagingService : FirebaseMessagingService() {
             goalId: Long? = null
         ) {
             val notificationManager =
-                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val channel = NotificationChannel(

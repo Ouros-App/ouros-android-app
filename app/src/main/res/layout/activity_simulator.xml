@@ -93,7 +93,7 @@
                             android:id="@+id/txtSimulatorConsumption"
                             style="@style/subtitle"
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent"
+                            android:layout_height="wrap_content"
                             android:gravity="bottom"
                             android:maxLines="1"
                             android:text="--"

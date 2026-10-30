@@ -1,4 +1,4 @@
-package com.ouros.app.core.fcm
+package com.ouros.app.data.fcm
 
 import android.content.Context
 import android.content.SharedPreferences
