@@ -1,5 +1,6 @@
 package com.ouros.app.data.record
 
+import com.ouros.app.core.BrazilianMoney
 import java.io.IOException
 import java.math.BigDecimal
 import kotlinx.coroutines.CancellationException
@@ -19,11 +20,11 @@ class RecordRepository(
 ) {
     suspend fun load(farmId: Long): RecordResult<RecordHubData> = safe {
         coroutineScope {
-            val water = async { api.getWater(farmId).requiredBody() }
-            val energy = async { api.getEnergy(farmId).requiredBody() }
-            val chicken = async { api.getChickenLeft(farmId).requiredBody() }
-            val lots = async { api.getLots(farmId).requiredBody() }
-            val farm = async { api.getFarm(farmId).requiredBody() }
+            val water = async { api.getWater(farmId).requiredBody("carregar os registros de água") }
+            val energy = async { api.getEnergy(farmId).requiredBody("carregar os registros de energia") }
+            val chicken = async { api.getChickenLeft(farmId).requiredBody("carregar as saídas de galinhas") }
+            val lots = async { api.getLots(farmId).requiredBody("carregar os lotes") }
+            val farm = async { api.getFarm(farmId).requiredBody("carregar a fazenda") }
 
             RecordHubData(
                 water = water.await(),
@@ -57,7 +58,9 @@ class RecordRepository(
             mode = RecordDraftMode.EDIT,
             step = 1,
             lotId = lot?.id?.toString().orEmpty(),
-            lotCost = lot?.cost?.let { BigDecimal.valueOf(it).stripTrailingZeros().toPlainString() }.orEmpty(),
+            lotCost = lot?.cost?.let {
+                BigDecimal.valueOf(it).stripTrailingZeros().toPlainString()
+            }.orEmpty(),
             waterDate = water?.registrationDate ?: isoDate,
             hydrometerStart = water?.startHydrometer?.toPlainString().orEmpty(),
             hydrometerEnd = water?.endHydrometer?.toPlainString().orEmpty(),
@@ -73,15 +76,14 @@ class RecordRepository(
     }
 
     suspend fun submit(farmId: Long, original: RecordDraft): RecordResult<Unit> = safe {
-        var draft = original
+        var draft = resolveExistingRecords(farmId, original)
         val lotId = draft.lotId.toLong()
         val lotCost = draft.lotCost.money()
         val waterStart = draft.hydrometerStart.decimal()
         val waterEnd = draft.hydrometerEnd.decimal()
-        val energy = draft.energyKwh.decimal()
+        val energyConsumption = draft.energyKwh.decimal()
         val entered = draft.chickensEntered.toInt()
         val left = draft.chickensLeft.toInt()
-        val current = draft.chickensCurrent.toInt()
 
         api.updateLot(
             lotId,
@@ -89,7 +91,7 @@ class RecordRepository(
                 receivedChickens = entered,
                 cost = lotCost.toDouble()
             )
-        ).requireSuccess()
+        ).requireSuccess("atualizar o lote")
 
         val waterBody = WaterRegistryUpdate(
             registrationDate = draft.waterDate,
@@ -97,6 +99,7 @@ class RecordRepository(
             endHydrometer = waterEnd
         )
         val waterId = draft.waterRecordId
+
         if (waterId == null) {
             val created = api.createWater(
                 WaterRegistryRequest(
@@ -105,31 +108,37 @@ class RecordRepository(
                     endHydrometer = waterEnd,
                     farmId = farmId
                 )
-            ).requiredBody()
+            ).requiredBody("registrar a água")
+
             draft = draft.copy(waterRecordId = created.id).also(draftStore::save)
         } else {
-            api.updateWater(waterId, waterBody).requireSuccess()
+            api.updateWater(waterId, waterBody)
+                .requireSuccess("atualizar o registro de água")
         }
 
         val energyBody = EnergyRegistryUpdate(
             registrationDate = draft.energyDate,
-            energyConsumption = energy
+            energyConsumption = energyConsumption
         )
         val energyId = draft.energyRecordId
+
         if (energyId == null) {
             val created = api.createEnergy(
                 EnergyRegistryRequest(
                     registrationDate = draft.energyDate,
-                    energyConsumption = energy,
+                    energyConsumption = energyConsumption,
                     farmId = farmId
                 )
-            ).requiredBody()
+            ).requiredBody("registrar a energia")
+
             draft = draft.copy(energyRecordId = created.id).also(draftStore::save)
         } else {
-            api.updateEnergy(energyId, energyBody).requireSuccess()
+            api.updateEnergy(energyId, energyBody)
+                .requireSuccess("atualizar o registro de energia")
         }
 
         val chickenId = draft.chickenLeftRecordId
+
         when {
             chickenId == null && left > 0 -> {
                 val created = api.createChickenLeft(
@@ -138,8 +147,11 @@ class RecordRepository(
                         exitDate = draft.waterDate,
                         farmId = farmId
                     )
-                ).requiredBody()
-                draft = draft.copy(chickenLeftRecordId = created.id).also(draftStore::save)
+                ).requiredBody("registrar a saída de galinhas")
+
+                draft = draft.copy(
+                    chickenLeftRecordId = created.id
+                ).also(draftStore::save)
             }
 
             chickenId != null && left > 0 -> {
@@ -149,22 +161,53 @@ class RecordRepository(
                         chickensCount = left,
                         exitDate = draft.waterDate
                     )
-                ).requireSuccess()
+                ).requireSuccess("atualizar a saída de galinhas")
             }
 
             chickenId != null -> {
-                api.deleteChickenLeft(chickenId).requireSuccess()
-                draft = draft.copy(chickenLeftRecordId = null).also(draftStore::save)
+                api.deleteChickenLeft(chickenId)
+                    .requireSuccess("remover a saída de galinhas")
+
+                draft = draft.copy(
+                    chickenLeftRecordId = null
+                ).also(draftStore::save)
             }
         }
 
-        api.updateFarm(
-            farmId,
-            FarmUpdateRequest(chickensNow = current)
-        ).requireSuccess()
-
         draftStore.clear()
         Unit
+    }
+
+    private suspend fun resolveExistingRecords(
+        farmId: Long,
+        original: RecordDraft
+    ): RecordDraft = coroutineScope {
+        val waterRequest = async {
+            original.waterRecordId ?: api.getWater(farmId)
+                .requiredBody("verificar os registros de água")
+                .firstOrNull { it.registrationDate == original.waterDate }
+                ?.id
+        }
+
+        val energyRequest = async {
+            original.energyRecordId ?: api.getEnergy(farmId)
+                .requiredBody("verificar os registros de energia")
+                .firstOrNull { it.registrationDate == original.energyDate }
+                ?.id
+        }
+
+        val chickenRequest = async {
+            original.chickenLeftRecordId ?: api.getChickenLeft(farmId)
+                .requiredBody("verificar as saídas de galinhas")
+                .firstOrNull { it.exitDate == original.waterDate }
+                ?.id
+        }
+
+        original.copy(
+            waterRecordId = waterRequest.await(),
+            energyRecordId = energyRequest.await(),
+            chickenLeftRecordId = chickenRequest.await()
+        ).also(draftStore::save)
     }
 
     private suspend fun <T> safe(block: suspend () -> T): RecordResult<T> {
@@ -175,17 +218,37 @@ class RecordRepository(
         } catch (error: RecordHttpException) {
             when (error.code) {
                 401 -> RecordResult.AuthenticationRequired
-                400, 422 -> RecordResult.Error("Confira os dados informados.", false)
-                403 -> RecordResult.Error("Seu usuário não possui permissão para registrar dados.", false)
-                404 -> RecordResult.Error("Fazenda, lote ou registro não encontrado.", false)
-                409 -> RecordResult.Error("Os dados entram em conflito com um registro existente.", false)
-                429 -> RecordResult.Error("Muitas tentativas. Aguarde e tente novamente.")
-                else -> RecordResult.Error("O serviço está indisponível. Tente novamente.")
+                400, 422 -> RecordResult.Error(
+                    "Confira os dados ao tentar ${error.operation}.",
+                    false
+                )
+                403 -> RecordResult.Error(
+                    "Seu usuário não tem permissão para ${error.operation}.",
+                    false
+                )
+                404 -> RecordResult.Error(
+                    "Não foi possível ${error.operation}: item não encontrado.",
+                    false
+                )
+                409 -> RecordResult.Error(
+                    "Já existe um registro para esses dados. Recarregue o histórico.",
+                    false
+                )
+                429 -> RecordResult.Error(
+                    "Muitas tentativas. Aguarde e tente novamente."
+                )
+                else -> RecordResult.Error(
+                    "Não foi possível ${error.operation}. Tente novamente."
+                )
             }
         } catch (_: IOException) {
-            RecordResult.Error("Sem conexão. Seus dados continuam salvos neste aparelho.")
+            RecordResult.Error(
+                "Sem conexão. Seus dados continuam salvos neste aparelho."
+            )
         } catch (_: Exception) {
-            RecordResult.Error("Ocorreu um erro inesperado. Seus dados continuam salvos.")
+            RecordResult.Error(
+                "Ocorreu um erro inesperado. Seus dados continuam salvos."
+            )
         }
     }
 
@@ -194,23 +257,25 @@ class RecordRepository(
     }
 
     private fun String.money(): BigDecimal {
-        val cleaned = filter { it.isDigit() || it == ',' || it == '.' || it == '-' }
-        val normalized = if (cleaned.contains(',')) {
-            cleaned.replace(".", "").replace(',', '.')
-        } else {
-            cleaned
+        return BrazilianMoney.parse(this)
+            ?: throw IllegalArgumentException("Valor monetário inválido.")
+    }
+
+    private fun <T> Response<T>.requiredBody(operation: String): T {
+        if (!isSuccessful) {
+            throw RecordHttpException(code(), operation)
         }
-        return normalized.toBigDecimal()
+        return body() ?: throw RecordHttpException(code(), operation)
     }
 
-    private fun <T> Response<T>.requiredBody(): T {
-        if (!isSuccessful) throw RecordHttpException(code())
-        return body() ?: throw RecordHttpException(code())
+    private fun Response<*>.requireSuccess(operation: String) {
+        if (!isSuccessful) {
+            throw RecordHttpException(code(), operation)
+        }
     }
 
-    private fun Response<*>.requireSuccess() {
-        if (!isSuccessful) throw RecordHttpException(code())
-    }
-
-    private class RecordHttpException(val code: Int) : RuntimeException()
+    private class RecordHttpException(
+        val code: Int,
+        val operation: String
+    ) : RuntimeException()
 }

@@ -42,8 +42,9 @@ class RecordFragment : Fragment() {
 
     private val wizardLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
-            viewModel.load()
+            draftStore.clear()
             renderDraftCard()
+            viewModel.load()
             showSuccessPopup()
         }
     }
