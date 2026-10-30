@@ -155,7 +155,7 @@ class FirstAccessActivity : AppCompatActivity(), FirstAccessViewModel.Listener {
     }
 
     override fun onInvalidCredentials() {
-        Toast.makeText(this, "Email ou senha inv·lidos.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Email ou senha inv√°lidos.", Toast.LENGTH_SHORT).show()
     }
 
     override fun onCodeError(message: String?) {
