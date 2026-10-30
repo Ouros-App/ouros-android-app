@@ -6,6 +6,7 @@ import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.ouros.app.R
+import com.ouros.app.core.util.applyBottomSystemBarMargin
 
 class ErrorActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,6 +21,8 @@ class ErrorActivity : AppCompatActivity() {
         findViewById<ImageView>(R.id.btnErrorBack).setOnClickListener {
             finish()
         }
+
+        findViewById<ImageView>(R.id.imageView7).applyBottomSystemBarMargin()
     }
 
     companion object {

@@ -108,7 +108,9 @@ class GoalsRepository(
 
     suspend fun create(
         title: String,
-        description: String?
+        description: String?,
+        type: String = "Outro",
+        targetValue: Double = 1.0
     ): GoalsResult<GoalResponse> = safeRequest<GoalResponse> {
         val farmId = farmSessionStore.farmId()
             ?: return@safeRequest GoalsResult.Error(
@@ -119,7 +121,10 @@ class GoalsRepository(
         val request = CreateIndividualGoalRequest(
             title = title.trim(),
             description = description?.trim()?.takeIf(String::isNotEmpty),
-            farmId = farmId
+            farmId = farmId,
+            type = type.trim().ifEmpty { "Outro" },
+            status = "Em andamento",
+            targetValue = if (targetValue > 0.0) targetValue else 1.0
         )
 
         when (val result = authenticatedCall {

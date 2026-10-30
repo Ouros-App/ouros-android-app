@@ -6,7 +6,7 @@ data class GoalResponse(
     val id: Long,
     val title: String,
     val description: String?,
-    val type: String = "MILK_PRODUCTION",
+    val type: String = "Outro",
     val status: String = PENDING,
     @SerializedName("target_value") val targetValue: Double = 0.0,
     @SerializedName("id_farm") val farmId: Long? = null,
@@ -15,7 +15,10 @@ data class GoalResponse(
     val region: String? = null
 ) {
     val isCompleted: Boolean
-        get() = status.equals(COMPLETED, ignoreCase = true)
+        get() = status.equals(COMPLETED, ignoreCase = true) ||
+                status.equals("Concluída", ignoreCase = true) ||
+                status.equals("Concluida", ignoreCase = true) ||
+                status.equals("ACHIEVED", ignoreCase = true)
 
     companion object {
         const val COMPLETED = "COMPLETED"
@@ -30,13 +33,17 @@ data class UpdateGoalStatusRequest(
 data class UpdateIndividualGoalRequest(
     val title: String? = null,
     val description: String? = null,
-    val status: String? = null
+    val status: String? = null,
+    @SerializedName("target_value") val targetValue: Double? = null
 )
 
 data class CreateIndividualGoalRequest(
     val title: String,
     val description: String?,
-    @SerializedName("id_farm") val farmId: Long
+    @SerializedName("id_farm") val farmId: Long,
+    val type: String = "Outro",
+    val status: String = "Em andamento",
+    @SerializedName("target_value") val targetValue: Double = 1.0
 )
 
 enum class GoalOrigin { PERSONAL, STATE }

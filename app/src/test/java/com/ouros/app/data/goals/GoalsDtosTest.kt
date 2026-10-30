@@ -17,11 +17,17 @@ class GoalsDtosTest {
         )
         assertTrue(completedGoal.isCompleted)
 
+        val concluidaGoal = completedGoal.copy(status = "Concluída")
+        assertTrue(concluidaGoal.isCompleted)
+
+        val achievedGoal = completedGoal.copy(status = "ACHIEVED")
+        assertTrue(achievedGoal.isCompleted)
+
         val pendingGoal = completedGoal.copy(status = GoalResponse.PENDING)
         assertFalse(pendingGoal.isCompleted)
 
-        val otherGoal = completedGoal.copy(status = "IN_PROGRESS")
-        assertFalse(otherGoal.isCompleted)
+        val inProgressGoal = completedGoal.copy(status = "Em andamento")
+        assertFalse(inProgressGoal.isCompleted)
     }
 
     @Test
@@ -52,11 +58,26 @@ class GoalsDtosTest {
         val createRequest = CreateIndividualGoalRequest(
             title = "Nova Meta",
             description = "Descrição",
-            farmId = 10L
+            farmId = 10L,
+            type = "Água",
+            status = "Em andamento",
+            targetValue = 5.0
         )
         assertEquals("Nova Meta", createRequest.title)
         assertEquals("Descrição", createRequest.description)
         assertEquals(10L, createRequest.farmId)
+        assertEquals("Água", createRequest.type)
+        assertEquals("Em andamento", createRequest.status)
+        assertEquals(5.0, createRequest.targetValue, 0.001)
+
+        val defaultRequest = CreateIndividualGoalRequest(
+            title = "Meta Padrão",
+            description = null,
+            farmId = 20L
+        )
+        assertEquals("Outro", defaultRequest.type)
+        assertEquals("Em andamento", defaultRequest.status)
+        assertEquals(1.0, defaultRequest.targetValue, 0.001)
 
         val updateRequest = UpdateIndividualGoalRequest(
             title = "Meta Editada",

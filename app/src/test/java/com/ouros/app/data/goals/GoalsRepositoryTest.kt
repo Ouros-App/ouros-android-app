@@ -294,6 +294,21 @@ class GoalsRepositoryTest {
         assertEquals("Nova Meta", api.lastCreateRequest?.title)
         assertEquals("Descrição", api.lastCreateRequest?.description)
         assertEquals(10L, api.lastCreateRequest?.farmId)
+        assertEquals("Outro", api.lastCreateRequest?.type)
+        assertEquals("Em andamento", api.lastCreateRequest?.status)
+        assertEquals(1.0, api.lastCreateRequest?.targetValue ?: 0.0, 0.001)
+    }
+
+    @Test
+    fun create_withCustomTypeAndTarget_submitsSpecifiedValues() = runBlocking {
+        val result = repository.create("Meta de Água", "Economia", type = "Água", targetValue = 5.0)
+
+        assertTrue(result is GoalsResult.Success)
+        assertEquals("Meta de Água", api.lastCreateRequest?.title)
+        assertEquals("Economia", api.lastCreateRequest?.description)
+        assertEquals("Água", api.lastCreateRequest?.type)
+        assertEquals("Em andamento", api.lastCreateRequest?.status)
+        assertEquals(5.0, api.lastCreateRequest?.targetValue ?: 0.0, 0.001)
     }
 
     @Test

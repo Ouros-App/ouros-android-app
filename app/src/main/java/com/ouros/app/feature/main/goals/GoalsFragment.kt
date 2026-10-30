@@ -8,6 +8,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
+import android.view.WindowManager
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -32,8 +35,6 @@ import com.ouros.app.data.goals.GoalsRepository
 import com.ouros.app.data.goals.GoalsUiState
 import com.ouros.app.data.session.FarmSessionStore
 import com.ouros.app.feature.main.MainActivity
-import android.os.Build
-import android.view.WindowManager
 
 class GoalsFragment : Fragment() {
     private lateinit var viewModel: GoalsViewModel
@@ -233,13 +234,26 @@ class GoalsFragment : Fragment() {
 
         val popupContent = layoutInflater.inflate(R.layout.popup_goal, null)
         val editTitle = popupContent.findViewById<EditText>(R.id.editGoalTitle)
+        val editType = popupContent.findViewById<AutoCompleteTextView>(R.id.editGoalType)
         val editDescription = popupContent.findViewById<EditText>(R.id.editGoalDesc)
         val confirmButton = popupContent.findViewById<Button>(R.id.buttonConfirmGoal)
         val deleteButton = popupContent.findViewById<Button>(R.id.buttonDeleteGoal)
         val backButton = popupContent.findViewById<View>(R.id.btnBack)
 
+        val goalTypes = arrayOf("Água", "Energia", "Bem-estar", "Outro")
+        val adapter = ArrayAdapter(requireContext(), R.layout.item_goal_type_dropdown, goalTypes)
+        editType.setAdapter(adapter)
+
         editTitle.setText(goal?.title.orEmpty())
         editDescription.setText(goal?.description.orEmpty())
+
+        val initialType = when {
+            goal != null && goal.type.isNotBlank() -> goal.type
+            else -> goalTypes[0]
+        }
+        editType.setText(initialType, false)
+        editType.isEnabled = (goal == null)
+
         deleteButton.visibility = if (goal == null) View.GONE else View.VISIBLE
 
         val popup = Dialog(requireContext()).apply {
@@ -259,7 +273,8 @@ class GoalsFragment : Fragment() {
             viewModel.saveGoal(
                 goal = goal,
                 title = editTitle.text.toString(),
-                description = editDescription.text.toString()
+                description = editDescription.text.toString(),
+                type = editType.text.toString().ifBlank { "Outro" }
             )
         }
 

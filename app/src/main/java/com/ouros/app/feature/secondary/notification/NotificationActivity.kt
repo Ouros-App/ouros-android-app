@@ -20,6 +20,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.ouros.app.R
+import com.ouros.app.core.util.applyBottomSystemBarPadding
+import com.ouros.app.core.util.dp
 import com.ouros.app.data.fcm.OurosFirebaseMessagingService
 import com.ouros.app.data.notification.NotificationItemResponse
 import com.ouros.app.feature.main.MainActivity
@@ -75,6 +77,7 @@ class NotificationActivity : AppCompatActivity() {
         btnMarkAllRead = findViewById(R.id.btnMarkAllRead)
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
         recyclerNotifications = findViewById(R.id.recyclerNotifications)
+        recyclerNotifications.applyBottomSystemBarPadding(16.dp)
         layoutEmpty = findViewById(R.id.layoutEmpty)
         progressLoading = findViewById(R.id.progressLoading)
         layoutError = findViewById(R.id.layoutError)
