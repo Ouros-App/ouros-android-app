@@ -98,10 +98,12 @@ class GoalsViewModel(
     fun saveGoal(
         goal: GoalResponse?,
         title: String,
-        description: String
+        description: String,
+        type: String = "Outro"
     ) {
         val cleanTitle = title.trim()
         val cleanDescription = description.trim()
+        val cleanType = type.trim().ifBlank { "Outro" }
 
         if (cleanTitle.isBlank()) {
             _event.value = GoalsEvent.ShowMessage("Informe o título da meta.")
@@ -116,7 +118,8 @@ class GoalsViewModel(
             val result = if (goal == null) {
                 repository.create(
                     title = cleanTitle,
-                    description = cleanDescription
+                    description = cleanDescription,
+                    type = cleanType
                 )
             } else {
                 repository.updateDetails(

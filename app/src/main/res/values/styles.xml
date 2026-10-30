@@ -82,6 +82,21 @@
         <item name="boxCornerRadiusBottomEnd">12dp</item>
     </style>
 
+    <style name="Widget.App.TextInputLayout.Gold.Dropdown" parent="Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+        <item name="boxStrokeColor">@color/gold</item>
+        <item name="hintTextColor">@color/gold</item>
+        <item name="cursorColor">@color/gold</item>
+        <item name="endIconTint">@color/gold</item>
+
+        <item name="android:layout_marginTop">5dp</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="boxCornerRadiusTopStart">12dp</item>
+        <item name="boxCornerRadiusTopEnd">12dp</item>
+        <item name="boxCornerRadiusBottomStart">12dp</item>
+        <item name="boxCornerRadiusBottomEnd">12dp</item>
+    </style>
+
     <style name="Widget.Ouros.VerificationCodeBox" parent="Widget.Material3.TextInputLayout.OutlinedBox">
         <item name="boxStrokeColor">@color/gold</item>
         <item name="hintTextColor">@color/gold</item>

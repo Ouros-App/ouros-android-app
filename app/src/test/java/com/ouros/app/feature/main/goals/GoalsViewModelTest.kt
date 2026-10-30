@@ -134,6 +134,7 @@ class GoalsViewModelTest {
                 id = 99L,
                 title = request.title,
                 description = request.description,
+                type = request.type,
                 status = "PENDING"
             )
             return Response.success(created)
@@ -261,6 +262,16 @@ class GoalsViewModelTest {
 
         viewModel.consumeEvent()
         assertNull(viewModel.event.value)
+    }
+
+    @Test
+    fun saveGoal_createsNewGoal_withCustomType() {
+        viewModel.loadInitialData()
+        viewModel.saveGoal(null, "Meta de Energia", "Detalhes", "Energia")
+
+        val created = viewModel.state.value?.personalGoals?.find { it.title == "Meta de Energia" }
+        assertEquals("Energia", created?.type)
+        assertEquals(GoalsEvent.CloseGoalPopup, viewModel.event.value)
     }
 
     @Test
