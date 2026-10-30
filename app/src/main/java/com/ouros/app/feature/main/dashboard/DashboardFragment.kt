@@ -14,6 +14,7 @@ import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.ouros.app.R
+import com.ouros.app.core.util.applyBottomSystemBarPadding
 import com.ouros.app.core.SkeletonLoaderView
 import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.AuthNetwork
@@ -100,6 +101,7 @@ class DashboardFragment : Fragment() {
         error = root.findViewById(R.id.dashboardError)
         retry = root.findViewById(R.id.dashboardRetry)
         content = root.findViewById(R.id.dashboardContent)
+        content.applyBottomSystemBarPadding()
         txtKpiConsumptionValue = root.findViewById(R.id.txtKpiConsumptionValue)
         txtKpiWaterValue = root.findViewById(R.id.txtKpiWaterValue)
         txtKpiEnergyValue = root.findViewById(R.id.txtKpiEnergyValue)

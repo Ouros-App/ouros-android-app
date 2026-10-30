@@ -26,6 +26,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import coil.load
 import com.ouros.app.R
+import com.ouros.app.core.util.applyBottomSystemBarPadding
+import com.ouros.app.core.util.dp
 import com.ouros.app.data.tip.TipDetailResponse
 import io.noties.markwon.Markwon
 import kotlinx.coroutines.launch
@@ -98,6 +100,7 @@ class TipDetailActivity : AppCompatActivity() {
         txtTipBody = findViewById(R.id.txtTipBody)
         cardReviewAction = findViewById(R.id.cardReviewAction)
         scrollTipContent = findViewById(R.id.scrollTipContent)
+        scrollTipContent.applyBottomSystemBarPadding(32.dp)
         progressLoading = findViewById(R.id.progressLoading)
         layoutError = findViewById(R.id.layoutError)
         txtErrorMessage = findViewById(R.id.txtErrorMessage)
