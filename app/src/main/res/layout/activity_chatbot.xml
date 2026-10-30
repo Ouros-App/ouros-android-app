@@ -1,6 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/chatRoot"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/white"
+    android:padding="16dp">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Assistente Ouros"
+        android:textColor="@color/blue"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:paddingBottom="12dp" />
+
+    <ScrollView
+        android:id="@+id/chatScroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+        <LinearLayout
+            android:id="@+id/chatMessages"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+
+    <TextView
+        android:id="@+id/chatError"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/warning_red"
+        android:visibility="gone"
+        android:paddingVertical="8dp" />
+    <Button
+        android:id="@+id/chatRetry"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tentar novamente"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/importPreview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/white"
+        android:padding="12dp"
+        android:visibility="gone">
+        <TextView android:id="@+id/previewTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/blue" android:textSize="18sp" android:textStyle="bold" />
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="160dp"
+            android:fillViewport="false">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <TextView android:id="@+id/previewRecords" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/black" android:paddingTop="8dp" />
+                <TextView android:id="@+id/previewIssues" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/warning_red" android:paddingTop="4dp" />
+            </LinearLayout>
+        </ScrollView>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <Button android:id="@+id/cancelImport" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Cancelar" />
+            <Button android:id="@+id/confirmImport" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Confirmar importação" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView android:id="@+id/selectedFile" android:layout_width="match_parent" android:layout_height="wrap_content" android:clickable="true" android:focusable="true" android:visibility="gone" android:paddingVertical="4dp" android:textColor="@color/blue" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <Button android:id="@+id/attachFile" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Arquivo" />
+        <EditText
+            android:id="@+id/messageInput"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Escreva sua mensagem"
+            android:inputType="textCapSentences|textMultiLine"
+            android:maxLines="4"
+            android:imeOptions="actionSend" />
+        <Button android:id="@+id/sendMessage" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Enviar" />
+    </LinearLayout>
+</LinearLayout>
