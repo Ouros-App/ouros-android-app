@@ -38,6 +38,7 @@ import android.view.WindowManager
 import android.app.Activity
 import android.graphics.Bitmap
 import android.net.Uri
+import com.ouros.app.data.fcm.FcmTokenStore
 import com.ouros.app.feature.onboarding.welcome.WelcomeActivity
 import com.yalantis.ucrop.UCrop
 import java.io.File
@@ -642,7 +643,7 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     private fun logout() {
-        val fcmToken = com.ouros.app.core.fcm.FcmTokenStore(applicationContext).getToken()
+        val fcmToken = FcmTokenStore(applicationContext).getToken()
         if (!fcmToken.isNullOrBlank()) {
             Executors.newSingleThreadExecutor().execute {
                 kotlinx.coroutines.runBlocking {
@@ -650,7 +651,7 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
                 }
             }
         }
-        com.ouros.app.core.fcm.FcmTokenStore(applicationContext).clear()
+        FcmTokenStore(applicationContext).clear()
 
         AppSession.sessionManager.clear()
         SecureRefreshTokenStore(applicationContext).clear()

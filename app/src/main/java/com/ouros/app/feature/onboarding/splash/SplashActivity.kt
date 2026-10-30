@@ -12,7 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessaging
 import com.ouros.app.R
-import com.ouros.app.core.fcm.FcmTokenStore
+import com.ouros.app.data.fcm.FcmTokenStore
 import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository
