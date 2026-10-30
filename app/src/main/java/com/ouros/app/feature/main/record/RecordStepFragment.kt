@@ -30,21 +30,27 @@ abstract class RecordStepFragment(@LayoutRes layout: Int) : Fragment(layout) {
     }
 
     private fun configureKeyboardBehavior(root: View, returnHome: View?) {
-        val contentContainer = root.findViewById<View>(R.id.recordContentContainer)
+        val formContainer = root.findViewById<View>(R.id.recordFormContainer)
+            ?: root.findViewById<View>(R.id.recordContentContainer)
+        val headerInfo = root.findViewById<View>(R.id.recordHeaderInfo)
+            ?: root.findViewById<View>(R.id.linearLayout2)
         val primaryButton = root.findViewById<View>(R.id.recordPrimary)
 
-        contentContainer?.applyImeFixedTranslation(
+        formContainer?.applyImeFixedTranslation(
             bottomAnchorView = primaryButton,
             extraMarginPx = 16.dp,
-            viewsToFadeOut = listOfNotNull(returnHome)
+            viewsToFadeOut = listOfNotNull(returnHome, headerInfo)
         )
         returnHome?.applyBottomSystemBarMargin()
 
         root.post {
-            root.isFocusableInTouchMode = true
-            root.requestFocus()
-            activity?.window?.let { window ->
-                WindowInsetsControllerCompat(window, root).hide(WindowInsetsCompat.Type.ime())
+            val currentFocus = root.findFocus()
+            if (currentFocus == null || currentFocus === root) {
+                root.isFocusableInTouchMode = true
+                root.requestFocus()
+                activity?.window?.let { window ->
+                    WindowInsetsControllerCompat(window, root).hide(WindowInsetsCompat.Type.ime())
+                }
             }
         }
     }

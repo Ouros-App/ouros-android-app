@@ -131,9 +131,11 @@ fun View.applyImeFixedTranslation(
 
         val focused = findFocus()
         val targetShift = if (focused != null && isChildOrDescendant(focused)) {
-            val focusedField = (focused.parent?.parent as? View)?.takeIf { isChildOrDescendant(it) }
-                ?: (focused.parent as? View)?.takeIf { isChildOrDescendant(it) }
-                ?: focused
+            var directChild: View = focused
+            while (directChild.parent != null && directChild.parent !== this && directChild.parent is View) {
+                directChild = directChild.parent as View
+            }
+            val focusedField = if (directChild.parent === this) directChild else focused
 
             val fLocation = IntArray(2)
             focusedField.getLocationInWindow(fLocation)

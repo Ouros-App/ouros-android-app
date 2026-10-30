@@ -176,9 +176,13 @@ class FirstAccessPageFragment :
         inputPassword.error = null
 
         val btnContinueCred = view.findViewById<View>(R.id.btnContinue)
-        view.findViewById<View>(
-            R.id.firstAccessCredentialsContentContainer
-        )?.applyImeFixedTranslation(bottomAnchorView = btnContinueCred)
+        val headerInfoCred = view.findViewById<View>(R.id.linearLayout2)
+        val formContainerCred = view.findViewById<View>(R.id.firstAccessCredentialsFormContainer)
+            ?: view.findViewById<View>(R.id.firstAccessCredentialsContentContainer)
+        formContainerCred?.applyImeFixedTranslation(
+            bottomAnchorView = btnContinueCred,
+            viewsToFadeOut = listOfNotNull(headerInfoCred)
+        )
     }
 
     private fun bindCode(view: View) {
@@ -447,9 +451,13 @@ class FirstAccessPageFragment :
         inputTelephone.error = null
 
         val btnContinuePersonal = view.findViewById<View>(R.id.btnContinue)
-        view.findViewById<View>(
-            R.id.firstAccessPersonalContentContainer
-        )?.applyImeFixedTranslation(bottomAnchorView = btnContinuePersonal)
+        val headerInfoPersonal = view.findViewById<View>(R.id.linearLayout2)
+        val formContainerPersonal = view.findViewById<View>(R.id.firstAccessPersonalFormContainer)
+            ?: view.findViewById<View>(R.id.firstAccessPersonalContentContainer)
+        formContainerPersonal?.applyImeFixedTranslation(
+            bottomAnchorView = btnContinuePersonal,
+            viewsToFadeOut = listOfNotNull(headerInfoPersonal)
+        )
     }
 
     private fun bindNewPassword(
