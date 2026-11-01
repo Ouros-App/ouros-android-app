@@ -21,6 +21,9 @@ import com.ouros.app.data.auth.SecureRefreshTokenStore
 import com.ouros.app.data.farmowner.FarmOwnerNetwork
 import com.ouros.app.data.farmowner.FarmOwnerRepository
 import com.ouros.app.data.notification.NotificationRepository
+import com.ouros.app.data.local.OfflineSyncRegistry
+import com.ouros.app.data.session.FarmSessionStore
+import com.ouros.app.data.session.OfflineStartupPolicy
 import com.ouros.app.feature.auth.firstaccess.FirstAccessActivity
 import com.ouros.app.feature.error.ErrorActivity
 import com.ouros.app.feature.main.MainActivity
@@ -39,6 +42,7 @@ class SplashActivity : AppCompatActivity() {
     private lateinit var authRepository: AuthRepository
     private lateinit var farmOwnerRepository: FarmOwnerRepository
     private lateinit var refreshTokenStore: SecureRefreshTokenStore
+    private lateinit var farmSessionStore: FarmSessionStore
 
     private var navigationStarted = false
     private var isWaitingForPermission = false
@@ -111,6 +115,7 @@ class SplashActivity : AppCompatActivity() {
 
     private fun configureRepositories() {
         refreshTokenStore = SecureRefreshTokenStore(applicationContext)
+        farmSessionStore = FarmSessionStore(applicationContext)
 
         authRepository = AuthRepository(
             api = AuthNetwork.api,
@@ -140,7 +145,10 @@ class SplashActivity : AppCompatActivity() {
             when (val refreshResult = authRepository.refreshSession()) {
                 is AuthResult.Error -> {
                     waitMinimumSplashTime(splashStartedAt)
-                    handleRefreshError(refreshResult)
+                    handleRefreshError(
+                        error = refreshResult,
+                        hasSavedRefreshToken = true
+                    )
                 }
 
                 is AuthResult.Success -> {
@@ -179,13 +187,20 @@ class SplashActivity : AppCompatActivity() {
                     openFirstAccess(farmOwnerId)
 
                 } else {
+                    farmSessionStore.saveAccount(
+                        ownerId = farmOwnerId,
+                        farmId = profile.farmId
+                    )
                     openMain()
                 }
             }
         }
     }
 
-    private fun handleRefreshError(error: AuthResult.Error) {
+    private fun handleRefreshError(
+        error: AuthResult.Error,
+        hasSavedRefreshToken: Boolean
+    ) {
         when (error.statusCode) {
             401 -> {
                 // O refresh token expirou ou foi revogado.
@@ -194,9 +209,19 @@ class SplashActivity : AppCompatActivity() {
             }
 
             else -> {
-                // Em erros de conexão ou servidor, o refresh token permanece salvo.
-                // Assim, o usuário pode tentar novamente depois.
-                openError(error.message)
+                val canOpenOffline = OfflineStartupPolicy.canOpenMain(
+                    isOnline = OfflineSyncRegistry.isOnline(),
+                    hasSavedRefreshToken = hasSavedRefreshToken,
+                    ownerId = farmSessionStore.ownerId(),
+                    farmId = farmSessionStore.farmId()
+                )
+
+                if (canOpenOffline) {
+                    openMain()
+                } else {
+                    // Em erros de servidor ou sem dados locais confirmados, não libera acesso.
+                    openError(error.message)
+                }
             }
         }
     }
