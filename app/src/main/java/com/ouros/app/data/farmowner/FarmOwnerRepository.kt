@@ -4,7 +4,6 @@ import com.ouros.app.data.auth.AuthResult
 import com.ouros.app.data.auth.SessionManager
 import com.ouros.app.data.auth.TokenResponse
 import com.ouros.app.data.local.OfflineStore
-import com.ouros.app.data.local.OfflineSyncRegistry
 import com.ouros.app.data.session.FarmSessionStore
 import retrofit2.Response
 import java.io.IOException
@@ -28,8 +27,7 @@ open class FarmOwnerRepository(
                 result
             }
             result is AuthResult.Error &&
-                result.statusCode != 401 &&
-                !OfflineSyncRegistry.isOnline() -> {
+                shouldUseCachedProfile(result.statusCode) -> {
                 cachedProfile()?.let { AuthResult.Success(it) } ?: result
             }
             else -> result
@@ -263,3 +261,9 @@ open class FarmOwnerRepository(
         const val NO_SAVED_SESSION_MESSAGE = "Nenhuma sessão salva."
     }
 }
+
+internal fun shouldUseCachedProfile(statusCode: Int?): Boolean =
+    statusCode == null ||
+        statusCode == 408 ||
+        statusCode == 429 ||
+        statusCode >= 500
