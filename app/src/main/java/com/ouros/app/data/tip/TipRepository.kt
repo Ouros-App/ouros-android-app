@@ -26,6 +26,10 @@ class TipRepository(
         safeCall {
             val response = try {
                 api.getTipById(id)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (error: IOException) {
+                if (offlineStore != null || enableMockFallback) null else throw error
             } catch (e: Exception) {
                 if (enableMockFallback) null else throw e
             }
@@ -86,6 +90,10 @@ class TipRepository(
                     tipId = tipId,
                     request = ReviewRequest(score = score, comment = validComment)
                 )
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (error: IOException) {
+                if (offlineStore != null || enableMockFallback) null else throw error
             } catch (e: Exception) {
                 if (enableMockFallback) null else throw e
             }

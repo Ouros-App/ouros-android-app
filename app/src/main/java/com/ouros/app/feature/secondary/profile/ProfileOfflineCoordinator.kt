@@ -14,6 +14,7 @@ import com.ouros.app.data.farmowner.FarmOwnerUpdateRequest
 import com.ouros.app.data.local.OfflineStore
 import com.ouros.app.data.local.OfflineSynchronizer
 import com.ouros.app.data.session.FarmSessionStore
+import java.io.File
 
 interface OfflineProfileSaver {
     fun savePending(
@@ -24,20 +25,21 @@ interface OfflineProfileSaver {
     ): FarmOwnerResponse
 }
 
-class ProfileOfflineCoordinator(context: Context) : OfflineProfileSaver, OfflineSynchronizer {
+class ProfileOfflineCoordinator internal constructor(
+    context: Context,
+    private val offlineStore: OfflineStore = OfflineStore(context.applicationContext),
+    private val farmSessionStore: FarmSessionStore = FarmSessionStore(context.applicationContext),
+    private val uploadImage: suspend (File) -> Result<String> = CloudinaryRepository()::uploadImage,
+    profileUpdater: (suspend (Long, FarmOwnerUpdateRequest) -> AuthResult<FarmOwnerResponse>)? = null
+) : OfflineProfileSaver, OfflineSynchronizer {
     private val applicationContext = context.applicationContext
-    private val offlineStore = OfflineStore(applicationContext)
-    private val farmSessionStore = FarmSessionStore(applicationContext)
-    private val cloudinaryRepository = CloudinaryRepository()
-    private val farmOwnerRepository: FarmOwnerRepository
-
-    init {
+    private val updateProfile = profileUpdater ?: run {
         val authRepository = AuthRepository(
             api = AuthNetwork.api,
             refreshTokenStore = SecureRefreshTokenStore(applicationContext),
             sessionManager = AppSession.sessionManager
         )
-        farmOwnerRepository = FarmOwnerRepository(
+        val repository = FarmOwnerRepository(
             api = FarmOwnerNetwork.api,
             sessionManager = AppSession.sessionManager,
             refreshSession = authRepository::refreshSession,
@@ -45,6 +47,7 @@ class ProfileOfflineCoordinator(context: Context) : OfflineProfileSaver, Offline
             offlineStore = offlineStore,
             farmSessionStore = farmSessionStore
         )
+        repository::update
     }
 
     override fun savePending(
@@ -103,7 +106,7 @@ class ProfileOfflineCoordinator(context: Context) : OfflineProfileSaver, Offline
             when (pending.photoOperation) {
                 PendingPhotoOperation.UPLOAD -> {
                     val localPhoto = photoStore.localPhotoFile() ?: return
-                    val upload = cloudinaryRepository.uploadImage(localPhoto)
+                    val upload = uploadImage(localPhoto)
                     if (upload.isFailure) return
                     uploadedPhotoUrl = upload.getOrNull() ?: return
                     request = request.copy(photoUrl = uploadedPhotoUrl)
@@ -112,7 +115,7 @@ class ProfileOfflineCoordinator(context: Context) : OfflineProfileSaver, Offline
                 PendingPhotoOperation.KEEP -> Unit
             }
 
-            when (farmOwnerRepository.update(pending.ownerId, request)) {
+            when (updateProfile(pending.ownerId, request)) {
                 is AuthResult.Success -> {
                     if (pending.photoOperation == PendingPhotoOperation.UPLOAD) {
                         photoStore.markPhotoUploadCompleted(uploadedPhotoUrl)
