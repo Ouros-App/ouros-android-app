@@ -17,7 +17,8 @@ import retrofit2.Response
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class NotificationOfflineCacheTest {
-    private val context get() = RuntimeEnvironment.getApplication<android.app.Application>()
+    private val context: android.app.Application
+        get() = RuntimeEnvironment.getApplication()
 
     @Before
     fun clearDatabase() {
