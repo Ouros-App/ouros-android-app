@@ -301,6 +301,26 @@ class ChatbotStateTest {
     }
 
     @Test
+    fun sendWhileOffline_doesNotAppendMessageOrCallApi() {
+        session.setAccessToken("test-token", TimeUnit.HOURS.toSeconds(1))
+        val api = FakeChatbotApi()
+        val viewModel = ChatbotViewModel(
+            RuntimeEnvironment.getApplication(),
+            SavedStateHandle(),
+            api,
+            api,
+            isOnline = { false }
+        )
+
+        viewModel.send("hello", attachment = null)
+
+        assertEquals(0, api.chatCalls)
+        assertTrue(viewModel.state.value!!.messages.isEmpty())
+        assertFalse(viewModel.state.value!!.sending)
+        assertEquals(null, viewModel.state.value!!.error)
+    }
+
+    @Test
     fun attachmentCanBeSelectedAndDiscarded() {
         val viewModel = newViewModel(FakeChatbotApi())
         val uri = Uri.parse("content://history/file.csv")

@@ -12,6 +12,7 @@ import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository
 import com.ouros.app.data.auth.AuthResult
 import com.ouros.app.data.auth.SecureRefreshTokenStore
+import com.ouros.app.data.local.OfflineSyncRegistry
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -26,10 +27,17 @@ class ChatbotViewModel internal constructor(
     application: Application,
     private val savedState: SavedStateHandle,
     private val aiApi: ChatbotApi,
-    private val springApi: ChatbotApi
+    private val springApi: ChatbotApi,
+    private val isOnline: () -> Boolean = { true }
 ) : AndroidViewModel(application) {
     constructor(application: Application, savedState: SavedStateHandle) :
-        this(application, savedState, ChatbotNetwork.aiApi, ChatbotNetwork.springApi)
+        this(
+            application,
+            savedState,
+            ChatbotNetwork.aiApi,
+            ChatbotNetwork.springApi,
+            OfflineSyncRegistry::isOnline
+        )
 
     val state = MutableLiveData(ChatState(threadId = savedState.get<String>(THREAD_ID) ?: UUID.randomUUID().toString()))
     private val session = AppSession.sessionManager
@@ -55,7 +63,7 @@ class ChatbotViewModel internal constructor(
         appendMessage: Boolean = true
     ) {
         val text = message.trim().ifEmpty { if (attachment != null) "Analise o arquivo anexado." else "" }
-        if (text.isEmpty() || state.value!!.sending || state.value!!.preview != null) return
+        if (!isOnline() || text.isEmpty() || state.value!!.sending || state.value!!.preview != null) return
         update {
             copy(
                 messages = if (appendMessage) messages + ChatLine(text, true) else messages,
