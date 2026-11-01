@@ -314,6 +314,68 @@ class ProfileViewModelTest {
         assertEquals("https://existing.com/photo.jpg", listener.savedProfile?.photoUrl)
     }
 
+    @Test
+    fun saveProfile_whileOffline_queuesLocallyWithoutCallingBackends() = runTest {
+        var updateCalled = false
+        val fakeFarmOwnerApi = object : FarmOwnerApi {
+            override suspend fun getMe(authorization: String) =
+                Response.success(sampleProfile(photoUrl = "https://existing.com/photo.jpg"))
+
+            override suspend fun update(
+                id: Long,
+                authorization: String,
+                request: FarmOwnerUpdateRequest
+            ): Response<FarmOwnerResponse> {
+                updateCalled = true
+                return Response.success(sampleProfile())
+            }
+        }
+        val sessionManager = SessionManager().apply {
+            setAccessToken("valid-token", expiresInSeconds = 3600)
+        }
+        val repository = FarmOwnerRepository(
+            api = fakeFarmOwnerApi,
+            sessionManager = sessionManager,
+            refreshSession = { error("Not needed") },
+            clearSession = {}
+        )
+        var queuedRequest: FarmOwnerUpdateRequest? = null
+        val offlineSaver = object : OfflineProfileSaver {
+            override fun savePending(
+                ownerId: Long,
+                currentProfile: FarmOwnerResponse,
+                request: FarmOwnerUpdateRequest,
+                photoChange: ProfilePhotoChange
+            ): FarmOwnerResponse {
+                queuedRequest = request
+                return currentProfile.copy(
+                    name = request.name,
+                    email = request.email,
+                    telephone = request.telephone
+                )
+            }
+        }
+        val viewModel = ProfileViewModel(
+            farmOwnerRepository = repository,
+            offlineCoordinator = offlineSaver,
+            isOnline = { false }
+        )
+        val listener = TestProfileListener()
+        viewModel.setListener(listener)
+        viewModel.loadProfile()
+
+        viewModel.saveProfile(
+            name = "Nome Offline",
+            email = "offline@fazenda.com",
+            telephone = "11999998888"
+        )
+
+        assertEquals(false, updateCalled)
+        assertEquals("Nome Offline", queuedRequest?.name)
+        assertEquals("offline@fazenda.com", listener.savedProfile?.email)
+        assertNull(listener.errorMessage)
+    }
+
     private fun sampleProfile(photoUrl: String? = null) = FarmOwnerResponse(
         id = 100L,
         name = "Produtor Rural",
