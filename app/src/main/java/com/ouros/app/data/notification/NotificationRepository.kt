@@ -1,6 +1,9 @@
 package com.ouros.app.data.notification
 
 import java.io.IOException
+import com.ouros.app.data.local.OfflineStore
+import com.ouros.app.data.local.OfflineSynchronizer
+import com.ouros.app.data.local.OfflineSyncRegistry
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -9,9 +12,15 @@ import retrofit2.Response
 
 class NotificationRepository(
     private val api: NotificationApi = NotificationNetwork.api,
-    private val enableMockFallback: Boolean = true,
+    private val enableMockFallback: Boolean = false,
+    private val offlineStore: OfflineStore? = null,
+    private val ownerIdProvider: () -> Long? = { null },
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
-) {
+) : OfflineSynchronizer {
+
+    init {
+        if (offlineStore != null) OfflineSyncRegistry.register(this)
+    }
 
     suspend fun registerDeviceToken(
         token: String,
@@ -38,13 +47,18 @@ class NotificationRepository(
         unreadOnly: Boolean? = null
     ): Result<NotificationPageResponse> = withContext(ioDispatcher) {
         safeCall {
-            val response = callApiWithFallback {
+            val response = callApiOrNull {
                 api.getNotifications(page = page, size = size, unreadOnly = unreadOnly)
             }
             val body = response?.body()
             when {
-                response?.isSuccessful == true && body != null -> Result.success(body)
+                response?.isSuccessful == true && body != null -> {
+                    offlineStore?.cache(cacheKey(), body)
+                    Result.success(body)
+                }
+                cachedPage() != null -> Result.success(cachedPage()!!)
                 enableMockFallback -> Result.success(createMockPageResponse())
+                response == null -> Result.failure(Exception(OFFLINE_MESSAGE))
                 else -> Result.failure(Exception("Falha ao carregar notificações: HTTP ${response?.code()}"))
             }
         }
@@ -52,11 +66,13 @@ class NotificationRepository(
 
     suspend fun getUnreadCount(): Result<Int> = withContext(ioDispatcher) {
         safeCall {
-            val response = callApiWithFallback { api.getUnreadCount() }
+            val response = callApiOrNull { api.getUnreadCount() }
             val body = response?.body()
             when {
                 response?.isSuccessful == true && body != null -> Result.success(body.count)
+                cachedPage() != null -> Result.success(cachedPage()!!.content.count { !it.isRead })
                 enableMockFallback -> Result.success(mockNotifications.count { !it.isRead })
+                response == null -> Result.failure(Exception(OFFLINE_MESSAGE))
                 else -> Result.failure(Exception("Falha ao obter contador de não lidas: HTTP ${response?.code()}"))
             }
         }
@@ -64,24 +80,118 @@ class NotificationRepository(
 
     suspend fun markAsRead(id: Long): Result<NotificationItemResponse?> = withContext(ioDispatcher) {
         safeCall {
-            val response = callApiWithFallback { api.markAsRead(id) }
-            updateMockItemReadStatus(id)
-            if (response?.isSuccessful == true) {
-                Result.success(response.body())
-            } else if (enableMockFallback) {
-                Result.success(mockNotifications.find { it.id == id })
-            } else {
-                Result.failure(Exception("Falha ao marcar notificação como lida: HTTP ${response?.code()}"))
+            val response = callApiOrNull { api.markAsRead(id) }
+            when {
+                response?.isSuccessful == true -> {
+                    updateCachedItemReadStatus(id)
+                    Result.success(response.body())
+                }
+                response == null && offlineStore != null -> {
+                    val cachedItem = updateCachedItemReadStatus(id)
+                    offlineStore.enqueueReplacing(
+                        area = pendingArea(),
+                        operation = MARK_READ,
+                        entityKey = id.toString(),
+                        value = PendingNotificationOperation(id)
+                    )
+                    Result.success(cachedItem)
+                }
+                enableMockFallback -> {
+                    updateMockItemReadStatus(id)
+                    Result.success(mockNotifications.find { it.id == id })
+                }
+                else -> Result.failure(Exception("Falha ao marcar notificação como lida: HTTP ${response?.code()}"))
             }
         }
     }
 
     suspend fun markAllAsRead(): Result<Unit> = withContext(ioDispatcher) {
         safeCall {
-            val response = callApiWithFallback { api.markAllAsRead() }
-            updateAllMockItemsReadStatus()
-            resolveAnyResponse(response, "Falha ao marcar todas como lidas")
+            val response = callApiOrNull { api.markAllAsRead() }
+            when {
+                response?.isSuccessful == true -> {
+                    updateAllCachedItemsReadStatus()
+                    Result.success(Unit)
+                }
+                response == null && offlineStore != null -> {
+                    updateAllCachedItemsReadStatus()
+                    offlineStore.enqueueReplacing(
+                        area = pendingArea(),
+                        operation = MARK_ALL_READ,
+                        entityKey = "all",
+                        value = PendingNotificationOperation()
+                    )
+                    Result.success(Unit)
+                }
+                enableMockFallback -> {
+                    updateAllMockItemsReadStatus()
+                    Result.success(Unit)
+                }
+                else -> Result.failure(Exception("Falha ao marcar todas como lidas: HTTP ${response?.code()}"))
+            }
         }
+    }
+
+    override suspend fun synchronize() = withContext(ioDispatcher) {
+        val store = offlineStore ?: return@withContext
+        for (operation in store.pending(pendingArea())) {
+            val successful = try {
+                when (operation.operation) {
+                    MARK_READ -> {
+                        val pending = store.decode(
+                            operation.payload,
+                            PendingNotificationOperation::class.java
+                        )
+                        val id = pending.id
+                        if (id == null) {
+                            store.complete(operation.id)
+                            continue
+                        }
+                        api.markAsRead(id).isSuccessful
+                    }
+                    MARK_ALL_READ -> api.markAllAsRead().isSuccessful
+                    else -> true
+                }
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                false
+            }
+            if (!successful) return@withContext
+            store.complete(operation.id)
+        }
+    }
+
+    private suspend fun <T> callApiOrNull(call: suspend () -> Response<T>): Response<T>? =
+        try {
+            call()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: IOException) {
+            null
+        }
+
+    private fun cachedPage(): NotificationPageResponse? = offlineStore?.cached(cacheKey())
+
+    private fun cacheKey() = "$CACHE_KEY:${ownerIdProvider() ?: "anonymous"}"
+
+    private fun pendingArea() = "$PENDING_AREA:${ownerIdProvider() ?: "anonymous"}"
+
+    private fun updateCachedItemReadStatus(id: Long): NotificationItemResponse? {
+        val page = cachedPage() ?: return null
+        val updated = page.content.map { item ->
+            if (item.id == id) item.copy(isRead = true) else item
+        }
+        offlineStore?.cache(cacheKey(), page.copy(content = updated))
+        return updated.find { it.id == id }
+    }
+
+    private fun updateAllCachedItemsReadStatus() {
+        val page = cachedPage() ?: return
+        offlineStore?.cache(
+            cacheKey(),
+            page.copy(content = page.content.map { it.copy(isRead = true) })
+        )
     }
 
     private suspend fun <T> callApiWithFallback(call: suspend () -> Response<T>): Response<T>? {
@@ -139,6 +249,14 @@ class NotificationRepository(
     }
 
     companion object {
+        private const val CACHE_KEY = "notifications:latest"
+        private const val PENDING_AREA = "notifications"
+        private const val MARK_READ = "mark-read"
+        private const val MARK_ALL_READ = "mark-all-read"
+        private const val OFFLINE_MESSAGE = "Sem conexão. Exibindo apenas notificações salvas neste aparelho."
+
+        private data class PendingNotificationOperation(val id: Long? = null)
+
         private val mockNotifications = mutableListOf(
             NotificationItemResponse(
                 id = 1,

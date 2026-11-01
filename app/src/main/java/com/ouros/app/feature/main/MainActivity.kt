@@ -69,7 +69,10 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
     private lateinit var txtSelectedPeriod: TextView
 
     private val notificationRepository: NotificationRepository by lazy {
-        NotificationRepository()
+        NotificationRepository(
+            offlineStore = OfflineStore(applicationContext),
+            ownerIdProvider = { farmSessionStore.ownerId() }
+        )
     }
 
     private val fcmTokenStore: FcmTokenStore by lazy {
