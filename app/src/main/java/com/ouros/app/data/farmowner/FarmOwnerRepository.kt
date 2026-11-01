@@ -3,6 +3,9 @@ package com.ouros.app.data.farmowner
 import com.ouros.app.data.auth.AuthResult
 import com.ouros.app.data.auth.SessionManager
 import com.ouros.app.data.auth.TokenResponse
+import com.ouros.app.data.local.OfflineStore
+import com.ouros.app.data.local.OfflineSyncRegistry
+import com.ouros.app.data.session.FarmSessionStore
 import retrofit2.Response
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
@@ -11,10 +14,29 @@ open class FarmOwnerRepository(
     private val api: FarmOwnerApi,
     private val sessionManager: SessionManager,
     private val refreshSession: suspend () -> AuthResult<TokenResponse>,
-    private val clearSession: () -> Unit
+    private val clearSession: () -> Unit,
+    private val offlineStore: OfflineStore? = null,
+    private val farmSessionStore: FarmSessionStore? = null
 ) {
 
     open suspend fun getMe(): AuthResult<FarmOwnerResponse> {
+        val result = getMeRemote()
+
+        return when {
+            result is AuthResult.Success -> {
+                cacheProfile(result.data)
+                result
+            }
+            result is AuthResult.Error &&
+                result.statusCode != 401 &&
+                !OfflineSyncRegistry.isOnline() -> {
+                cachedProfile()?.let { AuthResult.Success(it) } ?: result
+            }
+            else -> result
+        }
+    }
+
+    private suspend fun getMeRemote(): AuthResult<FarmOwnerResponse> {
         return try {
             when (val result = authenticatedCall(api::getMe)) {
                 is AuthenticatedCallResult.ResponseResult -> {
@@ -83,8 +105,10 @@ open class FarmOwnerRepository(
                     val farmOwner = response.body()
 
                     when {
-                        response.isSuccessful && farmOwner != null ->
+                        response.isSuccessful && farmOwner != null -> {
+                            cacheProfile(farmOwner)
                             AuthResult.Success(farmOwner)
+                        }
                         response.code() == 403 ->
                             AuthResult.Error(
                                 message = "Você não possui permissão para alterar este perfil.",
@@ -206,6 +230,22 @@ open class FarmOwnerRepository(
             message = "Sessão expirada.",
             statusCode = 401
         )
+
+    private fun cacheProfile(profile: FarmOwnerResponse) {
+        val ownerId = profile.id ?: return
+        offlineStore?.cache(profileCacheKey(ownerId), profile)
+        farmSessionStore?.saveAccount(
+            ownerId = ownerId,
+            farmId = profile.farmId ?: farmSessionStore.farmId()
+        )
+    }
+
+    private fun cachedProfile(): FarmOwnerResponse? {
+        val ownerId = farmSessionStore?.ownerId() ?: return null
+        return offlineStore?.cached(profileCacheKey(ownerId))
+    }
+
+    private fun profileCacheKey(ownerId: Long) = "farm-owner:$ownerId"
 
     private sealed interface AuthorizationResult {
         data class Ready(val header: String) : AuthorizationResult

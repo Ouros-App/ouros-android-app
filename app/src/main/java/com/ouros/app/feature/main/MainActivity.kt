@@ -35,6 +35,7 @@ import com.ouros.app.data.dashboard.DashboardPeriod
 import com.ouros.app.data.farmowner.FarmOwnerNetwork
 import com.ouros.app.data.farmowner.FarmOwnerRepository
 import com.ouros.app.data.notification.NotificationRepository
+import com.ouros.app.data.local.OfflineStore
 import com.ouros.app.data.rank.RankLeague
 import com.ouros.app.data.session.FarmSessionStore
 import com.ouros.app.feature.auth.login.LoginActivity
@@ -107,7 +108,9 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
             api = FarmOwnerNetwork.api,
             sessionManager = AppSession.sessionManager,
             refreshSession = authRepository::refreshSession,
-            clearSession = authRepository::clearSession
+            clearSession = authRepository::clearSession,
+            offlineStore = OfflineStore(applicationContext),
+            farmSessionStore = farmSessionStore
         )
     }
 

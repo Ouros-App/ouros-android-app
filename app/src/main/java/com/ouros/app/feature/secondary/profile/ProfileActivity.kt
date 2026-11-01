@@ -30,8 +30,7 @@ import com.ouros.app.data.farmowner.FarmOwnerNetwork
 import com.ouros.app.data.farmowner.FarmOwnerRepository
 import com.ouros.app.data.farmowner.FarmOwnerResponse
 import com.ouros.app.data.session.FarmSessionStore
-import java.net.HttpURLConnection
-import java.net.URL
+import com.ouros.app.data.local.OfflineStore
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import androidx.core.graphics.drawable.toDrawable
@@ -44,6 +43,7 @@ import com.ouros.app.data.fcm.FcmTokenStore
 import com.ouros.app.feature.onboarding.welcome.WelcomeActivity
 import com.yalantis.ucrop.UCrop
 import java.io.File
+import coil.load
 
 class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
 
@@ -64,7 +64,6 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     private lateinit var imgProfilePhoto: ImageView
     private lateinit var btnSave: Button
 
-    private val photoExecutor = Executors.newSingleThreadExecutor()
     private val photoRequestSequence = AtomicInteger(0)
     private var pendingCameraUri: Uri? = null
     private var pendingCropOutputFile: File? = null
@@ -197,7 +196,9 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
             api = FarmOwnerNetwork.api,
             sessionManager = AppSession.sessionManager,
             refreshSession = authRepository::refreshSession,
-            clearSession = authRepository::clearSession
+            clearSession = authRepository::clearSession,
+            offlineStore = OfflineStore(applicationContext),
+            farmSessionStore = farmSessionStore
         )
 
         val factory = ProfileViewModelFactory(
@@ -574,43 +575,17 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     private fun loadRemotePhoto(photoUrl: String) {
-        val requestId = photoRequestSequence.incrementAndGet()
+        photoRequestSequence.incrementAndGet()
+        val fallbackAvatar = photoStore?.selectedAvatarResource()
+            ?: R.drawable.avatar_yellow
 
-        photoExecutor.execute {
-            var connection: HttpURLConnection? = null
-
-            try {
-                connection = URL(photoUrl).openConnection() as HttpURLConnection
-                connection.connectTimeout = PHOTO_TIMEOUT_MILLIS
-                connection.readTimeout = PHOTO_TIMEOUT_MILLIS
-                connection.instanceFollowRedirects = true
-                connection.doInput = true
-                connection.connect()
-
-                if (connection.responseCode !in 200..299) {
-                    return@execute
-                }
-
-                val bitmap = connection.inputStream.use {
-                    BitmapFactory.decodeStream(it)}
-                        ?: return@execute
-
-                runOnUiThread {
-                    if (requestId == photoRequestSequence.get() && !isFinishing && !isDestroyed) {
-                        imgProfilePhoto.setBackgroundColor(Color.TRANSPARENT)
-                        imgProfilePhoto.scaleType = ImageView.ScaleType.CENTER_CROP
-                        imgProfilePhoto.setImageBitmap(bitmap)
-                    }
-                }
-
-            } catch (_: Exception) {
-                runOnUiThread {
-                    if (requestId == photoRequestSequence.get() && !isFinishing && !isDestroyed) {
-                        showDefaultAvatar()
-                    }
-                }
-
-            } finally { connection?.disconnect() }
+        imgProfilePhoto.setBackgroundColor(Color.TRANSPARENT)
+        imgProfilePhoto.scaleType = ImageView.ScaleType.CENTER_CROP
+        imgProfilePhoto.load(photoUrl) {
+            crossfade(true)
+            placeholder(fallbackAvatar)
+            error(fallbackAvatar)
+            fallback(fallbackAvatar)
         }
     }
 
@@ -683,7 +658,6 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     override fun onDestroy() {
         viewModel.clearListener(this)
         photoRequestSequence.incrementAndGet()
-        photoExecutor.shutdownNow()
 
         if (isFinishing) {
             clearPendingCrop()
@@ -693,7 +667,6 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     private companion object {
-        const val PHOTO_TIMEOUT_MILLIS = 10_000
         const val STATE_PENDING_CAMERA_URI = "pending_camera_uri"
         const val STATE_PENDING_CROP_PATH = "pending_crop_path"
         const val STATE_PENDING_PHOTO_REMOVAL = "pending_photo_removal"

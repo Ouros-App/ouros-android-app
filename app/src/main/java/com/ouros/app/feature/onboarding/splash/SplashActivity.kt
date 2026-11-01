@@ -127,7 +127,9 @@ class SplashActivity : AppCompatActivity() {
             api = FarmOwnerNetwork.api,
             sessionManager = AppSession.sessionManager,
             refreshSession = authRepository::refreshSession,
-            clearSession = authRepository::clearSession
+            clearSession = authRepository::clearSession,
+            offlineStore = OfflineStore(applicationContext),
+            farmSessionStore = farmSessionStore
         )
     }
 

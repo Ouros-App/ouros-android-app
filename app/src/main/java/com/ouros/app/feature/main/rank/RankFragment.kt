@@ -88,7 +88,9 @@ class RankFragment : Fragment() {
             api = FarmOwnerNetwork.api,
             sessionManager = AppSession.sessionManager,
             refreshSession = authRepository::refreshSession,
-            clearSession = authRepository::clearSession
+            clearSession = authRepository::clearSession,
+            offlineStore = OfflineStore(context),
+            farmSessionStore = FarmSessionStore(context)
         )
         val repository = RankRepository(
             api = RankNetwork.api,
