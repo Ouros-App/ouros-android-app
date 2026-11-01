@@ -4,6 +4,9 @@ import com.ouros.app.data.auth.AuthRepository
 import com.ouros.app.data.auth.AuthResult
 import com.ouros.app.data.auth.SessionManager
 import com.ouros.app.data.session.FarmSessionStore
+import com.ouros.app.data.local.OfflineStore
+import com.ouros.app.data.local.OfflineSynchronizer
+import com.ouros.app.data.local.OfflineSyncRegistry
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import retrofit2.Response
@@ -18,9 +21,23 @@ class GoalsRepository(
     private val api: GoalsApi,
     private val authRepository: AuthRepository,
     private val sessionManager: SessionManager,
-    private val farmSessionStore: FarmSessionStore
-) {
-    suspend fun load(): GoalsResult<GoalsPayload> = safeRequest<GoalsPayload> {
+    private val farmSessionStore: FarmSessionStore,
+    private val offlineStore: OfflineStore? = null
+) : OfflineSynchronizer {
+
+    init {
+        if (offlineStore != null) OfflineSyncRegistry.register(this)
+    }
+
+    suspend fun load(): GoalsResult<GoalsPayload> {
+        val result = loadRemote()
+        if (result is GoalsResult.Success) offlineStore?.cache(CACHE_KEY, result.data)
+        return if (result is GoalsResult.Error && result.canRetry) {
+            offlineStore?.cached<GoalsPayload>(CACHE_KEY)?.let { GoalsResult.Success(it) } ?: result
+        } else result
+    }
+
+    private suspend fun loadRemote(): GoalsResult<GoalsPayload> = safeRequest<GoalsPayload> {
         when (val personalCall = authenticatedCall { api.getIndividualGoals(it) }) {
             ApiCallResult.AuthenticationRequired -> GoalsResult.AuthenticationRequired
             ApiCallResult.TemporaryFailure -> temporaryError()
@@ -62,6 +79,29 @@ class GoalsRepository(
     }
 
     suspend fun updateStatus(
+        origin: GoalOrigin,
+        goal: GoalResponse,
+        completed: Boolean
+    ): GoalsResult<GoalResponse> {
+        val result = updateStatusRemote(origin, goal, completed)
+        if (result is GoalsResult.Success) updateCachedGoal(origin, result.data)
+        if (result is GoalsResult.Error && offlineStore != null && !OfflineSyncRegistry.isOnline()) {
+            val updated = goal.copy(
+                status = if (completed) GoalResponse.COMPLETED else GoalResponse.PENDING
+            )
+            offlineStore.enqueueReplacing(
+                area(),
+                UPDATE_STATUS,
+                "${origin.name}:${goal.id}",
+                PendingGoalOperation(origin = origin, goal = updated)
+            )
+            updateCachedGoal(origin, updated)
+            return GoalsResult.Success(updated)
+        }
+        return result
+    }
+
+    private suspend fun updateStatusRemote(
         origin: GoalOrigin,
         goal: GoalResponse,
         completed: Boolean
@@ -111,6 +151,35 @@ class GoalsRepository(
         description: String?,
         type: String = "Outro",
         targetValue: Double = 1.0
+    ): GoalsResult<GoalResponse> {
+        val result = createRemote(title, description, type, targetValue)
+        if (result is GoalsResult.Success) addCachedGoal(result.data)
+        if (result is GoalsResult.Error && offlineStore != null && !OfflineSyncRegistry.isOnline()) {
+            val localGoal = GoalResponse(
+                id = -System.currentTimeMillis(),
+                title = title.trim(),
+                description = description?.trim()?.takeIf(String::isNotEmpty),
+                type = type.trim().ifEmpty { "Outro" },
+                targetValue = if (targetValue > 0.0) targetValue else 1.0,
+                farmId = farmSessionStore.farmId()
+            )
+            offlineStore.enqueue(
+                area(),
+                CREATE,
+                localGoal.id.toString(),
+                PendingGoalOperation(origin = GoalOrigin.PERSONAL, goal = localGoal)
+            )
+            addCachedGoal(localGoal)
+            return GoalsResult.Success(localGoal)
+        }
+        return result
+    }
+
+    private suspend fun createRemote(
+        title: String,
+        description: String?,
+        type: String,
+        targetValue: Double
     ): GoalsResult<GoalResponse> = safeRequest<GoalResponse> {
         val farmId = farmSessionStore.farmId()
             ?: return@safeRequest GoalsResult.Error(
@@ -140,6 +209,27 @@ class GoalsRepository(
     }
 
     suspend fun updateDetails(
+        goal: GoalResponse,
+        title: String,
+        description: String
+    ): GoalsResult<GoalResponse> {
+        val result = updateDetailsRemote(goal, title, description)
+        if (result is GoalsResult.Success) updateCachedGoal(GoalOrigin.PERSONAL, result.data)
+        if (result is GoalsResult.Error && offlineStore != null && !OfflineSyncRegistry.isOnline()) {
+            val updated = goal.copy(title = title.trim(), description = description.trim())
+            offlineStore.enqueueReplacing(
+                area(),
+                UPDATE_DETAILS,
+                goal.id.toString(),
+                PendingGoalOperation(origin = GoalOrigin.PERSONAL, goal = updated)
+            )
+            updateCachedGoal(GoalOrigin.PERSONAL, updated)
+            return GoalsResult.Success(updated)
+        }
+        return result
+    }
+
+    private suspend fun updateDetailsRemote(
         goal: GoalResponse,
         title: String,
         description: String
@@ -180,7 +270,26 @@ class GoalsRepository(
         }
     }
 
-    suspend fun delete(id: Long): GoalsResult<Unit> = safeRequest<Unit> {
+    suspend fun delete(id: Long): GoalsResult<Unit> {
+        val result = deleteRemote(id)
+        if (result is GoalsResult.Success) removeCachedGoal(id)
+        if (result is GoalsResult.Error && offlineStore != null && !OfflineSyncRegistry.isOnline()) {
+            offlineStore.enqueueReplacing(
+                area(),
+                DELETE,
+                id.toString(),
+                PendingGoalOperation(
+                    origin = GoalOrigin.PERSONAL,
+                    goal = GoalResponse(id = id, title = "", description = null)
+                )
+            )
+            removeCachedGoal(id)
+            return GoalsResult.Success(Unit)
+        }
+        return result
+    }
+
+    private suspend fun deleteRemote(id: Long): GoalsResult<Unit> = safeRequest<Unit> {
         when (val result = authenticatedCall {
             api.deleteIndividualGoal(id, it)
         }) {
@@ -197,6 +306,99 @@ class GoalsRepository(
                 }
             }
         }
+    }
+
+    override suspend fun synchronize() {
+        val store = offlineStore ?: return
+        val remote = GoalsRepository(api, authRepository, sessionManager, farmSessionStore)
+        val area = area()
+        for (operation in store.pending(area)) {
+            val pending = store.decode(operation.payload, PendingGoalOperation::class.java)
+            val originalId = pending.goal.id
+            val remoteId = if (originalId < 0) store.mappedId(area, originalId) else originalId
+            val result: GoalsResult<*> = when (operation.operation) {
+                CREATE -> remote.createRemote(
+                    pending.goal.title,
+                    pending.goal.description,
+                    pending.goal.type,
+                    pending.goal.targetValue
+                )
+                UPDATE_STATUS -> {
+                    if (remoteId == null) break
+                    val resolved = pending.goal.copy(id = remoteId)
+                    remote.updateStatusRemote(pending.origin, resolved, resolved.isCompleted)
+                }
+                UPDATE_DETAILS -> {
+                    if (remoteId == null) break
+                    val resolved = pending.goal.copy(id = remoteId)
+                    remote.updateDetailsRemote(
+                        resolved,
+                        resolved.title,
+                        resolved.description.orEmpty()
+                    )
+                }
+                DELETE -> {
+                    if (remoteId == null) break
+                    remote.deleteRemote(remoteId)
+                }
+                else -> GoalsResult.Error("Operação offline desconhecida.", false)
+            }
+
+            when (result) {
+                is GoalsResult.Success -> {
+                    if (operation.operation == CREATE) {
+                        val created = result.data as GoalResponse
+                        store.saveMapping(area, originalId, created.id)
+                    }
+                    store.complete(operation.id)
+                }
+                GoalsResult.AuthenticationRequired -> break
+                is GoalsResult.Error -> {
+                    if (result.canRetry) {
+                        store.markAttempt(operation.id)
+                        break
+                    } else {
+                        store.complete(operation.id)
+                    }
+                }
+            }
+        }
+
+        when (val refreshed = remote.loadRemote()) {
+            is GoalsResult.Success -> store.cache(CACHE_KEY, refreshed.data)
+            else -> Unit
+        }
+    }
+
+    private fun updateCachedGoal(origin: GoalOrigin, goal: GoalResponse) {
+        val store = offlineStore ?: return
+        val payload = store.cached<GoalsPayload>(CACHE_KEY) ?: return
+        store.cache(
+            CACHE_KEY,
+            when (origin) {
+                GoalOrigin.PERSONAL -> payload.copy(
+                    personalGoals = payload.personalGoals.map { if (it.id == goal.id) goal else it }
+                )
+                GoalOrigin.STATE -> payload.copy(
+                    stateGoals = payload.stateGoals.map { if (it.id == goal.id) goal else it }
+                )
+            }
+        )
+    }
+
+    private fun addCachedGoal(goal: GoalResponse) {
+        val store = offlineStore ?: return
+        val payload = store.cached<GoalsPayload>(CACHE_KEY) ?: GoalsPayload(emptyList(), emptyList())
+        store.cache(CACHE_KEY, payload.copy(personalGoals = payload.personalGoals + goal))
+    }
+
+    private fun removeCachedGoal(id: Long) {
+        val store = offlineStore ?: return
+        val payload = store.cached<GoalsPayload>(CACHE_KEY) ?: return
+        store.cache(
+            CACHE_KEY,
+            payload.copy(personalGoals = payload.personalGoals.filterNot { it.id == id })
+        )
     }
 
     private fun readGoal(
@@ -359,5 +561,19 @@ class GoalsRepository(
 
     private companion object {
         const val NO_SAVED_SESSION_MESSAGE = "Nenhuma sessão salva."
+        const val AREA_PREFIX = "goals"
+        const val CREATE = "create"
+        const val UPDATE_STATUS = "update_status"
+        const val UPDATE_DETAILS = "update_details"
+        const val DELETE = "delete"
     }
+    private data class PendingGoalOperation(
+        val origin: GoalOrigin,
+        val goal: GoalResponse
+    )
+
+    private fun area() = "$AREA_PREFIX:${farmSessionStore.farmId() ?: "unknown"}"
+
+    private val CACHE_KEY: String
+        get() = "${area()}:cache"
 }

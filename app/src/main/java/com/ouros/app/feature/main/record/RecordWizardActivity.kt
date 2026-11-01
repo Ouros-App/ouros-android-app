@@ -20,6 +20,7 @@ import com.ouros.app.data.record.RecordDraftStore
 import com.ouros.app.data.record.RecordNetwork
 import com.ouros.app.data.record.RecordRepository
 import com.ouros.app.data.session.FarmSessionStore
+import com.ouros.app.data.local.OfflineStore
 import com.ouros.app.feature.auth.login.LoginActivity
 
 class RecordWizardActivity : AppCompatActivity() {
@@ -51,15 +52,16 @@ class RecordWizardActivity : AppCompatActivity() {
 
     private fun configureViewModel() {
         val draftStore = RecordDraftStore(applicationContext)
+        val farmSessionStore = FarmSessionStore(applicationContext)
 
         val repository = RecordRepository(
             api = RecordNetwork.api,
-            draftStore = draftStore
+            draftStore = draftStore,
+            offlineStore = OfflineStore(applicationContext),
+            farmSessionStore = farmSessionStore
         )
 
-        val farmId = FarmSessionStore(
-            applicationContext
-        ).farmId()
+        val farmId = farmSessionStore.farmId()
 
         wizardViewModel = ViewModelProvider(
             this,
