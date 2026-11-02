@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="onboarding_horizontal_margin">96dp</dimen>
+    <dimen name="onboarding_form_horizontal_margin">144dp</dimen>
+    <dimen name="onboarding_top_inset">76dp</dimen>
+    <dimen name="onboarding_section_gap">28dp</dimen>
+    <dimen name="onboarding_form_gap">24dp</dimen>
+    <dimen name="onboarding_logo_top_inset">76dp</dimen>
+    <dimen name="onboarding_welcome_text_width">460dp</dimen>
+    <dimen name="onboarding_welcome_midas_size">128dp</dimen>
+    <dimen name="onboarding_welcome_midas_bottom">24dp</dimen>
+    <dimen name="onboarding_welcome_midas_start">96dp</dimen>
+    <dimen name="tutorial_top_inset">76dp</dimen>
+    <dimen name="tutorial_horizontal_margin">96dp</dimen>
+    <dimen name="onboarding_choose_card_height">390dp</dimen>
+    <dimen name="onboarding_choose_content_width">480dp</dimen>
+    <dimen name="onboarding_choose_description_width">400dp</dimen>
+    <dimen name="onboarding_choose_button_top_gap">36dp</dimen>
+    <dimen name="onboarding_choose_card_max_width">700dp</dimen>
+    <dimen name="tutorial_illustration_max_width">360dp</dimen>
+    <dimen name="tutorial_illustration_max_height">220dp</dimen>
+    <dimen name="onboarding_password_mascot_size">88dp</dimen>
+    <dimen name="onboarding_password_mascot_end_margin">96dp</dimen>
+    <dimen name="onboarding_password_note_width">176dp</dimen>
+    <dimen name="onboarding_password_note_height">56dp</dimen>
+</resources>

@@ -28,4 +28,11 @@
     <dimen name="onboarding_choose_content_width">300dp</dimen>
     <dimen name="onboarding_choose_description_width">242dp</dimen>
     <dimen name="onboarding_choose_button_top_gap">80dp</dimen>
+    <dimen name="onboarding_choose_card_max_width">1000dp</dimen>
+    <dimen name="tutorial_illustration_max_width">600dp</dimen>
+    <dimen name="tutorial_illustration_max_height">500dp</dimen>
+    <dimen name="onboarding_password_mascot_size">200dp</dimen>
+    <dimen name="onboarding_password_mascot_end_margin">-50dp</dimen>
+    <dimen name="onboarding_password_note_width">204dp</dimen>
+    <dimen name="onboarding_password_note_height">40dp</dimen>
 </resources>

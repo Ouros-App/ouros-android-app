@@ -23,9 +23,11 @@
         android:layout_width="0dp"
         android:layout_height="@dimen/onboarding_choose_card_height"
         app:cardBackgroundColor="@color/white"
+        app:layout_constrainedWidth="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintWidth_max="@dimen/onboarding_choose_card_max_width"
         app:shapeAppearanceOverlay="@style/TopRoundedCard">
 
         <LinearLayout
