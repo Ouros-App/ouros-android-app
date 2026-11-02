@@ -253,12 +253,10 @@ class RecordChickensFragment : RecordStepFragment(R.layout.fragment_record_chick
 
         val entered = view.findViewById<EditText>(R.id.inputChickensEntered)
         val left = view.findViewById<EditText>(R.id.inputChickensLeft)
-        val current = view.findViewById<EditText>(R.id.inputChickensCurrent)
         val draft = wizard.currentDraft()
 
         entered.setText(draft.chickensEntered)
         left.setText(draft.chickensLeft)
-        current.setText(draft.chickensCurrent)
 
         watch(entered) { old, value ->
             old.copy(chickensEntered = value)
@@ -268,10 +266,6 @@ class RecordChickensFragment : RecordStepFragment(R.layout.fragment_record_chick
             old.copy(chickensLeft = value)
         }
 
-        watch(current) { old, value ->
-            old.copy(chickensCurrent = value)
-        }
-
         view.findViewById<Button>(R.id.recordPrimary).setOnClickListener {
             when {
                 entered.nonNegativeInt() == null ->
@@ -279,9 +273,6 @@ class RecordChickensFragment : RecordStepFragment(R.layout.fragment_record_chick
 
                 left.nonNegativeInt() == null ->
                     invalid(left, "Informe a quantidade que saiu.")
-
-                current.nonNegativeInt() == null ->
-                    invalid(current, "Informe a quantidade atual.")
 
                 else -> host.confirmRegistration()
             }
