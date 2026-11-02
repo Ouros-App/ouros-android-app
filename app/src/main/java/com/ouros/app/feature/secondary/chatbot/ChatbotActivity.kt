@@ -204,7 +204,7 @@ class ChatbotActivity : AppCompatActivity() {
                     }
                     if (chart.title.isNotBlank()) {
                         card.addView(TextView(this).apply {
-                            text = chart.title
+                            this.text = chart.title
                             textSize = 14f
                             setTextColor(getColor(android.R.color.white))
                         })
