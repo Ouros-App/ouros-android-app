@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/frameLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent"
+    tools:context=".feature.onboarding.tutorial.TutorialPageFragment">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent">
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/tutorialTextEnd"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.43" />
+
+        <TextView
+            android:id="@+id/txtTitle"
+            style="@style/subtitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/tutorial_horizontal_margin"
+            android:layout_marginEnd="24dp"
+            android:text="txtTitle"
+            app:layout_constraintEnd_toStartOf="@id/tutorialTextEnd"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/txtDescription"
+            style="@style/text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/tutorial_horizontal_margin"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="24dp"
+            android:text="txtDescription"
+            app:layout_constraintEnd_toStartOf="@id/tutorialTextEnd"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/txtTitle" />
+
+        <ImageView
+            android:id="@+id/imgIllustration"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="@dimen/tutorial_horizontal_margin"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:src="@drawable/tutorial_2"
+            app:layout_constrainedHeight="true"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight_max="@dimen/tutorial_illustration_max_height"
+            app:layout_constraintStart_toEndOf="@id/tutorialTextEnd"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintWidth_max="@dimen/tutorial_illustration_max_width" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</FrameLayout>

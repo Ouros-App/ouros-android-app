@@ -60,6 +60,7 @@ class GoalsAdapter(
 
         private val check: CheckBox =
             itemView.findViewById(R.id.checkGoal)
+        private val edit: View? = itemView.findViewById(R.id.buttonEditGoal)
 
         fun bind(item: GoalListItem) {
             val goal = item.goal
@@ -91,19 +92,13 @@ class GoalsAdapter(
                 }
             }
 
-            title.setOnClickListener(
-                if (onTitleClick == null) {
-                    null
-                } else {
-                    View.OnClickListener {
-                        if (!item.isUpdating) {
-                            onTitleClick.invoke(goal)
-                        }
-                    }
-                }
-            )
-
-            title.isClickable = onTitleClick != null
+            title.setOnClickListener(null)
+            title.isClickable = false
+            edit?.visibility = if (onTitleClick == null) View.GONE else View.VISIBLE
+            edit?.isEnabled = !item.isUpdating
+            edit?.setOnClickListener {
+                if (!item.isUpdating) onTitleClick?.invoke(goal)
+            }
         }
     }
 

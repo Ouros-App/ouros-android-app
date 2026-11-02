@@ -27,14 +27,14 @@
             android:id="@+id/textGoalTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
+            android:layout_marginEnd="12dp"
             android:fontFamily="@font/poppins_regular"
             android:includeFontPadding="false"
             android:maxLines="2"
             android:textColor="#010B13"
             android:textSize="15sp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/checkGoal"
+            app:layout_constraintEnd_toStartOf="@id/buttonEditGoal"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="Verificar bebedouros" />
@@ -55,6 +55,22 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:checked="true" />
+
+        <ImageButton
+            android:id="@+id/buttonEditGoal"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Editar meta"
+            android:padding="8dp"
+            android:src="@drawable/ic_edit"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/checkGoal"
+            app:layout_constraintTop_toTopOf="parent"
+            android:tint="#010B13"
+            tools:visibility="visible" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

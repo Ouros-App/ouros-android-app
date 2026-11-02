@@ -20,15 +20,17 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:text="2" />
 
-    <View
+    <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/viewRankAvatar"
         android:layout_width="46dp"
         android:layout_height="46dp"
         android:layout_marginStart="6dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@id/textRankPosition"
+        android:scaleType="centerCrop"
         app:layout_constraintTop_toTopOf="parent"
-        tools:background="@color/rank_avatar_above" />
+        app:shapeAppearanceOverlay="@style/CircleImage"
+        tools:srcCompat="@drawable/avatar_blue" />
 
     <TextView
         android:id="@+id/textFarmName"

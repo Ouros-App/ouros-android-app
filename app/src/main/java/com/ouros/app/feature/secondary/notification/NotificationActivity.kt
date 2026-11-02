@@ -6,7 +6,6 @@ import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -20,6 +19,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.ouros.app.R
+import com.ouros.app.core.SkeletonLoaderView
 import com.ouros.app.core.util.applyBottomSystemBarPadding
 import com.ouros.app.core.util.dp
 import com.ouros.app.data.fcm.OurosFirebaseMessagingService
@@ -48,7 +48,7 @@ class NotificationActivity : AppCompatActivity() {
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var recyclerNotifications: RecyclerView
     private lateinit var layoutEmpty: LinearLayout
-    private lateinit var progressLoading: ProgressBar
+    private lateinit var progressLoading: SkeletonLoaderView
     private lateinit var layoutError: LinearLayout
     private lateinit var txtErrorMessage: TextView
     private lateinit var btnRetry: Button
@@ -64,7 +64,7 @@ class NotificationActivity : AppCompatActivity() {
             val statusBarInset = insets.getInsets(WindowInsetsCompat.Type.statusBars())
             view.setPadding(
                 view.paddingLeft,
-                statusBarInset.top + 16,
+                maxOf(statusBarInset.top, resources.getDimensionPixelSize(R.dimen.secondary_header_top_inset)),
                 view.paddingRight,
                 view.paddingBottom
             )
@@ -88,6 +88,7 @@ class NotificationActivity : AppCompatActivity() {
         recyclerNotifications.applyBottomSystemBarPadding(16.dp)
         layoutEmpty = findViewById(R.id.layoutEmpty)
         progressLoading = findViewById(R.id.progressLoading)
+        progressLoading.mode = SkeletonLoaderView.Mode.NOTIFICATIONS
         layoutError = findViewById(R.id.layoutError)
         txtErrorMessage = findViewById(R.id.txtErrorMessage)
         btnRetry = findViewById(R.id.btnRetry)
@@ -137,6 +138,7 @@ class NotificationActivity : AppCompatActivity() {
     private fun renderUi(state: NotificationUiState) {
         swipeRefreshLayout.isRefreshing = state.isRefreshing
         progressLoading.visibility = if (state.isLoading) View.VISIBLE else View.GONE
+        if (state.isLoading) progressLoading.start() else progressLoading.stop()
 
         if (state.errorMessage != null && state.notifications.isEmpty()) {
             layoutError.visibility = View.VISIBLE

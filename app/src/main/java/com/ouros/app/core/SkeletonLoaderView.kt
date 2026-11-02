@@ -21,7 +21,10 @@ class SkeletonLoaderView @JvmOverloads constructor(
     enum class Mode {
         DASHBOARD,
         GOALS,
-        RANK
+        RANK,
+        RECORD,
+        NOTIFICATIONS,
+        TIP_DETAIL
     }
 
     var mode: Mode = Mode.DASHBOARD
@@ -72,21 +75,25 @@ class SkeletonLoaderView @JvmOverloads constructor(
             Mode.DASHBOARD -> drawDashboard(canvas)
             Mode.GOALS -> drawGoals(canvas)
             Mode.RANK -> drawRank(canvas)
+            Mode.RECORD -> drawRecord(canvas)
+            Mode.NOTIFICATIONS -> drawNotifications(canvas)
+            Mode.TIP_DETAIL -> drawTipDetail(canvas)
         }
     }
 
     private fun drawDashboard(canvas: Canvas) {
-        val horizontalPadding = dp(20f)
+        val horizontalPadding = contentHorizontalPadding()
         val availableWidth = width - horizontalPadding * 2f
+        val contentTop = contentTopPadding()
 
         drawDashboardCards(
             canvas = canvas,
-            top = dp(20f),
+            top = contentTop + dp(8f),
             horizontalPadding = horizontalPadding,
             availableWidth = availableWidth
         )
 
-        var sectionTop = dp(145f)
+        var sectionTop = contentTop + dp(145f)
         repeat(3) {
             drawDashboardChart(
                 canvas = canvas,
@@ -148,26 +155,26 @@ class SkeletonLoaderView @JvmOverloads constructor(
     }
 
     private fun drawGoals(canvas: Canvas) {
-        val horizontalPadding = dp(20f)
+        val horizontalPadding = contentHorizontalPadding()
         val availableWidth = width - horizontalPadding * 2f
-        val circleCenterX = horizontalPadding + dp(56f)
-        val circleCenterY = dp(72f)
+        val circleCenterX = horizontalPadding + dp(79f)
+        val circleCenterY = contentTopPadding() + dp(85f)
 
         canvas.drawCircle(
             circleCenterX,
             circleCenterY,
-            dp(52f),
+            dp(74f),
             paint
         )
 
-        val informationLeft = horizontalPadding + dp(135f)
+        val informationLeft = horizontalPadding + dp(158f + 20f)
         val informationRight = horizontalPadding + availableWidth
 
         canvas.drawRoundRect(
             informationLeft,
-            dp(48f),
+            contentTopPadding() + dp(53f),
             informationRight,
-            dp(66f),
+            contentTopPadding() + dp(71f),
             dp(6f),
             dp(6f),
             paint
@@ -175,15 +182,15 @@ class SkeletonLoaderView @JvmOverloads constructor(
 
         canvas.drawRoundRect(
             informationLeft,
-            dp(78f),
+            contentTopPadding() + dp(83f),
             informationRight,
-            dp(88f),
+            contentTopPadding() + dp(93f),
             dp(5f),
             dp(5f),
             paint
         )
 
-        var sectionTop = dp(160f)
+        var sectionTop = contentTopPadding() + dp(170f + 28f)
 
         sectionTop = drawGoalsSection(
             canvas = canvas,
@@ -238,56 +245,57 @@ class SkeletonLoaderView @JvmOverloads constructor(
                 horizontalPadding,
                 itemTop,
                 horizontalPadding + availableWidth,
-                itemTop + dp(48f),
+                itemTop + dp(64f),
                 dp(8f),
                 dp(8f),
                 paint
             )
-            itemTop += dp(56f)
+            itemTop += dp(72f)
         }
 
         return itemTop
     }
 
     private fun drawRank(canvas: Canvas) {
-        val horizontalPadding = dp(24f)
+        val horizontalPadding = contentHorizontalPadding()
         val availableWidth = width - horizontalPadding * 2f
+        val startTop = contentTopPadding()
 
-        // Card superior de liga e posicao (top: 84dp, height: 136dp, radius: 15dp)
+        // Card superior de liga e posicao.
         canvas.drawRoundRect(
             horizontalPadding,
-            dp(84f),
+            startTop,
             horizontalPadding + availableWidth,
-            dp(84f + 136f),
+            startTop + dp(136f),
             dp(15f),
             dp(15f),
             paint
         )
 
-        // Titulo 'Proximos resultados em' (top: 240dp)
+        // Titulo 'Proximos resultados em'.
         canvas.drawRoundRect(
             horizontalPadding,
-            dp(240f),
+            startTop + dp(156f),
             horizontalPadding + dp(180f),
-            dp(240f + 18f),
+            startTop + dp(156f + 18f),
             dp(6f),
             dp(6f),
             paint
         )
 
-        // Contador de tempo restante (top: 266dp)
+        // Contador de tempo restante.
         canvas.drawRoundRect(
             horizontalPadding,
-            dp(266f),
+            startTop + dp(182f),
             horizontalPadding + dp(120f),
-            dp(266f + 24f),
+            startTop + dp(182f + 24f),
             dp(6f),
             dp(6f),
             paint
         )
 
-        // Lista de produtores ranqueados (top: 306dp)
-        var itemTop = dp(306f)
+        // Lista de produtores ranqueados.
+        var itemTop = startTop + dp(222f)
         repeat(7) {
             // Posicao (numero)
             canvas.drawRoundRect(
@@ -334,6 +342,50 @@ class SkeletonLoaderView @JvmOverloads constructor(
         }
     }
 
+    private fun drawRecord(canvas: Canvas) {
+        val horizontalPadding = contentHorizontalPadding()
+        val availableWidth = width - horizontalPadding * 2f
+        val top = contentTopPadding()
+        canvas.drawRoundRect(horizontalPadding, top, horizontalPadding + availableWidth, top + dp(112f), dp(18f), dp(18f), paint)
+        val simulatorTop = top + dp(136f)
+        canvas.drawRoundRect(horizontalPadding, simulatorTop, horizontalPadding + availableWidth, simulatorTop + dp(140f), dp(18f), dp(18f), paint)
+        var sectionTop = simulatorTop + dp(172f)
+        repeat(2) {
+            canvas.drawRoundRect(horizontalPadding, sectionTop, horizontalPadding + dp(170f), sectionTop + dp(22f), dp(6f), dp(6f), paint)
+            var rowTop = sectionTop + dp(34f)
+            repeat(3) {
+                canvas.drawRoundRect(horizontalPadding, rowTop, horizontalPadding + availableWidth, rowTop + dp(64f), dp(10f), dp(10f), paint)
+                rowTop += dp(72f)
+            }
+            sectionTop = rowTop + dp(24f)
+        }
+    }
+
+    private fun drawNotifications(canvas: Canvas) {
+        val horizontalPadding = dp(20f)
+        val availableWidth = width - horizontalPadding * 2f
+        var top = dp(12f)
+        repeat(6) {
+            canvas.drawRoundRect(horizontalPadding, top, horizontalPadding + availableWidth, top + dp(88f), dp(14f), dp(14f), paint)
+            top += dp(100f)
+        }
+    }
+
+    private fun drawTipDetail(canvas: Canvas) {
+        val horizontalPadding = dp(24f)
+        val availableWidth = width - horizontalPadding * 2f
+        val top = dp(12f)
+        canvas.drawRoundRect(horizontalPadding, top, horizontalPadding + availableWidth * 0.78f, top + dp(24f), dp(6f), dp(6f), paint)
+        canvas.drawRoundRect(horizontalPadding, top + dp(30f), horizontalPadding + dp(120f), top + dp(48f), dp(6f), dp(6f), paint)
+        canvas.drawRoundRect(horizontalPadding, top + dp(60f), horizontalPadding + availableWidth, top + dp(245f), dp(12f), dp(12f), paint)
+        var lineTop = top + dp(264f)
+        repeat(8) { index ->
+            val right = if (index % 3 == 2) horizontalPadding + availableWidth * 0.72f else horizontalPadding + availableWidth
+            canvas.drawRoundRect(horizontalPadding, lineTop, right, lineTop + dp(12f), dp(5f), dp(5f), paint)
+            lineTop += dp(24f)
+        }
+    }
+
     fun start() {
         if (!animator.isStarted) animator.start()
     }
@@ -357,6 +409,12 @@ class SkeletonLoaderView @JvmOverloads constructor(
     private fun dp(value: Float): Float {
         return value * resources.displayMetrics.density
     }
+
+    private fun contentTopPadding(): Float =
+        resources.getDimension(com.ouros.app.R.dimen.main_content_top_padding)
+
+    private fun contentHorizontalPadding(): Float =
+        resources.getDimension(com.ouros.app.R.dimen.main_content_horizontal_padding)
 
     private companion object {
         const val BASE_COLOR = 0xFFD9DDE1.toInt()

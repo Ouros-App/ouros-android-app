@@ -12,7 +12,7 @@
         android:id="@+id/imageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="112dp"
+        android:layout_marginTop="@dimen/onboarding_logo_top_inset"
         android:contentDescription="Ouros"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -21,7 +21,7 @@
 
     <LinearLayout
         android:id="@+id/linearLayout"
-        android:layout_width="310dp"
+        android:layout_width="@dimen/onboarding_welcome_text_width"
         android:layout_height="wrap_content"
         android:layout_marginBottom="36dp"
         android:gravity="center"

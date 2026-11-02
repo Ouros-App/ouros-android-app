@@ -199,6 +199,8 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
             remotePhotoUrl = profile.photoUrl,
             fallbackAvatar = fallbackAvatar
         )
+        supportFragmentManager.fragments.filterIsInstance<RankFragment>()
+            .forEach(RankFragment::refreshProfilePhoto)
     }
 
     override fun onMainProfileError(message: String) {
@@ -477,6 +479,11 @@ class MainActivity : AppCompatActivity(), MainViewModel.Listener {
             error(selectedAvatar)
             fallback(selectedAvatar)
         }
+    }
+
+    fun currentProfilePhotoUrl(): String? {
+        if (profilePhotoStore?.shouldIgnoreRemotePhoto() == true) return null
+        return currentProfile?.photoUrl?.trim()?.takeIf(String::isNotBlank)
     }
 
     private fun showDestination(destination: MainDestination) {

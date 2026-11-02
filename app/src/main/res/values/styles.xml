@@ -102,10 +102,9 @@
         <item name="hintTextColor">@color/gold</item>
         <item name="cursorColor">@color/gold</item>
 
-        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_width">48dp</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_weight">1</item>
-        <item name="android:layout_marginHorizontal">4dp</item>
+        <item name="android:layout_marginHorizontal">2dp</item>
         <item name="hintEnabled">false</item>
         <item name="boxBackgroundColor">@android:color/transparent</item>
         <item name="boxStrokeWidth">1dp</item>
