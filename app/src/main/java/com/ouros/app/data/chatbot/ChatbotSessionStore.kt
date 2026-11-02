@@ -1,4 +1,4 @@
-package com.ouros.app.feature.secondary.chatbot
+package com.ouros.app.data.chatbot
 
 import android.content.Context
 import java.util.UUID

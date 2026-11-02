@@ -8,6 +8,18 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.SavedStateHandle
 import com.ouros.app.R
+import com.ouros.app.data.chatbot.ChatRequest
+import com.ouros.app.data.chatbot.ChatResponse
+import com.ouros.app.data.chatbot.ChatbotApi
+import com.ouros.app.data.chatbot.ChatbotRepository
+import com.ouros.app.data.chatbot.EnergyRegistry
+import com.ouros.app.data.chatbot.HealthResponse
+import com.ouros.app.data.chatbot.HistoryResponse
+import com.ouros.app.data.chatbot.MeasurementImportPreview
+import com.ouros.app.data.chatbot.MeasurementImportRecord
+import com.ouros.app.data.chatbot.MeasurementImportRequest
+import com.ouros.app.data.chatbot.MeasurementImportResponse
+import com.ouros.app.data.chatbot.WaterRegistry
 import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.SecureRefreshTokenStore
 import java.util.concurrent.TimeUnit
@@ -113,8 +125,7 @@ class ChatbotStateTest {
         val viewModel = ChatbotViewModel(
             RuntimeEnvironment.getApplication(),
             SavedStateHandle(),
-            api,
-            api
+            ChatbotRepository(RuntimeEnvironment.getApplication(), api, api)
         )
 
         viewModel.send("hello", attachment = null)
@@ -319,8 +330,7 @@ class ChatbotStateTest {
         val viewModel = ChatbotViewModel(
             RuntimeEnvironment.getApplication(),
             SavedStateHandle(),
-            api,
-            api,
+            ChatbotRepository(RuntimeEnvironment.getApplication(), api, api),
             isOnline = { false }
         )
 
@@ -451,8 +461,7 @@ class ChatbotStateTest {
     private fun newViewModel(api: FakeChatbotApi) = ChatbotViewModel(
         RuntimeEnvironment.getApplication(),
         SavedStateHandle(),
-        api,
-        api
+        ChatbotRepository(RuntimeEnvironment.getApplication(), api, api)
     )
 
     private fun preview(vararg records: MeasurementImportRecord) = MeasurementImportPreview(

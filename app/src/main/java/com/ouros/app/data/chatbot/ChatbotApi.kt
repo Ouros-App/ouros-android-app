@@ -1,4 +1,4 @@
-package com.ouros.app.feature.secondary.chatbot
+package com.ouros.app.data.chatbot
 
 import com.google.gson.annotations.SerializedName
 import okhttp3.MultipartBody
@@ -54,6 +54,9 @@ object ChatbotNetwork {
 
     val aiApi: ChatbotApi by lazy { api(BuildConfig.AI_API_BASE_URL) }
     val springApi: ChatbotApi by lazy { api(BuildConfig.OUROS_API_BASE_URL) }
+
+    fun repository(context: android.content.Context) =
+        ChatbotRepository(context.applicationContext, aiApi, springApi)
 }
 
 data class ChatRequest(

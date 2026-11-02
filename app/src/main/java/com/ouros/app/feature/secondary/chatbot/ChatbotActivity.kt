@@ -6,7 +6,6 @@ import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
-import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
@@ -15,20 +14,16 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.ouros.app.R
 import com.ouros.app.data.local.OfflineSyncRegistry
-import io.noties.markwon.Markwon
-import java.time.LocalDate
-import java.time.OffsetDateTime
-import java.time.format.DateTimeFormatter
 
 internal fun composerBottomInset(systemBarBottom: Int, imeBottom: Int): Int =
     maxOf(systemBarBottom, imeBottom)
@@ -39,7 +34,9 @@ class ChatbotActivity : AppCompatActivity() {
     private lateinit var connectivityManager: ConnectivityManager
     private var networkCallbackRegistered = false
     private var isOnline = true
-    private val markwon by lazy { Markwon.create(this) }
+    private lateinit var chatAdapter: ChatbotAdapter
+    private var renderedMessageCount = 0
+    private var historyWasLoaded = false
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) = refreshConnectivity()
 
@@ -63,6 +60,11 @@ class ChatbotActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_chatbot)
         viewModel = ViewModelProvider(this)[ChatbotViewModel::class.java]
+        chatAdapter = ChatbotAdapter(this, io.noties.markwon.Markwon.create(this))
+        findViewById<RecyclerView>(R.id.chatScroll).apply {
+            layoutManager = LinearLayoutManager(this@ChatbotActivity).apply { stackFromEnd = true }
+            adapter = chatAdapter
+        }
         connectivityManager = getSystemService(ConnectivityManager::class.java)
         isOnline = OfflineSyncRegistry.isOnline()
 
@@ -137,6 +139,15 @@ class ChatbotActivity : AppCompatActivity() {
         super.onStop()
     }
 
+    override fun onDestroy() {
+        if (::chatAdapter.isInitialized) {
+            val recycler = findViewById<RecyclerView>(R.id.chatScroll)
+            chatAdapter.disposeCharts(recycler)
+            recycler.adapter = null
+        }
+        super.onDestroy()
+    }
+
     private fun refreshConnectivity() {
         runOnUiThread {
             val onlineNow = OfflineSyncRegistry.isOnline()
@@ -151,101 +162,16 @@ class ChatbotActivity : AppCompatActivity() {
     private fun render(state: ChatState) {
         if (state == renderedState) return
         renderedState = state
-        val messages = findViewById<LinearLayout>(R.id.chatMessages)
-        for (index in 0 until messages.childCount) destroyWebViews(messages.getChildAt(index))
-        messages.removeAllViews()
-        var previousDate: String? = null
-        state.messages.forEach { line ->
-            val dateLabel = dateLabel(line.createdAt)
-            if (dateLabel != null && dateLabel != previousDate) {
-                messages.addView(TextView(this).apply {
-                    text = dateLabel
-                    textSize = 12f
-                    gravity = Gravity.CENTER
-                    setTextColor(getColor(android.R.color.darker_gray))
-                    setPadding(dp(12), dp(6), dp(12), dp(6))
-                    setBackgroundResource(R.drawable.bg_chat_date_pill)
-                    layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                    ).apply { gravity = Gravity.CENTER; topMargin = dp(8); bottomMargin = dp(4) }
-                })
-                previousDate = dateLabel
-            }
-            val text = TextView(this).apply {
-                textSize = 14f
-                setTextColor(getColor(android.R.color.white))
-                setPadding(dp(14), dp(10), dp(14), dp(10))
-                setBackgroundResource(
-                    if (line.user) R.drawable.bg_chat_balloon_user
-                    else R.drawable.bg_chat_balloon_assistant
-                )
-                maxWidth = resources.displayMetrics.widthPixels - dp(96)
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply {
-                    topMargin = dp(8)
-                    gravity = if (line.user) Gravity.END else Gravity.START
-                }
-            }
-            if (line.user) text.text = line.text else markwon.setMarkdown(text, line.text)
-            messages.addView(text)
-            line.visualizations.forEach { visualization ->
-                visualization.charts.filter { it.renderAs.equals("html", true) }.forEach { chart ->
-                    val card = LinearLayout(this).apply {
-                        orientation = LinearLayout.VERTICAL
-                        setPadding(dp(12), dp(10), dp(12), dp(10))
-                        setBackgroundResource(R.drawable.bg_chat_balloon_assistant)
-                        layoutParams = LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                            dp(280)
-                        ).apply { topMargin = dp(8); bottomMargin = dp(6) }
-                    }
-                    if (chart.title.isNotBlank()) {
-                        card.addView(TextView(this).apply {
-                            this.text = chart.title
-                            textSize = 14f
-                            setTextColor(getColor(android.R.color.white))
-                        })
-                    }
-                    val webView = WebView(this).apply {
-                        settings.javaScriptEnabled = true
-                        settings.allowFileAccess = false
-                        settings.allowContentAccess = false
-                        settings.domStorageEnabled = false
-                        webViewClient = object : WebViewClient() {
-                            override fun shouldOverrideUrlLoading(
-                                view: WebView?,
-                                request: android.webkit.WebResourceRequest?
-                            ) = true
-                        }
-                        loadDataWithBaseURL(
-                            "https://ms-ai-server.discloud.app/",
-                            chart.html,
-                            "text/html",
-                            "UTF-8",
-                            null
-                        )
-                    }
-                    card.addView(webView, LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        0,
-                        1f
-                    ))
-                    messages.addView(card)
-                }
+        val shouldScrollToBottom = state.messages.size > renderedMessageCount ||
+            (state.historyLoaded && !historyWasLoaded)
+        val recycler = findViewById<RecyclerView>(R.id.chatScroll)
+        chatAdapter.submitConversation(state.messages, state.sending) {
+            if (shouldScrollToBottom && chatAdapter.itemCount > 0) {
+                recycler.scrollToPosition(chatAdapter.itemCount - 1)
             }
         }
-        if (state.sending) {
-            messages.addView(TextView(this).apply {
-                text = "Midas está pensando…"
-                textSize = 14f
-                setTextColor(getColor(android.R.color.darker_gray))
-                setPadding(dp(14), dp(10), dp(14), dp(10))
-            })
-        }
-        findViewById<ScrollView>(R.id.chatScroll).post { findViewById<ScrollView>(R.id.chatScroll).fullScroll(View.FOCUS_DOWN) }
+        renderedMessageCount = state.messages.size
+        historyWasLoaded = state.historyLoaded
         renderControls(state)
         findViewById<TextView>(R.id.selectedFile).apply {
             val uri = state.selectedAttachment
@@ -326,29 +252,6 @@ class ChatbotActivity : AppCompatActivity() {
     private fun displayName(uri: Uri): String = contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
         if (cursor.moveToFirst()) cursor.getString(0) else null
     } ?: uri.lastPathSegment.orEmpty()
-
-    private fun dateLabel(value: String?): String? {
-        if (value.isNullOrBlank()) return null
-        val date = runCatching { OffsetDateTime.parse(value).toLocalDate() }
-            .getOrElse { runCatching { LocalDate.parse(value.take(10)) }.getOrNull() }
-            ?: return null
-        val today = LocalDate.now()
-        return when (date) {
-            today -> "Hoje"
-            today.minusDays(1) -> "Ontem"
-            else -> date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-        }
-    }
-
-    private fun destroyWebViews(view: View) {
-        if (view is WebView) {
-            view.stopLoading()
-            view.loadUrl("about:blank")
-            view.destroy()
-        } else if (view is android.view.ViewGroup) {
-            for (index in 0 until view.childCount) destroyWebViews(view.getChildAt(index))
-        }
-    }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
 }

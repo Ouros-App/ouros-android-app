@@ -97,30 +97,23 @@
             android:textSize="14sp" />
     </LinearLayout>
 
-    <ScrollView
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/chatScroll"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:clipToPadding="false"
-        android:fillViewport="true"
         android:overScrollMode="never"
         android:paddingStart="@dimen/main_content_horizontal_padding"
         android:paddingTop="8dp"
         android:paddingEnd="@dimen/main_content_horizontal_padding"
         android:paddingBottom="12dp"
         android:scrollbars="none"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:stackFromEnd="true"
         app:layout_constraintBottom_toTopOf="@id/chatInputArea"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/offlineNotice">
-
-        <LinearLayout
-            android:id="@+id/chatMessages"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="bottom"
-            android:orientation="vertical" />
-    </ScrollView>
+        app:layout_constraintTop_toBottomOf="@id/offlineNotice" />
 
     <LinearLayout
         android:id="@+id/chatInputArea"

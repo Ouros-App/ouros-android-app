@@ -7,8 +7,17 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.ouros.app.data.chatbot.ChatRequest
+import com.ouros.app.data.chatbot.ChatbotNetwork
+import com.ouros.app.data.chatbot.ChatbotRepository
+import com.ouros.app.data.chatbot.ChatbotResult
+import com.ouros.app.data.chatbot.ChatResponse
+import com.ouros.app.data.chatbot.ChatVisualization
+import com.ouros.app.data.chatbot.EnergyRegistry
+import com.ouros.app.data.chatbot.MeasurementImportPreview
+import com.ouros.app.data.chatbot.MeasurementImportRequest
+import com.ouros.app.data.chatbot.WaterRegistry
 import com.ouros.app.data.local.OfflineSyncRegistry
-import com.ouros.app.data.session.FarmSessionStore
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -17,47 +26,31 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.BufferedSink
-import retrofit2.Response
 
 class ChatbotViewModel internal constructor(
     application: Application,
     @Suppress("UNUSED_PARAMETER") savedState: SavedStateHandle,
-    private val aiApi: ChatbotApi,
-    private val springApi: ChatbotApi,
+    private val repository: ChatbotRepository,
     private val isOnline: () -> Boolean = OfflineSyncRegistry::isOnline
 ) : AndroidViewModel(application) {
     constructor(application: Application, savedState: SavedStateHandle) :
-        this(application, savedState, ChatbotNetwork.aiApi, ChatbotNetwork.springApi)
+        this(application, savedState, ChatbotNetwork.repository(application.applicationContext))
 
-    private val farmSessionStore = FarmSessionStore(application.applicationContext)
-    private val ownerId = farmSessionStore.ownerId()
-    private val sessionStore = ChatbotSessionStore(application.applicationContext)
-    val state = MutableLiveData(ChatState(threadId = sessionStore.threadId(ownerId)))
+    val state = MutableLiveData(ChatState(threadId = repository.currentThreadId()))
 
     fun loadConversation(force: Boolean = false) {
         if (state.value!!.historyLoading || (state.value!!.historyLoaded && !force)) return
         update { copy(historyLoading = true, error = null) }
         viewModelScope.launch {
-            val available = try {
-                val health = aiApi.healthCheck()
-                health.isSuccessful && health.body()?.status.equals("ok", true)
-            } catch (error: CancellationException) {
-                throw error
-            } catch (_: Exception) {
-                false
+            val available = when (val health = repository.checkHealth()) {
+                is ChatbotResult.Success -> health.data
+                is ChatbotResult.HttpFailure, is ChatbotResult.Failure -> false
             }
             update { copy(serviceAvailable = available) }
-            try {
-                val response = aiApi.getHistory(
-                    threadId = state.value!!.threadId,
-                    userId = ownerId?.toString(),
-                    limit = HISTORY_PAGE_SIZE
-                )
-                val body = response.body()
-                if (response.isSuccessful && body != null) {
-                    body.threadId.takeIf(String::isNotBlank)?.let {
-                        sessionStore.saveThreadId(ownerId, it)
-                    }
+            when (val history = repository.loadHistory(HISTORY_PAGE_SIZE)) {
+                is ChatbotResult.Success -> {
+                    val body = history.data
+                    body.threadId.takeIf(String::isNotBlank)?.let(repository::saveThreadId)
                     update {
                         copy(
                             threadId = body.threadId,
@@ -72,13 +65,10 @@ class ChatbotViewModel internal constructor(
                             historyLoaded = true
                         )
                     }
-                } else {
+                }
+                is ChatbotResult.HttpFailure, is ChatbotResult.Failure -> {
                     update { copy(historyLoading = false, historyLoaded = true) }
                 }
-            } catch (error: CancellationException) {
-                throw error
-            } catch (_: Exception) {
-                update { copy(historyLoading = false, historyLoaded = true) }
             }
         }
     }
@@ -99,35 +89,45 @@ class ChatbotViewModel internal constructor(
         }
         viewModelScope.launch {
             try {
-                val response = if (attachment == null) {
-                    aiApi.sendMessage(
+                val result = if (attachment == null) {
+                    repository.sendMessage(
                         ChatRequest(
                             message = text,
                             threadId = state.value!!.threadId,
-                            userId = ownerId?.toString()
+                            userId = repository.currentOwnerId()?.toString()
                         )
                     )
                 } else {
-                    aiApi.chatWithAttachment(
+                    repository.sendAttachment(
                         text.toRequestBody("text/plain".toMediaTypeOrNull()),
                         state.value!!.threadId.toRequestBody("text/plain".toMediaTypeOrNull()),
                         attachmentPart(attachment)
                     )
                 }
-                val body = response.body()
-                if (!response.isSuccessful || body == null) {
-                    throw ChatHttpException(response.code())
+                when (result) {
+                    is ChatbotResult.Success -> {
+                        result.data.threadId?.takeIf(String::isNotBlank)?.let(repository::saveThreadId)
+                        update { completeChatSend(result.data).copy(serviceAvailable = true) }
+                    }
+                    is ChatbotResult.HttpFailure -> {
+                        if (!state.value!!.serviceAvailable && result.code >= 500) {
+                            update { completeChatSend(ChatResponse(message = mockFallback(text))) }
+                        } else {
+                            update { copy(sending = false, error = "Não foi possível enviar a mensagem (HTTP ${result.code}).") }
+                        }
+                    }
+                    is ChatbotResult.Failure -> {
+                        if (!state.value!!.serviceAvailable) {
+                            update { completeChatSend(ChatResponse(message = mockFallback(text))) }
+                        } else {
+                            update { copy(sending = false, error = result.error.localizedMessage ?: "Falha ao enviar. Tente novamente.") }
+                        }
+                    }
                 }
-                body.threadId?.takeIf(String::isNotBlank)?.let {
-                    sessionStore.saveThreadId(ownerId, it)
-                }
-                update { completeChatSend(body).copy(serviceAvailable = true) }
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
-                if (!state.value!!.serviceAvailable &&
-                    (error !is ChatHttpException || error.code >= 500)
-                ) {
+                if (!state.value!!.serviceAvailable) {
                     update { completeChatSend(ChatResponse(message = mockFallback(text))) }
                 } else {
                     update { copy(sending = false, error = error.localizedMessage ?: "Falha ao enviar. Tente novamente.") }
@@ -153,9 +153,14 @@ class ChatbotViewModel internal constructor(
                 if (request.waterRegistries.isEmpty() && request.energyRegistries.isEmpty()) {
                     throw IllegalStateException("Não há registros válidos para importar.")
                 }
-                val response = springApi.importMeasurements(request)
-                if (!response.isSuccessful || response.body() == null) {
-                    throw IOException("Não foi possível salvar os registros (HTTP ${response.code()}).")
+                val result = repository.importMeasurements(request)
+                if (result !is ChatbotResult.Success) {
+                    val errorMessage = when (result) {
+                        is ChatbotResult.HttpFailure -> "Não foi possível salvar os registros (HTTP ${result.code})."
+                        is ChatbotResult.Failure -> result.error.localizedMessage ?: "Não foi possível salvar os registros."
+                        is ChatbotResult.Success -> ""
+                    }
+                    throw IOException(errorMessage)
                 }
                 update {
                     copy(
@@ -223,9 +228,6 @@ class ChatbotViewModel internal constructor(
             "O Midas está temporariamente indisponível. Consulte a tela de Ranking para ver sua posição atual."
         else -> "O Midas está temporariamente indisponível. Sua mensagem não foi enviada ao assistente; tente novamente quando o serviço voltar."
     }
-
-    private class ChatHttpException(val code: Int) :
-        IOException("Não foi possível enviar a mensagem (HTTP $code).")
 
     private companion object { const val HISTORY_PAGE_SIZE = 20 }
 }
