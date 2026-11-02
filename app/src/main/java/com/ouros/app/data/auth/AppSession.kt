@@ -5,6 +5,9 @@ import android.content.Intent
 import com.ouros.app.feature.auth.login.LoginActivity
 import java.util.concurrent.atomic.AtomicBoolean
 
+/**
+ * Componente de apoio a auth. Reúne comportamento relacionado a essa funcionalidade para manter o fluxo principal mais simples.
+ */
 object AppSession {
 
     val sessionManager: SessionManager by lazy {

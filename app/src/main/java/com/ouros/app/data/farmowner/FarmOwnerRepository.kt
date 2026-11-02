@@ -9,6 +9,9 @@ import retrofit2.Response
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 
+/**
+ * Acesso a dados de farmowner. Encapsula chamadas de rede e persistência local e traduz respostas para que a tela não dependa do transporte.
+ */
 open class FarmOwnerRepository(
     private val api: FarmOwnerApi,
     private val sessionManager: SessionManager,

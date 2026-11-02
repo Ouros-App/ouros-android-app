@@ -2,6 +2,9 @@ package com.ouros.app.data.auth
 
 import okhttp3.OkHttpClient
 
+/**
+ * Configuração de rede de auth. Cria clientes Retrofit compartilhados e centraliza URL, conversores e autenticação.
+ */
 object AuthenticatedNetwork {
 
     val client: OkHttpClient by lazy {

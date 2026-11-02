@@ -10,6 +10,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+/**
+ * Acesso a dados de tip. Encapsula chamadas de rede e persistência local e traduz respostas para que a tela não dependa do transporte.
+ */
 class TipRepository(
     private val api: TipApi = TipNetwork.api,
     private val enableMockFallback: Boolean = true,

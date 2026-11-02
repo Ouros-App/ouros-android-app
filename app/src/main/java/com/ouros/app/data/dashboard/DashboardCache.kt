@@ -6,6 +6,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
+/**
+ * Componente de apoio a dashboard. Reúne comportamento relacionado a essa funcionalidade para manter o fluxo principal mais simples.
+ */
 class DashboardCache(
     private val cacheDirectory: File,
     private val gson: Gson = Gson()

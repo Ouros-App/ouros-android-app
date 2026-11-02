@@ -3,6 +3,9 @@ package com.ouros.app.data.chatbot
 import android.content.Context
 import java.util.UUID
 
+/**
+ * Armazenamento local de chatbot. Centraliza leitura e gravação para que telas não manipulem diretamente os detalhes do armazenamento.
+ */
 internal class ChatbotSessionStore(context: Context) {
     private val preferences = context.applicationContext.getSharedPreferences(
         PREFERENCES_NAME,

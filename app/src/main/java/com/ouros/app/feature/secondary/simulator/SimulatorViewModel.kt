@@ -17,6 +17,9 @@ sealed interface SimulatorEvent {
     data class Message(val text: String) : SimulatorEvent
 }
 
+/**
+ * Estado e ações de apresentação de simulator. Executa operações assíncronas e publica resultados para a interface, mantendo o estado fora dos componentes visuais.
+ */
 class SimulatorViewModel(
     private val repository: SimulatorRepository,
     private val farmId: Long?

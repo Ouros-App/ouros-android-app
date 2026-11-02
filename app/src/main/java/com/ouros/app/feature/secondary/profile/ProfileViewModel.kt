@@ -17,6 +17,9 @@ sealed class ProfilePhotoChange {
     object Remove : ProfilePhotoChange()
 }
 
+/**
+ * Estado e ações de apresentação de profile. Executa operações assíncronas e publica resultados para a interface, mantendo o estado fora dos componentes visuais.
+ */
 class ProfileViewModel(
     private val farmOwnerRepository: FarmOwnerRepository,
     private val cloudinaryRepository: CloudinaryRepository = CloudinaryRepository(),

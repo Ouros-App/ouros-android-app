@@ -12,6 +12,9 @@ import com.ouros.app.core.applyBottomSystemBarMargin
 import com.ouros.app.feature.auth.choose.ChooseActivity
 import com.ouros.app.feature.onboarding.tutorial.view.TutorialPagerAdapter
 
+/**
+ * Tela Android de onboarding › tutorial. Recebe interações, coordena componentes visuais e navegação; delega operações de dados para manter responsabilidades separadas.
+ */
 class TutorialActivity : AppCompatActivity(), TutorialViewModel.Listener {
 
     private lateinit var viewModel: TutorialViewModel

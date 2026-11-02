@@ -8,6 +8,9 @@ import com.ouros.app.data.auth.LoginStartResponse
 import com.ouros.app.data.farmowner.FarmOwnerRepository
 import kotlinx.coroutines.launch
 
+/**
+ * Estado e ações de apresentação de auth › login. Executa operações assíncronas e publica resultados para a interface, mantendo o estado fora dos componentes visuais.
+ */
 class LoginViewModel(
     private val authRepository:
     AuthRepository,

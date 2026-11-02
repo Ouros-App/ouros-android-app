@@ -8,6 +8,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.ouros.app.R
 import com.ouros.app.data.record.RecordHistoryItem
 
+/**
+ * Adaptador visual de record. Converte itens em componentes reutilizáveis e conecta os dados às linhas da interface.
+ */
 class RecordHistoryAdapter(private val onClick: (RecordHistoryItem) -> Unit) : RecyclerView.Adapter<RecordHistoryAdapter.Holder>() {
     private var items = emptyList<RecordHistoryItem>()
     fun submitList(value: List<RecordHistoryItem>) { items = value; notifyDataSetChanged() }

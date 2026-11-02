@@ -5,6 +5,9 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
+/**
+ * Configuração de rede de cloudinary. Cria clientes Retrofit compartilhados e centraliza URL, conversores e autenticação.
+ */
 object CloudinaryNetwork {
 
     private const val BASE_URL = "https://api.cloudinary.com/"

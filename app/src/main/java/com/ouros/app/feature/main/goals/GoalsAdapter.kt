@@ -17,6 +17,9 @@ data class GoalListItem(
     val isUpdating: Boolean
 )
 
+/**
+ * Adaptador visual de goals. Converte itens em componentes reutilizáveis e conecta os dados às linhas da interface.
+ */
 class GoalsAdapter(
     private val onToggle: (GoalResponse, Boolean) -> Unit,
     private val onTitleClick: ((GoalResponse) -> Unit)? = null

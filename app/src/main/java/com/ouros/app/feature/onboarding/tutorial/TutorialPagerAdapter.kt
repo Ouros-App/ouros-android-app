@@ -6,6 +6,9 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.ouros.app.feature.onboarding.tutorial.TutorialPage
 import com.ouros.app.feature.onboarding.tutorial.TutorialPageFragment
 
+/**
+ * Adaptador visual de onboarding › tutorial. Converte itens em componentes reutilizáveis e conecta os dados às linhas da interface.
+ */
 class TutorialPagerAdapter(activity: FragmentActivity, private val pages: List<TutorialPage>) : FragmentStateAdapter(activity) {
 
     override fun getItemCount(): Int {

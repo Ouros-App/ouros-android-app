@@ -7,6 +7,9 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
+/**
+ * Modelos de dados de record. Os tipos abaixo espelham os campos usados no contrato da API ou no fluxo local; os nomes serializados mostram como cada propriedade é convertida para JSON.
+ */
 data class WaterRegistryResponse(
     val id: Long,
     @SerializedName("registration_date") val registrationDate: String,

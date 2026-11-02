@@ -3,6 +3,9 @@ package com.ouros.app.data.record
 import android.content.Context
 import com.google.gson.Gson
 
+/**
+ * Armazenamento local de record. Centraliza leitura e gravação para que telas não manipulem diretamente os detalhes do armazenamento.
+ */
 class RecordDraftStore(context: Context) {
     private val preferences = context.applicationContext.getSharedPreferences(
         PREFERENCES_NAME,

@@ -6,6 +6,9 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 
+/**
+ * Contrato Retrofit de tip. Declara rotas, parâmetros e formatos HTTP esperados; a interpretação das respostas fica no repositório.
+ */
 interface TipApi {
 
     @GET("tips/{id}")

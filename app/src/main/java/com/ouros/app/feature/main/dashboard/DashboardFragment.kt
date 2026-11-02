@@ -28,6 +28,9 @@ import com.ouros.app.data.dashboard.DashboardUiState
 import com.ouros.app.data.session.FarmSessionStore
 import com.ouros.app.feature.main.MainActivity
 
+/**
+ * Seção visual de dashboard. Conecta layout, estado e eventos do usuário, deixando regras e acesso a dados para as camadas apropriadas.
+ */
 class DashboardFragment : Fragment() {
 
     private enum class ChartSlot {

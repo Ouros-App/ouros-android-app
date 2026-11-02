@@ -5,6 +5,9 @@ import com.ouros.app.data.auth.AuthenticatedNetwork
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
+/**
+ * Configuração de rede de goals. Cria clientes Retrofit compartilhados e centraliza URL, conversores e autenticação.
+ */
 object GoalsNetwork {
 
     private val BASE_URL: String = BuildConfig.OUROS_API_BASE_URL

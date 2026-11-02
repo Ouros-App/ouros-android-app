@@ -10,6 +10,9 @@ import com.ouros.app.core.applyBottomSystemBarPadding
 import com.ouros.app.feature.auth.firstaccess.FirstAccessActivity
 import com.ouros.app.feature.auth.login.LoginActivity
 
+/**
+ * Tela Android de auth › choose. Recebe interações, coordena componentes visuais e navegação; delega operações de dados para manter responsabilidades separadas.
+ */
 class ChooseActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

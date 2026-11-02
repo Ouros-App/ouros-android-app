@@ -4,6 +4,9 @@ import androidx.annotation.DrawableRes
 import com.ouros.app.R
 import java.util.Locale
 
+/**
+ * Componente de apoio a rank. Reúne comportamento relacionado a essa funcionalidade para manter o fluxo principal mais simples.
+ */
 enum class RankLeague(
     val displayName: String,
     val uppercaseName: String,

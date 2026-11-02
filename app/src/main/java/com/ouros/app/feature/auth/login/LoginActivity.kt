@@ -33,6 +33,9 @@ import com.ouros.app.feature.auth.forgotpassword.ForgotPasswordActivity
 import com.ouros.app.feature.error.ErrorActivity
 import com.ouros.app.feature.main.MainActivity
 
+/**
+ * Tela Android de auth › login. Recebe interações, coordena componentes visuais e navegação; delega operações de dados para manter responsabilidades separadas.
+ */
 class LoginActivity :
     AppCompatActivity(),
     LoginViewModel.Listener {

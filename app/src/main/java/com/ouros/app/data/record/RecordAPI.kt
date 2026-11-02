@@ -9,6 +9,9 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
+/**
+ * Contrato Retrofit de record. Declara rotas, parâmetros e formatos HTTP esperados; a interpretação das respostas fica no repositório.
+ */
 interface RecordAPI {
     @GET("water-registries")
     suspend fun getWater(@Query("farm_id") farmId: Long): Response<List<WaterRegistryResponse>>

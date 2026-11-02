@@ -13,6 +13,9 @@ sealed interface RankResult<out T> {
     data object AuthenticationRequired : RankResult<Nothing>
 }
 
+/**
+ * Acesso a dados de rank. Encapsula chamadas de rede e persistência local e traduz respostas para que a tela não dependa do transporte.
+ */
 class RankRepository(
     private val api: RankAPI,
     private val farmOwnerRepository: FarmOwnerRepository,

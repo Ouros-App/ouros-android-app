@@ -7,6 +7,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 typealias RankApi = RankAPI
 
+/**
+ * Configuração de rede de rank. Cria clientes Retrofit compartilhados e centraliza URL, conversores e autenticação.
+ */
 object RankNetwork {
 
     private val BASE_URL: String = BuildConfig.OUROS_API_BASE_URL

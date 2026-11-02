@@ -20,6 +20,9 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import retrofit2.Response
 
+/**
+ * Testes automatizados de dashboard. Os casos verificam entradas e resultados esperados para ajudar a detectar regressões sem depender da interface real.
+ */
 class DashboardViewModelFactoryTest {
 
     @get:Rule

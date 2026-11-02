@@ -8,6 +8,9 @@ import java.math.RoundingMode
 import java.text.NumberFormat
 import java.util.Locale
 
+/**
+ * Componente de apoio a aplicativo. Reúne comportamento relacionado a essa funcionalidade para manter o fluxo principal mais simples.
+ */
 object BrazilianMoney {
     private val locale = Locale.forLanguageTag("pt-BR")
 

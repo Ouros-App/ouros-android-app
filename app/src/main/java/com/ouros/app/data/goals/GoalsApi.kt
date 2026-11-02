@@ -9,6 +9,9 @@ import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
 
+/**
+ * Contrato Retrofit de goals. Declara rotas, parâmetros e formatos HTTP esperados; a interpretação das respostas fica no repositório.
+ */
 interface GoalsApi {
     @GET("individual-goals")
     suspend fun getIndividualGoals(

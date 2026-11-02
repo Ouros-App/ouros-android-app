@@ -19,6 +19,9 @@ data class NotificationUiState(
     val errorMessage: String? = null
 )
 
+/**
+ * Estado e ações de apresentação de notification. Executa operações assíncronas e publica resultados para a interface, mantendo o estado fora dos componentes visuais.
+ */
 class NotificationViewModel(
     private val notificationRepository: NotificationRepository = NotificationRepository()
 ) : ViewModel() {

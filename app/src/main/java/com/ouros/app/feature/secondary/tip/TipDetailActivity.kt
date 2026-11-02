@@ -36,6 +36,9 @@ import io.noties.markwon.Markwon
 import kotlinx.coroutines.launch
 import java.util.Locale
 
+/**
+ * Tela Android de tip. Recebe interações, coordena componentes visuais e navegação; delega operações de dados para manter responsabilidades separadas.
+ */
 class TipDetailActivity : AppCompatActivity() {
 
     private val viewModel: TipDetailViewModel by viewModels {

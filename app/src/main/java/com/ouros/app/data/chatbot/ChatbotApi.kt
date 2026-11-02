@@ -16,6 +16,9 @@ import retrofit2.http.Query
 import com.ouros.app.BuildConfig
 import com.ouros.app.data.auth.AuthenticatedNetwork
 
+/**
+ * Contrato Retrofit de chatbot. Declara rotas, parâmetros e formatos HTTP esperados; a interpretação das respostas fica no repositório.
+ */
 interface ChatbotApi {
     @POST("v1/chat")
     suspend fun sendMessage(@Body request: ChatRequest): Response<ChatResponse>

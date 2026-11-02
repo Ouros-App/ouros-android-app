@@ -23,6 +23,9 @@ import com.ouros.app.data.auth.AuthRepository
 import com.ouros.app.data.auth.SecureRefreshTokenStore
 import com.ouros.app.feature.auth.login.LoginActivity
 
+/**
+ * Tela Android de auth › forgotpassword. Recebe interações, coordena componentes visuais e navegação; delega operações de dados para manter responsabilidades separadas.
+ */
 class ForgotPasswordActivity :
     AppCompatActivity(),
     ForgotPasswordViewModel.Listener {

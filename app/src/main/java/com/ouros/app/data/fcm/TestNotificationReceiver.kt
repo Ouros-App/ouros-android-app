@@ -4,6 +4,9 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 
+/**
+ * Componente de apoio a fcm. Reúne comportamento relacionado a essa funcionalidade para manter o fluxo principal mais simples.
+ */
 class TestNotificationReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent?) {

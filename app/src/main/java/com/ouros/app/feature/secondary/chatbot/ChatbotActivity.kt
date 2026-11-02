@@ -28,6 +28,9 @@ import com.ouros.app.data.local.OfflineSyncRegistry
 internal fun composerBottomInset(systemBarBottom: Int, imeBottom: Int): Int =
     maxOf(systemBarBottom, imeBottom)
 
+/**
+ * Coordena a interface do chatbot: entrada de texto/anexos, rolagem e navegação; o ViewModel controla conversa e estado assíncrono.
+ */
 class ChatbotActivity : AppCompatActivity() {
     private lateinit var viewModel: ChatbotViewModel
     private var renderedState: ChatState? = null

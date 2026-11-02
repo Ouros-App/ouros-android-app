@@ -20,6 +20,9 @@ data class TipDetailUiState(
     val userRating: Int? = null
 )
 
+/**
+ * Estado e ações de apresentação de tip. Executa operações assíncronas e publica resultados para a interface, mantendo o estado fora dos componentes visuais.
+ */
 class TipDetailViewModel(
     private val tipRepository: TipRepository = TipRepository()
 ) : ViewModel() {

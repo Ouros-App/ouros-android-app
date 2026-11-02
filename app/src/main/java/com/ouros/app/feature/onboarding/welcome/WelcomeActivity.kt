@@ -10,6 +10,9 @@ import com.ouros.app.R
 import com.ouros.app.core.applyBottomSystemBarMargin
 import com.ouros.app.feature.onboarding.tutorial.TutorialActivity
 
+/**
+ * Tela Android de onboarding › welcome. Recebe interações, coordena componentes visuais e navegação; delega operações de dados para manter responsabilidades separadas.
+ */
 class WelcomeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

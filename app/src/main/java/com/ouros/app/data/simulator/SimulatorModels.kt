@@ -2,6 +2,9 @@ package com.ouros.app.data.simulator
 
 import com.google.gson.annotations.SerializedName
 
+/**
+ * Modelos de dados de simulator. Os tipos abaixo espelham os campos usados no contrato da API ou no fluxo local; os nomes serializados mostram como cada propriedade é convertida para JSON.
+ */
 data class SimulatorRankingResponse(
     @SerializedName("farm_id") val farmId: Long,
     @SerializedName("farm_name") val farmName: String?,

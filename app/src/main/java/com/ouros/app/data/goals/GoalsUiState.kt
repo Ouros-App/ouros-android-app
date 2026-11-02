@@ -2,6 +2,9 @@ package com.ouros.app.data.goals
 
 import kotlin.math.roundToInt
 
+/**
+ * Modelo de apresentação de goals. Agrupa os valores de estado que a interface precisa para renderizar a tela.
+ */
 data class GoalsUiState(
     val isLoading: Boolean = false,
     val isPopupSaving: Boolean = false,

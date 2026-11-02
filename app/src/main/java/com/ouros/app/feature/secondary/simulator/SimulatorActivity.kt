@@ -24,6 +24,9 @@ import com.ouros.app.data.simulator.SimulatorUiState
 import com.ouros.app.feature.auth.login.LoginActivity
 import java.util.Locale
 
+/**
+ * Tela Android de simulator. Recebe interações, coordena componentes visuais e navegação; delega operações de dados para manter responsabilidades separadas.
+ */
 class SimulatorActivity : AppCompatActivity() {
     private lateinit var viewModel: SimulatorViewModel
     private lateinit var content: View
@@ -166,6 +169,7 @@ class SimulatorActivity : AppCompatActivity() {
         }
         if (!valid) return
 
+        // Reúne os valores já validados para que a chamada receba números não nulos.
         val validatedTargetCgi = targetCgi ?: return
         val validatedWaterPrice = waterPrice ?: return
         val validatedEnergyPrice = energyPrice ?: return

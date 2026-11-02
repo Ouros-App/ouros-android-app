@@ -20,6 +20,9 @@ import java.time.format.DateTimeFormatter
 import com.ouros.app.core.BrazilianMoney
 import com.ouros.app.core.BrazilianMoneyTextWatcher
 
+/**
+ * Seção visual de record. Conecta layout, estado e eventos do usuário, deixando regras e acesso a dados para as camadas apropriadas.
+ */
 abstract class RecordStepFragment(@LayoutRes layout: Int) : Fragment(layout) {
     protected val host: RecordWizardActivity get() = requireActivity() as RecordWizardActivity
     protected val wizard: RecordWizardViewModel get() = host.wizardViewModel

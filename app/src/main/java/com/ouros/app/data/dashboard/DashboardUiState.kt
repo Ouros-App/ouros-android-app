@@ -1,5 +1,8 @@
 package com.ouros.app.data.dashboard
 
+/**
+ * Modelo de apresentação de dashboard. Agrupa os valores de estado que a interface precisa para renderizar a tela.
+ */
 data class DashboardUiState(
     val isLoading: Boolean = false,
 

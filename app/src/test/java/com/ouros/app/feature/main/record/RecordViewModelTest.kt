@@ -43,6 +43,9 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import retrofit2.Response
 
+/**
+ * Testes automatizados de record. Os casos verificam entradas e resultados esperados para ajudar a detectar regressões sem depender da interface real.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])

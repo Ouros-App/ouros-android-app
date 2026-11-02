@@ -4,6 +4,9 @@ import com.ouros.app.BuildConfig
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
+/**
+ * Configuração de rede de auth. Cria clientes Retrofit compartilhados e centraliza URL, conversores e autenticação.
+ */
 object AuthNetwork {
 
     private val BASE_URL: String = BuildConfig.AUTH_API_BASE_URL

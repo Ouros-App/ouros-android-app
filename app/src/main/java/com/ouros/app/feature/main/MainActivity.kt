@@ -51,6 +51,9 @@ import com.ouros.app.feature.secondary.tip.TipDetailActivity
 import java.util.Calendar
 import kotlinx.coroutines.launch
 
+/**
+ * Tela Android de aplicativo. Recebe interações, coordena componentes visuais e navegação; delega operações de dados para manter responsabilidades separadas.
+ */
 class MainActivity : AppCompatActivity(), MainViewModel.Listener {
     private data class FooterItem(
         val container: View,

@@ -31,6 +31,9 @@ import com.ouros.app.feature.main.MainActivity
 import com.ouros.app.feature.secondary.tip.TipDetailActivity
 import kotlinx.coroutines.launch
 
+/**
+ * Tela Android de notification. Recebe interações, coordena componentes visuais e navegação; delega operações de dados para manter responsabilidades separadas.
+ */
 class NotificationActivity : AppCompatActivity() {
 
     private val viewModel: NotificationViewModel by viewModels {

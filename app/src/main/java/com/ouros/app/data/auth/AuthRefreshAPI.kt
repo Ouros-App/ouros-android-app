@@ -12,4 +12,7 @@ interface AuthRefreshApi {
     ): Call<TokenResponse>
 }
 
+/**
+ * Contrato Retrofit de auth. Declara rotas, parâmetros e formatos HTTP esperados; a interpretação das respostas fica no repositório.
+ */
 typealias AuthRefreshAPI = AuthRefreshApi

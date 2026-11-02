@@ -27,6 +27,9 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.BufferedSink
 
+/**
+ * Estado e ações de apresentação de chatbot. Executa operações assíncronas e publica resultados para a interface, mantendo o estado fora dos componentes visuais.
+ */
 class ChatbotViewModel internal constructor(
     application: Application,
     @Suppress("UNUSED_PARAMETER") savedState: SavedStateHandle,
@@ -142,6 +145,7 @@ class ChatbotViewModel internal constructor(
         update { copy(importing = true, error = null) }
         viewModelScope.launch {
             try {
+                // O backend recebe apenas medições completas; campos opcionais incompletos ficam fora da importação.
                 val request = MeasurementImportRequest(
                     waterRegistries = preview.records.filter { it.kind.equals("water", true) }
                         .mapNotNull { record ->

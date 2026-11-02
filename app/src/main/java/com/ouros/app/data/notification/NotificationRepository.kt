@@ -10,6 +10,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.Response
 
+/**
+ * Acesso a dados de notification. Encapsula chamadas de rede e persistência local e traduz respostas para que a tela não dependa do transporte.
+ */
 class NotificationRepository(
     private val api: NotificationApi = NotificationNetwork.api,
     private val enableMockFallback: Boolean = false,

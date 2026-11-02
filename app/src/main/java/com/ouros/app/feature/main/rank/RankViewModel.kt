@@ -13,6 +13,9 @@ sealed interface RankEvent {
     data object AuthenticationRequired : RankEvent
 }
 
+/**
+ * Estado e ações de apresentação de rank. Executa operações assíncronas e publica resultados para a interface, mantendo o estado fora dos componentes visuais.
+ */
 class RankViewModel(private val repository: RankRepository) : ViewModel() {
     private val _state = MutableLiveData(RankUiState())
     val state: LiveData<RankUiState> = _state

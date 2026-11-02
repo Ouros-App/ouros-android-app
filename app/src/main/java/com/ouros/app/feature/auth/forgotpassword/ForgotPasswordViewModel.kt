@@ -9,6 +9,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/**
+ * Estado e ações de apresentação de auth › forgotpassword. Executa operações assíncronas e publica resultados para a interface, mantendo o estado fora dos componentes visuais.
+ */
 class ForgotPasswordViewModel(private val authRepository:AuthRepository) : ViewModel() {
 
     interface Listener {

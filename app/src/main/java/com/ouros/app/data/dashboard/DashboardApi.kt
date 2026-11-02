@@ -6,6 +6,9 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 
+/**
+ * Contrato Retrofit de dashboard. Declara rotas, parâmetros e formatos HTTP esperados; a interpretação das respostas fica no repositório.
+ */
 interface DashboardApi {
 
     @GET("v1/user/dashboards/status")

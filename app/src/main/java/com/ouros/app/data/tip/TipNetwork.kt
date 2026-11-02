@@ -7,6 +7,9 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
+/**
+ * Configuração de rede de tip. Cria clientes Retrofit compartilhados e centraliza URL, conversores e autenticação.
+ */
 object TipNetwork {
 
     private val BASE_URL: String = BuildConfig.OUROS_API_BASE_URL

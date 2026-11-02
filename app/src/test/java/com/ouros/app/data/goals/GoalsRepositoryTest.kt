@@ -36,6 +36,9 @@ import org.robolectric.annotation.Config
 import retrofit2.Response
 import java.io.IOException
 
+/**
+ * Testes automatizados de goals. Os casos verificam entradas e resultados esperados para ajudar a detectar regressões sem depender da interface real.
+ */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class GoalsRepositoryTest {

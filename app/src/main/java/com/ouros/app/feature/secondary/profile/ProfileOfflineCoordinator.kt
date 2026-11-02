@@ -25,6 +25,9 @@ interface OfflineProfileSaver {
     ): FarmOwnerResponse
 }
 
+/**
+ * Coordena etapas do fluxo de secondary › profile para que a interface não precise conhecer os detalhes de persistência e sincronização.
+ */
 class ProfileOfflineCoordinator internal constructor(
     context: Context,
     private val offlineStore: OfflineStore = OfflineStore(context.applicationContext),

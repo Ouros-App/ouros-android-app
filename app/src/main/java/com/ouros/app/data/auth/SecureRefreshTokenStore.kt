@@ -18,6 +18,9 @@ interface RefreshTokenStorage {
     fun clear()
 }
 
+/**
+ * Persiste o refresh token em armazenamento criptografado para restaurar a sessão sem guardar credenciais em texto puro.
+ */
 class SecureRefreshTokenStore(context: Context) : RefreshTokenStorage {
 
     private val preferences = context

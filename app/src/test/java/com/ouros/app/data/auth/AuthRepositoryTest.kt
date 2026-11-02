@@ -11,6 +11,9 @@ import org.junit.Test
 import retrofit2.Response
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * Testes automatizados de auth. Os casos verificam entradas e resultados esperados para ajudar a detectar regressões sem depender da interface real.
+ */
 class AuthRepositoryTest {
 
     @Test

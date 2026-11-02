@@ -5,6 +5,9 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/**
+ * Testes automatizados de goals. Os casos verificam entradas e resultados esperados para ajudar a detectar regressões sem depender da interface real.
+ */
 class GoalsDtosTest {
 
     @Test

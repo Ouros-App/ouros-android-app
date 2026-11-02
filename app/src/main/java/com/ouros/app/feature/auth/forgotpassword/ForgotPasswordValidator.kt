@@ -1,5 +1,8 @@
 package com.ouros.app.feature.auth.forgotpassword
 
+/**
+ * Regras de validação de auth › forgotpassword. Reúne verificações reutilizáveis para apresentar erros de entrada de forma consistente.
+ */
 object ForgotPasswordValidator {
 
     private val EMAIL_REGEX =

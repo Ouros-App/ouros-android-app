@@ -5,6 +5,9 @@ import com.ouros.app.data.auth.AuthenticatedNetwork
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
+/**
+ * Configuração de rede de dashboard. Cria clientes Retrofit compartilhados e centraliza URL, conversores e autenticação.
+ */
 object DashboardNetwork {
 
     private val BASE_URL: String =

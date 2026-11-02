@@ -3,6 +3,9 @@ package com.ouros.app.data.session
 import android.content.Context
 import android.content.SharedPreferences
 
+/**
+ * Armazenamento local de session. Centraliza leitura e gravação para que telas não manipulem diretamente os detalhes do armazenamento.
+ */
 open class FarmSessionStore(
     context: Context? = null,
     private val preferences: SharedPreferences? = context?.applicationContext

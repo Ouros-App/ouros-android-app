@@ -19,6 +19,9 @@ import com.ouros.app.data.fcm.OurosFirebaseMessagingService
 import com.ouros.app.feature.main.MainActivity
 import com.ouros.app.feature.secondary.tip.TipDetailActivity
 
+/**
+ * Tela Android de notification. Recebe interações, coordena componentes visuais e navegação; delega operações de dados para manter responsabilidades separadas.
+ */
 class NotificationTestActivity : AppCompatActivity() {
 
     private lateinit var btnBack: ImageView

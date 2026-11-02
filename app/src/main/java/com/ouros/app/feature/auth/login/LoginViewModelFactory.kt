@@ -5,6 +5,9 @@ import androidx.lifecycle.ViewModelProvider
 import com.ouros.app.data.auth.AuthRepository
 import com.ouros.app.data.farmowner.FarmOwnerRepository
 
+/**
+ * Fábrica de dependências de auth › login. Constrói o objeto com os repositórios e serviços de que ele precisa.
+ */
 class LoginViewModelFactory(
     private val authRepository: AuthRepository,
     private val farmOwnerRepository: FarmOwnerRepository

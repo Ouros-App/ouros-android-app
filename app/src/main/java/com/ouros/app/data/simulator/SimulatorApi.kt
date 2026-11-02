@@ -5,6 +5,9 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
 
+/**
+ * Contrato Retrofit de simulator. Declara rotas, parâmetros e formatos HTTP esperados; a interpretação das respostas fica no repositório.
+ */
 interface SimulatorApi {
     @GET("farms/{id}/ranking")
     suspend fun getFarmRanking(@Path("id") farmId: Long): Response<SimulatorRankingResponse>

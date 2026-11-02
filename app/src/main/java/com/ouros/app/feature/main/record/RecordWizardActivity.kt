@@ -23,6 +23,9 @@ import com.ouros.app.data.session.FarmSessionStore
 import com.ouros.app.data.local.OfflineStore
 import com.ouros.app.feature.auth.login.LoginActivity
 
+/**
+ * Tela Android de record. Recebe interações, coordena componentes visuais e navegação; delega operações de dados para manter responsabilidades separadas.
+ */
 class RecordWizardActivity : AppCompatActivity() {
     lateinit var wizardViewModel: RecordWizardViewModel
         private set

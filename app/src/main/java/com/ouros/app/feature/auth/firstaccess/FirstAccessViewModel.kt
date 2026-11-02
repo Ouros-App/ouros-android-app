@@ -9,6 +9,9 @@ import com.ouros.app.data.farmowner.FarmOwnerResponse
 import com.ouros.app.data.farmowner.FarmOwnerUpdateRequest
 import kotlinx.coroutines.launch
 
+/**
+ * Estado e ações de apresentação de auth › firstaccess. Executa operações assíncronas e publica resultados para a interface, mantendo o estado fora dos componentes visuais.
+ */
 class FirstAccessViewModel(
     private val authRepository: AuthRepository,
     private val farmOwnerRepository: FarmOwnerRepository

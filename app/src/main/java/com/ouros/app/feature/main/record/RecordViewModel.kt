@@ -15,6 +15,9 @@ import kotlinx.coroutines.launch
 data class RecordUiState(val loading: Boolean = false, val water: List<RecordHistoryItem> = emptyList(), val energy: List<RecordHistoryItem> = emptyList(), val error: String? = null)
 sealed interface RecordEvent { data object OpenWizard : RecordEvent; data object AuthenticationRequired : RecordEvent }
 
+/**
+ * Estado e ações de apresentação de record. Executa operações assíncronas e publica resultados para a interface, mantendo o estado fora dos componentes visuais.
+ */
 class RecordViewModel(private val repository: RecordRepository, private val draftStore: RecordDraftStore, private val farmId: Long?) : ViewModel() {
     private val _state = MutableLiveData(RecordUiState())
     val state: LiveData<RecordUiState> = _state

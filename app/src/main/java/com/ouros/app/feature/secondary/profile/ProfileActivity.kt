@@ -53,6 +53,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
+/**
+ * Tela Android de profile. Recebe interações, coordena componentes visuais e navegação; delega operações de dados para manter responsabilidades separadas.
+ */
 class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
 
     private val logoutScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -630,6 +633,7 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     private fun logout() {
         val fcmToken = FcmTokenStore(applicationContext).getToken()
         if (!fcmToken.isNullOrBlank()) {
+            // O logout limpa a sessão imediatamente; a remoção remota do token não deve atrasar a navegação.
             logoutScope.launch {
                 runCatching {
                     com.ouros.app.data.notification.NotificationRepository().deleteDeviceToken(fcmToken)

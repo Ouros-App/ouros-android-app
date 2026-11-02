@@ -1,5 +1,8 @@
 package com.ouros.app.feature.secondary.profile
 
+/**
+ * Regras de validação de profile. Reúne verificações reutilizáveis para apresentar erros de entrada de forma consistente.
+ */
 object ProfileValidator {
 
     private val NAME_REGEX =

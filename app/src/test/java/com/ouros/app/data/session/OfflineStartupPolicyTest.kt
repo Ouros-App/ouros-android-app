@@ -4,6 +4,9 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/**
+ * Testes automatizados de session. Os casos verificam entradas e resultados esperados para ajudar a detectar regressões sem depender da interface real.
+ */
 class OfflineStartupPolicyTest {
     @Test
     fun allowsOfflineStartForPreviouslyConfirmedFarm() {

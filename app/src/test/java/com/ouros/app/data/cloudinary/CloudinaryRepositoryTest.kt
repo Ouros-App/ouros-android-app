@@ -13,6 +13,9 @@ import retrofit2.Response
 import java.io.File
 import java.io.IOException
 
+/**
+ * Testes automatizados de cloudinary. Os casos verificam entradas e resultados esperados para ajudar a detectar regressões sem depender da interface real.
+ */
 class CloudinaryRepositoryTest {
 
     @get:Rule

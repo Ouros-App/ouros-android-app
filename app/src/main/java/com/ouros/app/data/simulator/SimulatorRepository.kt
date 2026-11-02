@@ -12,6 +12,9 @@ sealed interface SimulatorResult<out T> {
     data object AuthenticationRequired : SimulatorResult<Nothing>
 }
 
+/**
+ * Acesso a dados de simulator. Encapsula chamadas de rede e persistência local e traduz respostas para que a tela não dependa do transporte.
+ */
 class SimulatorRepository(private val api: SimulatorApi) {
     suspend fun loadInitialData(farmId: Long): SimulatorResult<SimulatorInitialData> = safeRequest {
         coroutineScope {

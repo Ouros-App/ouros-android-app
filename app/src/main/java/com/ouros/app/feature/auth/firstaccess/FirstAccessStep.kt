@@ -3,6 +3,9 @@ package com.ouros.app.feature.auth.firstaccess
 import androidx.annotation.LayoutRes
 import com.ouros.app.R
 
+/**
+ * Componente de apoio a auth › firstaccess. Reúne comportamento relacionado a essa funcionalidade para manter o fluxo principal mais simples.
+ */
 enum class FirstAccessStep(
     @LayoutRes val layoutRes: Int
 ) {

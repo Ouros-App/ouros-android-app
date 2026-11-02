@@ -14,6 +14,9 @@ import com.ouros.app.data.rank.RankPodiumEntry
 import java.text.NumberFormat
 import java.util.Locale
 
+/**
+ * Adaptador visual de rank. Converte itens em componentes reutilizáveis e conecta os dados às linhas da interface.
+ */
 class RankAdapter : ListAdapter<RankPodiumEntry, RankAdapter.RankViewHolder>(DiffCallback) {
     private val scoreFormatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("pt-BR")).apply {
         minimumFractionDigits = 2

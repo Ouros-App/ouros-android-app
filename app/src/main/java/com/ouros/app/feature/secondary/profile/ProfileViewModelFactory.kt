@@ -5,6 +5,9 @@ import androidx.lifecycle.ViewModelProvider
 import com.ouros.app.data.cloudinary.CloudinaryRepository
 import com.ouros.app.data.farmowner.FarmOwnerRepository
 
+/**
+ * Fábrica de dependências de profile. Constrói o objeto com os repositórios e serviços de que ele precisa.
+ */
 class ProfileViewModelFactory(
     private val farmOwnerRepository: FarmOwnerRepository,
     private val cloudinaryRepository: CloudinaryRepository = CloudinaryRepository(),

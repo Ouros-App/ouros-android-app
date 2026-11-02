@@ -29,6 +29,9 @@ import com.ouros.app.data.local.OfflineStore
 import com.ouros.app.feature.auth.login.LoginActivity
 import com.ouros.app.feature.secondary.simulator.SimulatorActivity
 
+/**
+ * Seção visual de record. Conecta layout, estado e eventos do usuário, deixando regras e acesso a dados para as camadas apropriadas.
+ */
 class RecordFragment : Fragment() {
     private lateinit var viewModel: RecordViewModel
     private lateinit var draftStore: RecordDraftStore

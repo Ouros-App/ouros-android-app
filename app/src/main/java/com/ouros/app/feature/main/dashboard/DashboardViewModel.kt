@@ -16,6 +16,9 @@ sealed interface DashboardEvent {
     data object AuthenticationRequired : DashboardEvent
 }
 
+/**
+ * Estado e ações de apresentação de dashboard. Executa operações assíncronas e publica resultados para a interface, mantendo o estado fora dos componentes visuais.
+ */
 class DashboardViewModel(private val dashboardRepository: DashboardRepository) : ViewModel() {
 
     private val _state = MutableLiveData(DashboardUiState())

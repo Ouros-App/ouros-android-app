@@ -7,6 +7,9 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.ouros.app.R
 
+/**
+ * Seção visual de onboarding › tutorial. Conecta layout, estado e eventos do usuário, deixando regras e acesso a dados para as camadas apropriadas.
+ */
 class TutorialPageFragment : Fragment(R.layout.fragment_tutorial_page) {
 
     override fun onViewCreated(

@@ -3,6 +3,9 @@ package com.ouros.app.data.fcm
 import android.content.Context
 import android.content.SharedPreferences
 
+/**
+ * Armazenamento local de fcm. Centraliza leitura e gravação para que telas não manipulem diretamente os detalhes do armazenamento.
+ */
 class FcmTokenStore(context: Context) {
 
     private val prefs: SharedPreferences =

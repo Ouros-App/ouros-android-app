@@ -5,6 +5,9 @@ import androidx.lifecycle.ViewModelProvider
 import com.ouros.app.data.farmowner.FarmOwnerRepository
 import com.ouros.app.data.session.FarmSessionStore
 
+/**
+ * Fábrica de dependências de aplicativo. Constrói o objeto com os repositórios e serviços de que ele precisa.
+ */
 class MainViewModelFactory(
     private val farmOwnerRepository: FarmOwnerRepository,
     private val farmSessionStore: FarmSessionStore

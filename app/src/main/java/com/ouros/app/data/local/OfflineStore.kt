@@ -4,6 +4,9 @@ import android.content.Context
 import com.google.gson.Gson
 import java.lang.reflect.Type
 
+/**
+ * Fachada de persistência offline. Converte objetos em JSON e delega ao SQLite cache, fila de operações e mapeamento de IDs para manter os detalhes do banco fora dos repositórios.
+ */
 class OfflineStore(context: Context) {
     private val database = OurosOfflineDatabase(context)
     private val gson = Gson()

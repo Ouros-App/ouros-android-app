@@ -2,6 +2,9 @@ package com.ouros.app.feature.onboarding.tutorial
 
 import androidx.lifecycle.ViewModel
 
+/**
+ * Estado e ações de apresentação de onboarding › tutorial. Executa operações assíncronas e publica resultados para a interface, mantendo o estado fora dos componentes visuais.
+ */
 class TutorialViewModel : ViewModel() {
 
     interface Listener {

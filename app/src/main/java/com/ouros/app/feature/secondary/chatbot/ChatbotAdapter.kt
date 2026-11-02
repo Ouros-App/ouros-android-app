@@ -20,6 +20,9 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
+/**
+ * Renderiza mensagens em linhas recicláveis com DiffUtil. Separa texto, datas, gráficos e indicador de digitação para atualizar apenas o que mudou.
+ */
 internal class ChatbotAdapter(
     context: android.content.Context,
     private val markwon: Markwon

@@ -8,6 +8,9 @@ import java.io.File
 import java.io.InputStream
 import kotlin.random.Random
 
+/**
+ * Persiste estado e arquivos de alterações de foto pendentes. Assim, uma troca iniciada offline pode ser retomada sem depender da Activity aberta.
+ */
 class ProfilePhotoStore internal constructor(
     private val filesDir: File,
     private val preferences: SharedPreferences,

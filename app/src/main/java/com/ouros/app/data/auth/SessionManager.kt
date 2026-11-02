@@ -1,5 +1,8 @@
 package com.ouros.app.data.auth
 
+/**
+ * Mantém o access token da sessão em memória e oferece operações centralizadas para leitura, atualização e limpeza durante login e logout.
+ */
 class SessionManager {
 
     @Volatile

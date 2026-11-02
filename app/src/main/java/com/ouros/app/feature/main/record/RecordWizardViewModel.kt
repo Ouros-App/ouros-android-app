@@ -21,6 +21,9 @@ sealed interface RecordWizardEvent {
     data class Error(val message: String) : RecordWizardEvent
 }
 
+/**
+ * Estado e ações de apresentação de record. Executa operações assíncronas e publica resultados para a interface, mantendo o estado fora dos componentes visuais.
+ */
 class RecordWizardViewModel(
     private val repository: RecordRepository,
     private val draftStore: RecordDraftStore,

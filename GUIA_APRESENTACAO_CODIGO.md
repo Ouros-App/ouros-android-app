@@ -100,4 +100,4 @@ Os 122 XML sob `res` são a composição visual e configuração declarativa. `l
 
 ## Escopo desta documentação
 
-O projeto tem muitos arquivos, então os comentários inline foram concentrados em inicialização, autenticação, sincronização e outras decisões cujo motivo não fica evidente só pela sintaxe. Este guia cobre o mapa do fluxo de produção e o papel das áreas/recursos, mas não descreve linha por linha os 17 mil linhas Kotlin e 7 mil linhas XML. Para explicar uma regra específica em detalhe, a melhor referência é o método correspondente no fonte e o contrato do backend relacionado.
+Os tipos principais de produção e de teste agora têm comentários explicando sua responsabilidade e como se encaixam no fluxo. Também há comentários junto às decisões menos óbvias, como renovação de sessão, cache e sincronização offline. Os comentários explicam blocos e intenções, não repetem cada instrução; os layouts XML continuam explicados pelo papel de cada recurso e pela tela que o utiliza. Para regras de negócio específicas, consulte o método correspondente e o contrato do backend.

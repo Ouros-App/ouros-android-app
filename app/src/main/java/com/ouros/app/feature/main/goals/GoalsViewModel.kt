@@ -18,6 +18,9 @@ sealed interface GoalsEvent {
     data object AuthenticationRequired : GoalsEvent
 }
 
+/**
+ * Estado e ações de apresentação de goals. Executa operações assíncronas e publica resultados para a interface, mantendo o estado fora dos componentes visuais.
+ */
 class GoalsViewModel(
     private val repository: GoalsRepository
 ) : ViewModel() {

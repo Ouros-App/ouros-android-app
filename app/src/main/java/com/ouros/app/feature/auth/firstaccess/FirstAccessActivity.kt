@@ -28,6 +28,9 @@ import com.ouros.app.data.farmowner.FarmOwnerRepository
 import com.ouros.app.data.session.FarmSessionStore
 import com.ouros.app.feature.main.MainActivity
 
+/**
+ * Tela Android de auth › firstaccess. Recebe interações, coordena componentes visuais e navegação; delega operações de dados para manter responsabilidades separadas.
+ */
 class FirstAccessActivity : AppCompatActivity(), FirstAccessViewModel.Listener {
 
     private lateinit var viewModel: FirstAccessViewModel

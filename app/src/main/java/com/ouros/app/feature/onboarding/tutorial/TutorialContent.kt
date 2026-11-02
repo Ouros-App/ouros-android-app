@@ -2,6 +2,9 @@ package com.ouros.app.feature.onboarding.tutorial
 
 import com.ouros.app.R
 
+/**
+ * Componente de apoio a onboarding › tutorial. Reúne comportamento relacionado a essa funcionalidade para manter o fluxo principal mais simples.
+ */
 object TutorialContent {
     val pages = listOf(
         TutorialPage(

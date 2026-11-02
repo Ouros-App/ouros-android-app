@@ -10,6 +10,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.ouros.app.R
 import com.ouros.app.data.notification.NotificationItemResponse
 
+/**
+ * Adaptador visual de notification. Converte itens em componentes reutilizáveis e conecta os dados às linhas da interface.
+ */
 class NotificationAdapter(
     private val onItemClick: (NotificationItemResponse) -> Unit
 ) : ListAdapter<NotificationItemResponse, NotificationAdapter.NotificationViewHolder>(DiffCallback) {

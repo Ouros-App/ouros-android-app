@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.ouros.app.data.auth.AuthRepository
 
+/**
+ * Fábrica de dependências de auth › forgotpassword. Constrói o objeto com os repositórios e serviços de que ele precisa.
+ */
 class ForgotPasswordViewModelFactory(
     private val authRepository:
     AuthRepository

@@ -14,6 +14,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
+/**
+ * Testes automatizados de profile. Os casos verificam entradas e resultados esperados para ajudar a detectar regressões sem depender da interface real.
+ */
 class ProfilePhotoStoreTest {
 
     @get:Rule

@@ -33,6 +33,9 @@ import com.ouros.app.feature.main.MainActivity
 import com.ouros.app.feature.secondary.profile.ProfilePhotoStore
 import kotlin.math.max
 
+/**
+ * Seção visual de rank. Conecta layout, estado e eventos do usuário, deixando regras e acesso a dados para as camadas apropriadas.
+ */
 class RankFragment : Fragment() {
     private lateinit var viewModel: RankViewModel
     private lateinit var adapter: RankAdapter

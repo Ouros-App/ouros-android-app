@@ -11,6 +11,9 @@ import retrofit2.Response
 import java.io.File
 import java.io.IOException
 
+/**
+ * Acesso a dados de cloudinary. Encapsula chamadas de rede e persistência local e traduz respostas para que a tela não dependa do transporte.
+ */
 class CloudinaryRepository(
     private val api: CloudinaryApi = CloudinaryNetwork.api,
     private val cloudName: String = BuildConfig.CLOUDINARY_CLOUD_NAME,

@@ -38,6 +38,9 @@ import com.ouros.app.data.session.FarmSessionStore
 import com.ouros.app.data.local.OfflineStore
 import com.ouros.app.feature.main.MainActivity
 
+/**
+ * Seção visual de goals. Conecta layout, estado e eventos do usuário, deixando regras e acesso a dados para as camadas apropriadas.
+ */
 class GoalsFragment : Fragment() {
     private lateinit var viewModel: GoalsViewModel
     private lateinit var progressGoals: CircularProgressIndicator

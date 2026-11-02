@@ -17,6 +17,9 @@ sealed interface GoalsResult<out T> {
     data object AuthenticationRequired : GoalsResult<Nothing>
 }
 
+/**
+ * Coordena leitura e alteração de metas entre API e fila offline, convertendo respostas e estados remotos para o modelo usado pela tela.
+ */
 class GoalsRepository(
     private val api: GoalsApi,
     private val authRepository: AuthRepository,

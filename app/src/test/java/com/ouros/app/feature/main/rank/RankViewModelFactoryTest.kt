@@ -17,6 +17,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import retrofit2.Response
 
+/**
+ * Testes automatizados de rank. Os casos verificam entradas e resultados esperados para ajudar a detectar regressões sem depender da interface real.
+ */
 class RankViewModelFactoryTest {
 
     private class FakeRankApi : RankAPI {

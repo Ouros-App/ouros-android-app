@@ -5,6 +5,9 @@ import com.ouros.app.data.auth.AuthenticatedNetwork
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
+/**
+ * Configuração de rede de simulator. Cria clientes Retrofit compartilhados e centraliza URL, conversores e autenticação.
+ */
 object SimulatorNetwork {
     val api: SimulatorApi by lazy {
         Retrofit.Builder()

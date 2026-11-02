@@ -20,6 +20,9 @@ import com.ouros.app.R
 import com.ouros.app.core.applyBottomSystemBarMargin
 import com.ouros.app.core.applyImeFixedTranslation
 
+/**
+ * Seção visual de auth › firstaccess. Conecta layout, estado e eventos do usuário, deixando regras e acesso a dados para as camadas apropriadas.
+ */
 class FirstAccessPageFragment :
     Fragment() {
 

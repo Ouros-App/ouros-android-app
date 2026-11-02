@@ -18,6 +18,9 @@ sealed interface RecordResult<out T> {
     data object AuthenticationRequired : RecordResult<Nothing>
 }
 
+/**
+ * Coordena registros com a API e o armazenamento offline. Lê cache sem conexão e enfileira criações/alterações para sincronizar quando a rede voltar.
+ */
 class RecordRepository(
     private val api: RecordAPI,
     private val draftStore: RecordDraftStore,
@@ -32,25 +35,29 @@ class RecordRepository(
 
     suspend fun load(farmId: Long): RecordResult<RecordHubData> {
         val result = safe {
-        coroutineScope {
-            val water = async { api.getWater(farmId).requiredBody("carregar os registros de água") }
-            val energy = async { api.getEnergy(farmId).requiredBody("carregar os registros de energia") }
-            val chicken = async { api.getChickenLeft(farmId).requiredBody("carregar as saídas de galinhas") }
-            val lots = async { api.getLots(farmId).requiredBody("carregar os lotes") }
-            val farm = async { api.getFarm(farmId).requiredBody("carregar a fazenda") }
+            coroutineScope {
+                // Essas leituras independentes são paralelas para montar o histórico sem esperar cada chamada em sequência.
+                val water = async { api.getWater(farmId).requiredBody("carregar os registros de água") }
+                val energy = async { api.getEnergy(farmId).requiredBody("carregar os registros de energia") }
+                val chicken = async { api.getChickenLeft(farmId).requiredBody("carregar as saídas de galinhas") }
+                val lots = async { api.getLots(farmId).requiredBody("carregar os lotes") }
+                val farm = async { api.getFarm(farmId).requiredBody("carregar a fazenda") }
 
-            RecordHubData(
-                water = water.await(),
-                energy = energy.await(),
-                chickenLeft = chicken.await(),
-                lots = lots.await(),
-                farm = farm.await()
-            ).also { offlineStore?.cache(cacheKey(farmId), it) }
-        }
+                RecordHubData(
+                    water = water.await(),
+                    energy = energy.await(),
+                    chickenLeft = chicken.await(),
+                    lots = lots.await(),
+                    farm = farm.await()
+                ).also { offlineStore?.cache(cacheKey(farmId), it) }
+            }
         }
         return if (result is RecordResult.Error && result.canRetry) {
-            offlineStore?.cached<RecordHubData>(cacheKey(farmId))?.let { RecordResult.Success(it) } ?: result
-        } else result
+            offlineStore?.cached<RecordHubData>(cacheKey(farmId))
+                ?.let { RecordResult.Success(it) } ?: result
+        } else {
+            result
+        }
     }
 
     fun prepareEdit(item: RecordHistoryItem, hub: RecordHubData): RecordDraft {

@@ -8,6 +8,9 @@ import androidx.appcompat.app.AppCompatActivity
 import com.ouros.app.R
 import com.ouros.app.core.applyBottomSystemBarMargin
 
+/**
+ * Tela Android de error. Recebe interações, coordena componentes visuais e navegação; delega operações de dados para manter responsabilidades separadas.
+ */
 class ErrorActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

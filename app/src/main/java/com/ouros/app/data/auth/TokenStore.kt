@@ -2,6 +2,9 @@ package com.ouros.app.data.auth
 
 import android.content.Context
 
+/**
+ * Abstração de leitura e gravação de tokens usada pelas camadas de autenticação.
+ */
 class TokenStore(
     context: Context
 ) {

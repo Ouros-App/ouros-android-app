@@ -1,5 +1,8 @@
 package com.ouros.app.feature.auth.firstaccess
 
+/**
+ * Regras de validação de auth › firstaccess. Reúne verificações reutilizáveis para apresentar erros de entrada de forma consistente.
+ */
 object FirstAccessValidator {
 
     private val NAME_REGEX =

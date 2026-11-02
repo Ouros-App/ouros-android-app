@@ -28,6 +28,9 @@ sealed interface DashboardResult {
         DashboardResult
 }
 
+/**
+ * Carrega e valida os dados dos gráficos. Usa cache quando o serviço está indisponível e devolve resultados explícitos para a tela tratar sucesso e erro.
+ */
 class DashboardRepository(
     private val api: DashboardApi,
     private val authRepository: AuthRepository,
@@ -36,52 +39,28 @@ class DashboardRepository(
     private val farmSessionStore: FarmSessionStore
 ) {
 
-    suspend fun load(
-        period: DashboardPeriod
-    ): DashboardResult {
+    suspend fun load(period: DashboardPeriod): DashboardResult {
         val farmId = farmSessionStore.farmId()
         return try {
-            when (
-                val statusResult =
-                    authenticatedCall {
-                            authorization ->
-
-                        api.getStatus(
-                            authorization
-                        )
-                    }
-            ) {
-                AuthenticatedCallResult.AuthenticationRequired -> {
-                    DashboardResult.AuthenticationRequired
-                }
-
-                AuthenticatedCallResult.TemporaryFailure -> {
-                    cachedResult(
-                        "Não foi possível atualizar os dados.",
-                        farmId
-                    )
-                }
-
-                is AuthenticatedCallResult.ResponseResult -> {
-                    handleStatusResponse(
-                        response = statusResult.response,
-                        period = period,
-                        farmId = farmId
-                    )
-                }
+            when (val statusResult = authenticatedCall { authorization ->
+                api.getStatus(authorization)
+            }) {
+                AuthenticatedCallResult.AuthenticationRequired -> DashboardResult.AuthenticationRequired
+                AuthenticatedCallResult.TemporaryFailure -> cachedResult(
+                    "Não foi possível atualizar os dados.", farmId
+                )
+                is AuthenticatedCallResult.ResponseResult -> handleStatusResponse(
+                    response = statusResult.response,
+                    period = period,
+                    farmId = farmId
+                )
             }
         } catch (error: CancellationException) {
             throw error
         } catch (_: IOException) {
-            cachedResult(
-                "Sem conexão. Exibindo os últimos dados disponíveis.",
-                farmId
-            )
+            cachedResult("Sem conexão. Exibindo os últimos dados disponíveis.", farmId)
         } catch (_: Exception) {
-            cachedResult(
-                "Não foi possível atualizar os dados.",
-                farmId
-            )
+            cachedResult("Não foi possível atualizar os dados.", farmId)
         }
     }
 
@@ -91,28 +70,15 @@ class DashboardRepository(
         farmId: Long?
     ): DashboardResult {
         return when {
-            response.code() == 403 -> {
-                DashboardResult.Error(
-                    message =
-                        "Este conteúdo não está disponível para o seu perfil.",
-                    canRetry = false
-                )
-            }
-
-            response.code() == 503 -> {
-                cachedResult(
-                    "Dados de telemetria em atualização.",
-                    farmId
-                )
-            }
-
-            !response.isSuccessful -> {
-                DashboardResult.Error(
-                    message =
-                        "Não foi possível verificar os dados.",
-                    canRetry = true
-                )
-            }
+            response.code() == 403 -> DashboardResult.Error(
+                message = "Este conteúdo não está disponível para o seu perfil.",
+                canRetry = false
+            )
+            response.code() == 503 -> cachedResult("Dados de telemetria em atualização.", farmId)
+            !response.isSuccessful -> DashboardResult.Error(
+                message = "Não foi possível verificar os dados.",
+                canRetry = true
+            )
 
             else -> {
                 val status = response.body()?.status
@@ -232,6 +198,7 @@ class DashboardRepository(
             response.isSuccessful -> {
                 val dashboard = response.body()
                 if (dashboard == null) {
+                    // Uma resposta 2xx sem corpo não contém dados suficientes para desenhar os gráficos.
                     return DashboardResult.Error(
                         message = "A API não retornou os gráficos.",
                         canRetry = true

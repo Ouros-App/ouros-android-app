@@ -7,6 +7,9 @@ import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.Path
 
+/**
+ * Contrato Retrofit de farmowner. Declara rotas, parâmetros e formatos HTTP esperados; a interpretação das respostas fica no repositório.
+ */
 interface FarmOwnerApi {
 
     @GET("farm-owners/me")

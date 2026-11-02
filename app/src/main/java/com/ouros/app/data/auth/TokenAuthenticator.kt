@@ -6,6 +6,9 @@ import okhttp3.Response
 import okhttp3.Route
 import retrofit2.Response as RetrofitResponse
 
+/**
+ * Renova credenciais após uma resposta HTTP 401. Serializa o refresh para evitar chamadas concorrentes e reutiliza o token novo quando outra requisição já atualizou a sessão.
+ */
 class TokenAuthenticator(
     private val sessionManager: SessionManager,
     private val refreshTokenStore: RefreshTokenStorage,

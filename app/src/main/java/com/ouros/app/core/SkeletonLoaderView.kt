@@ -12,6 +12,9 @@ import android.view.View
 import android.view.animation.LinearInterpolator
 import androidx.core.view.isVisible
 
+/**
+ * Componente de apoio a aplicativo. Reúne comportamento relacionado a essa funcionalidade para manter o fluxo principal mais simples.
+ */
 class SkeletonLoaderView @JvmOverloads constructor(
     context: Context,
     attributes: AttributeSet? = null,
