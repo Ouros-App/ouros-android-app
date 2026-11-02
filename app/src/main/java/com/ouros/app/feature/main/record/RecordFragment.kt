@@ -21,6 +21,7 @@ import com.ouros.app.R
 import com.ouros.app.core.SkeletonLoaderView
 import com.ouros.app.core.util.applyBottomSystemBarPadding
 import com.ouros.app.data.record.RecordDraftStore
+import com.ouros.app.data.record.RecordHistoryItem
 import com.ouros.app.data.record.RecordNetwork
 import com.ouros.app.data.record.RecordRepository
 import com.ouros.app.data.session.FarmSessionStore
@@ -40,8 +41,14 @@ class RecordFragment : Fragment() {
     private lateinit var draftSubtitle: TextView
     private lateinit var emptyWater: TextView
     private lateinit var emptyEnergy: TextView
+    private lateinit var moreWater: TextView
+    private lateinit var moreEnergy: TextView
     private lateinit var waterAdapter: RecordHistoryAdapter
     private lateinit var energyAdapter: RecordHistoryAdapter
+    private var waterRecords = emptyList<RecordHistoryItem>()
+    private var energyRecords = emptyList<RecordHistoryItem>()
+    private var showAllWaterRecords = false
+    private var showAllEnergyRecords = false
     private var successDialog: Dialog? = null
     private var deleteDialog: Dialog? = null
 
@@ -108,6 +115,15 @@ class RecordFragment : Fragment() {
             viewModel.load()
         }
 
+        moreWater.setOnClickListener {
+            showAllWaterRecords = !showAllWaterRecords
+            renderHistory(waterAdapter, moreWater, waterRecords, showAllWaterRecords)
+        }
+        moreEnergy.setOnClickListener {
+            showAllEnergyRecords = !showAllEnergyRecords
+            renderHistory(energyAdapter, moreEnergy, energyRecords, showAllEnergyRecords)
+        }
+
         observe()
     }
 
@@ -131,6 +147,8 @@ class RecordFragment : Fragment() {
         draftSubtitle = root.findViewById(R.id.recordDraftSubtitle)
         emptyWater = root.findViewById(R.id.recordEmptyWater)
         emptyEnergy = root.findViewById(R.id.recordEmptyEnergy)
+        moreWater = root.findViewById(R.id.recordMoreWater)
+        moreEnergy = root.findViewById(R.id.recordMoreEnergy)
     }
 
     private fun configureLists(root: View) {
@@ -159,8 +177,10 @@ class RecordFragment : Fragment() {
             retry.visibility = if (state.error != null) View.VISIBLE else View.GONE
             error.text = state.error
 
-            waterAdapter.submitList(state.water)
-            energyAdapter.submitList(state.energy)
+            waterRecords = state.water
+            energyRecords = state.energy
+            renderHistory(waterAdapter, moreWater, waterRecords, showAllWaterRecords)
+            renderHistory(energyAdapter, moreEnergy, energyRecords, showAllEnergyRecords)
 
             emptyWater.visibility =
                 if (!state.loading && state.water.isEmpty()) View.VISIBLE else View.GONE
@@ -189,6 +209,23 @@ class RecordFragment : Fragment() {
             }
 
             if (event != null) viewModel.consumeEvent()
+        }
+    }
+
+    private fun renderHistory(
+        adapter: RecordHistoryAdapter,
+        moreButton: TextView,
+        records: List<RecordHistoryItem>,
+        showAll: Boolean
+    ) {
+        adapter.submitList(if (showAll) records else records.take(INITIAL_VISIBLE_RECORDS))
+        val remaining = records.size - INITIAL_VISIBLE_RECORDS
+        moreButton.visibility = if (remaining > 0) View.VISIBLE else View.GONE
+        moreButton.text = if (showAll) {
+            "Ver menos registros"
+        } else {
+            val noun = if (remaining == 1) "registro" else "registros"
+            "Ver mais $remaining $noun"
         }
     }
 
@@ -298,5 +335,9 @@ class RecordFragment : Fragment() {
         deleteDialog?.dismiss()
         deleteDialog = null
         super.onDestroyView()
+    }
+
+    private companion object {
+        const val INITIAL_VISIBLE_RECORDS = 1
     }
 }
