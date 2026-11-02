@@ -11,9 +11,9 @@
         android:id="@+id/linearLayout3"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/onboarding_horizontal_margin"
-        android:layout_marginTop="@dimen/onboarding_top_inset"
-        android:layout_marginEnd="@dimen/onboarding_horizontal_margin"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="100dp"
+        android:layout_marginEnd="50dp"
         android:gravity="center"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
@@ -29,10 +29,9 @@
             app:srcCompat="@drawable/ic_arrow_left" />
 
         <ImageView
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:scaleType="fitCenter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
             android:contentDescription="Etapa 2 de 4"
             app:srcCompat="@drawable/stages_2" />
 
@@ -51,9 +50,9 @@
             android:id="@+id/linearLayout2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/onboarding_horizontal_margin"
-            android:layout_marginTop="@dimen/onboarding_section_gap"
-            android:layout_marginEnd="@dimen/onboarding_horizontal_margin"
+            android:layout_marginStart="50dp"
+            android:layout_marginTop="72dp"
+            android:layout_marginEnd="50dp"
             android:orientation="vertical">
 
             <TextView
@@ -77,9 +76,9 @@
             android:id="@+id/codeInputContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/onboarding_form_horizontal_margin"
-            android:layout_marginTop="@dimen/onboarding_form_gap"
-            android:layout_marginEnd="@dimen/onboarding_form_horizontal_margin"
+            android:layout_marginStart="30dp"
+            android:layout_marginTop="70dp"
+            android:layout_marginEnd="30dp"
             android:gravity="center"
             android:orientation="horizontal">
 
@@ -145,9 +144,9 @@
             style="@style/text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/onboarding_form_horizontal_margin"
+            android:layout_marginStart="30dp"
             android:layout_marginTop="8dp"
-            android:layout_marginEnd="@dimen/onboarding_form_horizontal_margin"
+            android:layout_marginEnd="30dp"
             android:textColor="@color/warning_red"
             android:visibility="gone"
             tools:text="Informe os 6 números do código."
@@ -158,9 +157,9 @@
             style="@style/Widget.Ouros.Button.Big.Blue"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/onboarding_form_horizontal_margin"
+            android:layout_marginStart="30dp"
             android:layout_marginTop="16dp"
-            android:layout_marginEnd="@dimen/onboarding_form_horizontal_margin"
+            android:layout_marginEnd="30dp"
             android:text="Continuar" />
 
     </LinearLayout>
@@ -170,8 +169,8 @@
         style="@style/text"
         android:layout_width="0dp"
         android:layout_height="48dp"
-        android:layout_marginStart="@dimen/onboarding_form_horizontal_margin"
-        android:layout_marginEnd="@dimen/onboarding_form_horizontal_margin"
+        android:layout_marginStart="30dp"
+        android:layout_marginEnd="30dp"
         android:layout_marginBottom="24dp"
         android:clickable="true"
         android:focusable="true"

@@ -103,8 +103,6 @@ class FirstAccessPageFragment :
     }
 
     private fun bindWelcome(view: View) {
-        view.findViewById<View>(R.id.midas).applyBottomSystemBarMargin()
-
         view.findViewById<View>(
             R.id.btnBack
         ).setOnClickListener {
