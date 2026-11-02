@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ouros.app.data.auth.AuthResult
 import com.ouros.app.data.farmowner.FarmOwnerRepository
+import com.ouros.app.data.local.OfflineSyncRegistry
 import com.ouros.app.data.session.FarmSessionStore
 import kotlinx.coroutines.launch
 
@@ -89,7 +90,7 @@ class MainViewModel(
                 is AuthResult.Error -> {
                     if (result.statusCode == 401) {
                         listener?.onMainSessionExpired()
-                    } else {
+                    } else if (OfflineSyncRegistry.isOnline()) {
                         listener?.onMainProfileError(
                             result.message
                         )

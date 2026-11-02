@@ -289,7 +289,10 @@ class RankRepositoryTest {
         val result = repository.load()
 
         assertTrue(result is RankResult.Error)
-        assertEquals("Sem conexão. Verifique sua internet.", (result as RankResult.Error).message)
+        assertEquals(
+            "Sem conexão e sem ranking salvo neste aparelho.",
+            (result as RankResult.Error).message
+        )
         assertTrue(result.canRetry)
     }
 

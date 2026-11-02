@@ -29,6 +29,9 @@ import com.ouros.app.R
 import com.ouros.app.core.util.applyBottomSystemBarPadding
 import com.ouros.app.core.util.dp
 import com.ouros.app.data.tip.TipDetailResponse
+import com.ouros.app.data.tip.TipRepository
+import com.ouros.app.data.local.OfflineStore
+import com.ouros.app.data.session.FarmSessionStore
 import io.noties.markwon.Markwon
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -36,7 +39,12 @@ import java.util.Locale
 class TipDetailActivity : AppCompatActivity() {
 
     private val viewModel: TipDetailViewModel by viewModels {
-        TipDetailViewModel.Factory()
+        TipDetailViewModel.Factory(
+            TipRepository(
+                offlineStore = OfflineStore(applicationContext),
+                farmSessionStore = FarmSessionStore(applicationContext)
+            )
+        )
     }
 
     private val markwon: Markwon by lazy {

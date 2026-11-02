@@ -7,7 +7,8 @@ import com.ouros.app.data.farmowner.FarmOwnerRepository
 
 class ProfileViewModelFactory(
     private val farmOwnerRepository: FarmOwnerRepository,
-    private val cloudinaryRepository: CloudinaryRepository = CloudinaryRepository()
+    private val cloudinaryRepository: CloudinaryRepository = CloudinaryRepository(),
+    private val offlineCoordinator: OfflineProfileSaver? = null
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
@@ -21,7 +22,8 @@ class ProfileViewModelFactory(
         ) {
             return ProfileViewModel(
                 farmOwnerRepository = farmOwnerRepository,
-                cloudinaryRepository = cloudinaryRepository
+                cloudinaryRepository = cloudinaryRepository,
+                offlineCoordinator = offlineCoordinator
             ) as T
         }
 

@@ -131,6 +131,23 @@ class ProfilePhotoStoreTest {
     }
 
     @Test
+    fun stagedPhoto_survivesRemoteSnapshotAndCanBeStagedAgain() {
+        val (store, _) = createStore(5111L)
+        val source = temporaryFolder.newFile("offline.jpg").apply {
+            writeBytes(byteArrayOf(8, 6, 4, 2))
+        }
+
+        assertTrue(store.stagePhotoForUpload(source, null))
+        val localPhoto = store.localPhotoFile()!!
+        assertTrue(store.isPhotoPendingUpload())
+
+        store.syncWithRemote(null)
+        assertArrayEquals(byteArrayOf(8, 6, 4, 2), store.localPhotoFile()?.readBytes())
+        assertTrue(store.stagePhotoForUpload(localPhoto, null))
+        assertTrue(store.isPhotoPendingUpload())
+    }
+
+    @Test
     fun committingPhotoRemoval_deletesFileAndMarksRemoved() {
         val (store, _) = createStore(5103L)
         val source = temporaryFolder.newFile("to_delete.jpg").apply {

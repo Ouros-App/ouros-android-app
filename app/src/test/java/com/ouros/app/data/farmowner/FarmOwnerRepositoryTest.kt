@@ -5,10 +5,29 @@ import com.ouros.app.data.auth.SessionManager
 import com.ouros.app.data.auth.TokenResponse
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import retrofit2.Response
 
 class FarmOwnerRepositoryTest {
+
+    @Test
+    fun cachedProfile_isUsedForTransientFailuresDuringReconnection() {
+        assertTrue(shouldUseCachedProfile(null))
+        assertTrue(shouldUseCachedProfile(408))
+        assertTrue(shouldUseCachedProfile(429))
+        assertTrue(shouldUseCachedProfile(500))
+        assertTrue(shouldUseCachedProfile(503))
+    }
+
+    @Test
+    fun cachedProfile_doesNotHideSessionOrProfileErrors() {
+        assertFalse(shouldUseCachedProfile(401))
+        assertFalse(shouldUseCachedProfile(403))
+        assertFalse(shouldUseCachedProfile(404))
+        assertFalse(shouldUseCachedProfile(422))
+    }
 
     @Test
     fun getMe_refreshesExpiredAccessTokenBeforeRequest() = runBlocking {

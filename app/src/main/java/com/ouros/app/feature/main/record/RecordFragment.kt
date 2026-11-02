@@ -22,6 +22,7 @@ import com.ouros.app.data.record.RecordDraftStore
 import com.ouros.app.data.record.RecordNetwork
 import com.ouros.app.data.record.RecordRepository
 import com.ouros.app.data.session.FarmSessionStore
+import com.ouros.app.data.local.OfflineStore
 import com.ouros.app.feature.auth.login.LoginActivity
 import com.ouros.app.feature.secondary.simulator.SimulatorActivity
 
@@ -63,13 +64,19 @@ class RecordFragment : Fragment() {
 
         val appContext = requireContext().applicationContext
         draftStore = RecordDraftStore(appContext)
-        val repository = RecordRepository(RecordNetwork.api, draftStore)
+        val farmSessionStore = FarmSessionStore(appContext)
+        val repository = RecordRepository(
+            RecordNetwork.api,
+            draftStore,
+            OfflineStore(appContext),
+            farmSessionStore = farmSessionStore
+        )
         viewModel = ViewModelProvider(
             this,
             RecordViewModelFactory(
                 repository,
                 draftStore,
-                FarmSessionStore(appContext).farmId()
+                farmSessionStore.farmId()
             )
         )[RecordViewModel::class.java]
 

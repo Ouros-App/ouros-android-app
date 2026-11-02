@@ -27,6 +27,7 @@ import com.ouros.app.data.rank.RankRepository
 import com.ouros.app.data.rank.RankUiState
 import com.ouros.app.data.rank.formatRemainingTime
 import com.ouros.app.data.session.FarmSessionStore
+import com.ouros.app.data.local.OfflineStore
 import com.ouros.app.feature.main.MainActivity
 import kotlin.math.max
 
@@ -87,12 +88,15 @@ class RankFragment : Fragment() {
             api = FarmOwnerNetwork.api,
             sessionManager = AppSession.sessionManager,
             refreshSession = authRepository::refreshSession,
-            clearSession = authRepository::clearSession
+            clearSession = authRepository::clearSession,
+            offlineStore = OfflineStore(context),
+            farmSessionStore = FarmSessionStore(context)
         )
         val repository = RankRepository(
             api = RankNetwork.api,
             farmOwnerRepository = farmOwnerRepository,
-            farmSessionStore = FarmSessionStore(context)
+            farmSessionStore = FarmSessionStore(context),
+            offlineStore = OfflineStore(context)
         )
         viewModel = ViewModelProvider(
             this,

@@ -24,6 +24,9 @@ import com.ouros.app.core.util.applyBottomSystemBarPadding
 import com.ouros.app.core.util.dp
 import com.ouros.app.data.fcm.OurosFirebaseMessagingService
 import com.ouros.app.data.notification.NotificationItemResponse
+import com.ouros.app.data.notification.NotificationRepository
+import com.ouros.app.data.local.OfflineStore
+import com.ouros.app.data.session.FarmSessionStore
 import com.ouros.app.feature.main.MainActivity
 import com.ouros.app.feature.secondary.tip.TipDetailActivity
 import kotlinx.coroutines.launch
@@ -31,7 +34,12 @@ import kotlinx.coroutines.launch
 class NotificationActivity : AppCompatActivity() {
 
     private val viewModel: NotificationViewModel by viewModels {
-        NotificationViewModel.Factory()
+        NotificationViewModel.Factory(
+            NotificationRepository(
+                offlineStore = OfflineStore(applicationContext),
+                ownerIdProvider = { FarmSessionStore(applicationContext).ownerId() }
+            )
+        )
     }
 
     private lateinit var btnBack: ImageView

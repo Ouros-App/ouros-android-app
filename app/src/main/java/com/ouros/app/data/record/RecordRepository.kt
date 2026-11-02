@@ -1,6 +1,10 @@
 package com.ouros.app.data.record
 
 import com.ouros.app.core.BrazilianMoney
+import com.ouros.app.data.local.OfflineStore
+import com.ouros.app.data.local.OfflineSynchronizer
+import com.ouros.app.data.local.OfflineSyncRegistry
+import com.ouros.app.data.session.FarmSessionStore
 import java.io.IOException
 import java.math.BigDecimal
 import kotlinx.coroutines.CancellationException
@@ -16,9 +20,18 @@ sealed interface RecordResult<out T> {
 
 class RecordRepository(
     private val api: RecordAPI,
-    private val draftStore: RecordDraftStore
-) {
-    suspend fun load(farmId: Long): RecordResult<RecordHubData> = safe {
+    private val draftStore: RecordDraftStore,
+    private val offlineStore: OfflineStore? = null,
+    private val manageDraft: Boolean = true,
+    private val farmSessionStore: FarmSessionStore? = null
+) : OfflineSynchronizer {
+
+    init {
+        if (offlineStore != null) OfflineSyncRegistry.register(this)
+    }
+
+    suspend fun load(farmId: Long): RecordResult<RecordHubData> {
+        val result = safe {
         coroutineScope {
             val water = async { api.getWater(farmId).requiredBody("carregar os registros de água") }
             val energy = async { api.getEnergy(farmId).requiredBody("carregar os registros de energia") }
@@ -32,8 +45,12 @@ class RecordRepository(
                 chickenLeft = chicken.await(),
                 lots = lots.await(),
                 farm = farm.await()
-            )
+            ).also { offlineStore?.cache(cacheKey(farmId), it) }
         }
+        }
+        return if (result is RecordResult.Error && result.canRetry) {
+            offlineStore?.cached<RecordHubData>(cacheKey(farmId))?.let { RecordResult.Success(it) } ?: result
+        } else result
     }
 
     fun prepareEdit(item: RecordHistoryItem, hub: RecordHubData): RecordDraft {
@@ -72,10 +89,26 @@ class RecordRepository(
             waterRecordId = water?.id,
             energyRecordId = energy?.id,
             chickenLeftRecordId = chicken?.id
-        ).also(draftStore::save)
+        ).also(::saveDraft)
     }
 
-    suspend fun submit(farmId: Long, original: RecordDraft): RecordResult<Unit> = safe {
+    suspend fun submit(farmId: Long, original: RecordDraft): RecordResult<Unit> {
+        val result = submitRemote(farmId, original)
+        if (result is RecordResult.Error && offlineStore != null && !OfflineSyncRegistry.isOnline()) {
+            offlineStore.enqueueReplacing(
+                AREA,
+                SUBMIT,
+                "$farmId:${original.waterDate}:${original.energyDate}",
+                PendingRecordSubmission(farmId, original)
+            )
+            updateCachedRecord(farmId, original)
+            clearDraft()
+            return RecordResult.Success(Unit)
+        }
+        return result
+    }
+
+    private suspend fun submitRemote(farmId: Long, original: RecordDraft): RecordResult<Unit> = safe {
         var draft = resolveExistingRecords(farmId, original)
         val lotId = draft.lotId.toLong()
         val lotCost = draft.lotCost.money()
@@ -110,7 +143,7 @@ class RecordRepository(
                 )
             ).requiredBody("registrar a água")
 
-            draft = draft.copy(waterRecordId = created.id).also(draftStore::save)
+            draft = draft.copy(waterRecordId = created.id).also(::saveDraft)
         } else {
             api.updateWater(waterId, waterBody)
                 .requireSuccess("atualizar o registro de água")
@@ -131,7 +164,7 @@ class RecordRepository(
                 )
             ).requiredBody("registrar a energia")
 
-            draft = draft.copy(energyRecordId = created.id).also(draftStore::save)
+            draft = draft.copy(energyRecordId = created.id).also(::saveDraft)
         } else {
             api.updateEnergy(energyId, energyBody)
                 .requireSuccess("atualizar o registro de energia")
@@ -151,7 +184,7 @@ class RecordRepository(
 
                 draft = draft.copy(
                     chickenLeftRecordId = created.id
-                ).also(draftStore::save)
+                ).also(::saveDraft)
             }
 
             chickenId != null && left > 0 -> {
@@ -170,12 +203,84 @@ class RecordRepository(
 
                 draft = draft.copy(
                     chickenLeftRecordId = null
-                ).also(draftStore::save)
+                ).also(::saveDraft)
             }
         }
 
-        draftStore.clear()
+        clearDraft()
         Unit
+    }
+
+    override suspend fun synchronize() {
+        val store = offlineStore ?: return
+        for (operation in store.pending(AREA)) {
+            if (operation.operation != SUBMIT) continue
+            val pending = store.decode(operation.payload, PendingRecordSubmission::class.java)
+            val activeFarmId = farmSessionStore?.farmId()
+            if (activeFarmId != null && activeFarmId != pending.farmId) continue
+            val remoteRepository = RecordRepository(api, draftStore, manageDraft = false)
+            when (val result = remoteRepository.submit(pending.farmId, pending.draft)) {
+                is RecordResult.Success -> {
+                    store.complete(operation.id)
+                    when (val fresh = remoteRepository.load(pending.farmId)) {
+                        is RecordResult.Success -> store.cache(cacheKey(pending.farmId), fresh.data)
+                        else -> Unit
+                    }
+                }
+                is RecordResult.AuthenticationRequired -> break
+                is RecordResult.Error -> {
+                    if (result.canRetry) {
+                        store.markAttempt(operation.id)
+                        break
+                    } else {
+                        store.complete(operation.id)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateCachedRecord(farmId: Long, draft: RecordDraft) {
+        val store = offlineStore ?: return
+        val cached = store.cached<RecordHubData>(cacheKey(farmId)) ?: return
+        runCatching {
+            val temporaryId = -System.currentTimeMillis()
+            val water = WaterRegistryResponse(
+                id = draft.waterRecordId ?: temporaryId,
+                registrationDate = draft.waterDate,
+                startHydrometer = draft.hydrometerStart.decimal(),
+                endHydrometer = draft.hydrometerEnd.decimal(),
+                farmId = farmId
+            )
+            val energy = EnergyRegistryResponse(
+                id = draft.energyRecordId ?: temporaryId - 1,
+                registrationDate = draft.energyDate,
+                energyConsumption = draft.energyKwh.decimal(),
+                farmId = farmId
+            )
+            val updated = cached.copy(
+                water = cached.water.filterNot { it.registrationDate == draft.waterDate } + water,
+                energy = cached.energy.filterNot { it.registrationDate == draft.energyDate } + energy,
+                chickenLeft = cached.chickenLeft.filterNot { it.exitDate == draft.waterDate } +
+                    draft.chickensLeft.toInt().takeIf { it > 0 }?.let {
+                        ChickenLeftResponse(
+                            id = draft.chickenLeftRecordId ?: temporaryId - 2,
+                            chickensCount = it,
+                            exitDate = draft.waterDate,
+                            farmId = farmId
+                        )
+                    }.let { listOfNotNull(it) },
+                lots = cached.lots.map {
+                    if (it.id == draft.lotId.toLong()) {
+                        it.copy(
+                            receivedChickens = draft.chickensEntered.toInt(),
+                            cost = draft.lotCost.money().toDouble()
+                        )
+                    } else it
+                }
+            )
+            store.cache(cacheKey(farmId), updated)
+        }
     }
 
     private suspend fun resolveExistingRecords(
@@ -207,7 +312,7 @@ class RecordRepository(
             waterRecordId = waterRequest.await(),
             energyRecordId = energyRequest.await(),
             chickenLeftRecordId = chickenRequest.await()
-        ).also(draftStore::save)
+        ).also(::saveDraft)
     }
 
     private suspend fun <T> safe(block: suspend () -> T): RecordResult<T> {
@@ -256,6 +361,14 @@ class RecordRepository(
         return trim().replace(',', '.').toBigDecimal()
     }
 
+    private fun saveDraft(draft: RecordDraft) {
+        if (manageDraft) draftStore.save(draft)
+    }
+
+    private fun clearDraft() {
+        if (manageDraft) draftStore.clear()
+    }
+
     private fun String.money(): BigDecimal {
         return BrazilianMoney.parse(this)
             ?: throw IllegalArgumentException("Valor monetário inválido.")
@@ -278,4 +391,13 @@ class RecordRepository(
         val code: Int,
         val operation: String
     ) : RuntimeException()
+
+    private data class PendingRecordSubmission(val farmId: Long, val draft: RecordDraft)
+
+    private fun cacheKey(farmId: Long) = "records:$farmId"
+
+    private companion object {
+        const val AREA = "records"
+        const val SUBMIT = "submit"
+    }
 }

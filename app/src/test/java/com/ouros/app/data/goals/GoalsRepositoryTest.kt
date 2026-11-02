@@ -16,6 +16,8 @@ import com.ouros.app.data.auth.RefreshRequest
 import com.ouros.app.data.auth.RefreshTokenStorage
 import com.ouros.app.data.auth.SessionManager
 import com.ouros.app.data.auth.TokenResponse
+import com.ouros.app.data.local.OfflineStore
+import com.ouros.app.data.local.OfflineSyncRegistry
 import com.ouros.app.data.session.FarmSessionStore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
@@ -27,9 +29,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
 import retrofit2.Response
 import java.io.IOException
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class GoalsRepositoryTest {
 
     private class FakeRefreshTokenStore(var token: String? = "saved-refresh-token") : RefreshTokenStorage {
@@ -79,6 +87,7 @@ class GoalsRepositoryTest {
         var lastIndividualAuth: String? = null
         var lastStateAuth: String? = null
         var lastUpdateRequest: UpdateIndividualGoalRequest? = null
+        val updateRequests = mutableListOf<UpdateIndividualGoalRequest>()
         var lastCreateRequest: CreateIndividualGoalRequest? = null
         var lastDeleteId: Long? = null
 
@@ -98,6 +107,7 @@ class GoalsRepositoryTest {
             request: UpdateIndividualGoalRequest
         ): Response<GoalResponse> {
             lastUpdateRequest = request
+            updateRequests += request
             return updateIndividualResponse
         }
 
@@ -138,6 +148,9 @@ class GoalsRepositoryTest {
 
     @Before
     fun setUp() {
+        val context: android.app.Application = RuntimeEnvironment.getApplication()
+        context.deleteDatabase("ouros_offline.db")
+        OfflineSyncRegistry.initialize(context)
         api = FakeGoalsApi()
         authApi = FakeAuthApi()
         tokenStore = FakeRefreshTokenStore()
@@ -146,6 +159,153 @@ class GoalsRepositoryTest {
         authRepository = AuthRepository(authApi, tokenStore, sessionManager)
         farmSessionStore = FakeFarmSessionStore(10L)
         repository = GoalsRepository(api, authRepository, sessionManager, farmSessionStore)
+    }
+
+    @Test
+    fun offlineStore_loadCachesSuccessAndFallsBackAfterNetworkFailure() = runBlocking {
+        val store = OfflineStore(RuntimeEnvironment.getApplication())
+        val expected = GoalResponse(7L, "Economizar água", "Meta salva", status = "PENDING")
+        api.individualGoalsResponse = Response.success(listOf(expected))
+        val cachedRepository = GoalsRepository(
+            api,
+            authRepository,
+            sessionManager,
+            farmSessionStore,
+            store
+        )
+
+        assertTrue(cachedRepository.load() is GoalsResult.Success)
+        val failingApi = object : GoalsApi by api {
+            override suspend fun getIndividualGoals(authorization: String): Response<List<GoalResponse>> {
+                throw IOException("offline")
+            }
+        }
+        val offlineRepository = GoalsRepository(
+            failingApi,
+            authRepository,
+            sessionManager,
+            farmSessionStore,
+            store
+        )
+
+        val result = offlineRepository.load() as GoalsResult.Success
+        assertEquals(listOf(expected), result.data.personalGoals)
+    }
+
+    @Test
+    fun offlineStore_crudUpdatesCacheAndQueuesEveryOperation() = runBlocking {
+        val store = OfflineStore(RuntimeEnvironment.getApplication())
+        val original = GoalResponse(8L, "Original", "Descrição", status = "PENDING")
+        store.cache("goals:10:cache", GoalsPayload(listOf(original), emptyList()))
+        val failingApi = object : GoalsApi by api {
+            private fun offline(): Nothing = throw IOException("offline")
+            override suspend fun updateIndividualGoal(id: Long, authorization: String, request: UpdateIndividualGoalRequest): Response<GoalResponse> = offline()
+            override suspend fun createIndividualGoal(authorization: String, request: CreateIndividualGoalRequest): Response<GoalResponse> = offline()
+            override suspend fun deleteIndividualGoal(id: Long, authorization: String): Response<Unit> = offline()
+        }
+        val offlineRepository = GoalsRepository(
+            failingApi,
+            authRepository,
+            sessionManager,
+            farmSessionStore,
+            store
+        )
+
+        val status = offlineRepository.updateStatus(GoalOrigin.PERSONAL, original, true)
+        val details = offlineRepository.updateDetails(original, " Editada ", " Nova descrição ")
+        val created = offlineRepository.create(" Nova ", " ", type = "", targetValue = 0.0)
+        val deleted = offlineRepository.delete(original.id)
+
+        assertEquals("COMPLETED", (status as GoalsResult.Success).data.status)
+        assertEquals("Editada", (details as GoalsResult.Success).data.title)
+        assertTrue((created as GoalsResult.Success).data.id < 0)
+        assertTrue(deleted is GoalsResult.Success)
+        assertEquals(4, store.pending("goals:10").size)
+        val cached = store.cached<GoalsPayload>("goals:10:cache")
+        assertTrue(cached?.personalGoals?.none { it.id == original.id } == true)
+        assertTrue(cached?.personalGoals?.any { it.title == "Nova" && it.type == "Outro" } == true)
+    }
+
+    @Test
+    fun synchronize_createsRemoteGoalStoresMappingAndRefreshesCache() = runBlocking {
+        val store = OfflineStore(RuntimeEnvironment.getApplication())
+        var offline = true
+        val switchingApi = object : GoalsApi by api {
+            override suspend fun createIndividualGoal(
+                authorization: String,
+                request: CreateIndividualGoalRequest
+            ): Response<GoalResponse> {
+                if (offline) throw IOException("offline")
+                return Response.success(GoalResponse(99L, request.title, request.description))
+            }
+        }
+        val syncingRepository = GoalsRepository(
+            switchingApi,
+            authRepository,
+            sessionManager,
+            farmSessionStore,
+            store
+        )
+        val local = (syncingRepository.create("Sincronizar", "Depois") as GoalsResult.Success).data
+
+        offline = false
+        api.individualGoalsResponse = Response.success(listOf(GoalResponse(99L, "Sincronizar", "Depois")))
+        syncingRepository.synchronize()
+
+        assertTrue(store.pending("goals:10").isEmpty())
+        assertEquals(99L, store.mappedId("goals:10", local.id))
+        assertEquals(99L, store.cached<GoalsPayload>("goals:10:cache")?.personalGoals?.single()?.id)
+    }
+
+    @Test
+    fun synchronize_replaysStatusDetailsDeleteAndDropsUnknownOperation() = runBlocking {
+        val store = OfflineStore(RuntimeEnvironment.getApplication())
+        val goal = GoalResponse(8L, "Atualizada", "Descrição", status = "COMPLETED")
+        val payload = { value: GoalResponse ->
+            mapOf("origin" to "PERSONAL", "goal" to value)
+        }
+        store.enqueue("goals:10", "update_status", "PERSONAL:8", payload(goal))
+        store.enqueue("goals:10", "update_details", "8", payload(goal))
+        store.enqueue("goals:10", "delete", "8", payload(goal))
+        store.enqueue("goals:10", "future_operation", "8", payload(goal))
+        val syncingRepository = GoalsRepository(
+            api,
+            authRepository,
+            sessionManager,
+            farmSessionStore,
+            store
+        )
+
+        syncingRepository.synchronize()
+
+        assertTrue(store.pending("goals:10").isEmpty())
+        assertTrue(api.updateRequests.any { it.status == "COMPLETED" })
+        assertEquals("Atualizada", api.lastUpdateRequest?.title)
+        assertEquals(8L, api.lastDeleteId)
+    }
+
+    @Test
+    fun synchronize_marksRetryableFailureAndStopsQueue() = runBlocking {
+        val store = OfflineStore(RuntimeEnvironment.getApplication())
+        val goal = GoalResponse(-5L, "Pendente", null)
+        store.enqueue(
+            "goals:10",
+            "create",
+            "-5",
+            mapOf("origin" to "PERSONAL", "goal" to goal)
+        )
+        api.createResponse = Response.error(500, "server".toResponseBody(null))
+        val syncingRepository = GoalsRepository(
+            api,
+            authRepository,
+            sessionManager,
+            farmSessionStore,
+            store
+        )
+
+        syncingRepository.synchronize()
+
+        assertEquals(1, store.pending("goals:10").single().attempts)
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.ouros.app.data.rank
 import com.ouros.app.data.auth.AuthResult
 import com.ouros.app.data.farmowner.FarmOwnerRepository
 import com.ouros.app.data.session.FarmSessionStore
+import com.ouros.app.data.local.OfflineStore
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 
@@ -15,7 +16,8 @@ sealed interface RankResult<out T> {
 class RankRepository(
     private val api: RankAPI,
     private val farmOwnerRepository: FarmOwnerRepository,
-    private val farmSessionStore: FarmSessionStore
+    private val farmSessionStore: FarmSessionStore,
+    private val offlineStore: OfflineStore? = null
 ) {
     suspend fun load(): RankResult<RankPodiumResponse> {
         return try {
@@ -27,9 +29,9 @@ class RankRepository(
         } catch (error: CancellationException) {
             throw error
         } catch (_: IOException) {
-            RankResult.Error("Sem conexão. Verifique sua internet.", true)
+            cachedRanking() ?: RankResult.Error("Sem conexão e sem ranking salvo neste aparelho.", true)
         } catch (_: Exception) {
-            RankResult.Error("Ocorreu um erro inesperado ao carregar o ranking.", true)
+            cachedRanking() ?: RankResult.Error("Ocorreu um erro inesperado ao carregar o ranking.", true)
         }
     }
 
@@ -75,7 +77,7 @@ class RankRepository(
                     rankingPodium = podium.rankingPodium?.sortedBy {
                         it.rankPosition
                     }
-                )
+                ).also { offlineStore?.cache(cacheKey(farmId), it) }
             )
         }
 
@@ -103,4 +105,11 @@ class RankRepository(
             )
         }
     }
+
+    private fun cachedRanking(): RankResult.Success<RankPodiumResponse>? =
+        offlineStore?.cached<RankPodiumResponse>(
+            cacheKey(farmSessionStore.farmId())
+        )?.let { RankResult.Success(it) }
+
+    private fun cacheKey(farmId: Long?) = "rank:${farmId ?: "unknown"}"
 }

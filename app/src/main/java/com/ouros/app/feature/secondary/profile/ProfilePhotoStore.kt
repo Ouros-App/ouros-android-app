@@ -103,15 +103,18 @@ class ProfilePhotoStore internal constructor(
         return try {
             createProfileDirectory()
 
-            sourceFile.copyTo(
-                target = profilePhoto,
-                overwrite = true
-            )
+            if (sourceFile.canonicalFile != profilePhoto.canonicalFile) {
+                sourceFile.copyTo(
+                    target = profilePhoto,
+                    overwrite = true
+                )
+            }
 
             cancelPendingCameraPhoto()
 
             preferences.edit()
                 .putBoolean(KEY_REMOTE_PHOTO_REMOVED, false)
+                .putBoolean(KEY_PHOTO_REMOVAL_PENDING, false)
                 .putBoolean(KEY_PHOTO_PENDING_UPLOAD, false)
                 .putString(KEY_LAST_SYNCED_PHOTO_URL, remoteUrl?.trim()?.takeIf(String::isNotBlank))
                 .apply()
@@ -122,6 +125,14 @@ class ProfilePhotoStore internal constructor(
         }
     }
 
+    fun stagePhotoForUpload(sourceFile: File, currentRemoteUrl: String?): Boolean {
+        val committed = commitPhoto(sourceFile, currentRemoteUrl)
+        if (committed) {
+            preferences.edit().putBoolean(KEY_PHOTO_PENDING_UPLOAD, true).apply()
+        }
+        return committed
+    }
+
     fun commitPhotoRemoval(): Int? {
         safelyDeleteFile(profilePhoto)
         cancelPendingCameraPhoto()
@@ -130,6 +141,7 @@ class ProfilePhotoStore internal constructor(
 
         preferences.edit()
             .putBoolean(KEY_REMOTE_PHOTO_REMOVED, true)
+            .putBoolean(KEY_PHOTO_REMOVAL_PENDING, true)
             .putBoolean(KEY_PHOTO_PENDING_UPLOAD, false)
             .remove(KEY_LAST_SYNCED_PHOTO_URL)
             .apply()
@@ -138,6 +150,8 @@ class ProfilePhotoStore internal constructor(
     }
 
     fun syncWithRemote(remotePhotoUrl: String?) {
+        if (isPhotoPendingUpload() || isPhotoRemovalPending()) return
+
         val normalizedUrl = remotePhotoUrl?.trim()?.takeIf(String::isNotBlank)
 
         if (normalizedUrl == null) {
@@ -290,11 +304,23 @@ class ProfilePhotoStore internal constructor(
         return preferences.getBoolean(KEY_PHOTO_PENDING_UPLOAD, false) && localPhotoFile() != null
     }
 
-    fun markPhotoUploadCompleted() {
+    fun markPhotoUploadCompleted(remoteUrl: String? = null) {
+        val editor = preferences.edit().putBoolean(KEY_PHOTO_PENDING_UPLOAD, false)
+        remoteUrl?.trim()?.takeIf(String::isNotBlank)?.let {
+            editor.putString(KEY_LAST_SYNCED_PHOTO_URL, it)
+        }
+        editor.apply()
+    }
+
+    fun markPhotoRemovalCompleted() {
         preferences.edit()
-            .putBoolean(KEY_PHOTO_PENDING_UPLOAD, false)
+            .putBoolean(KEY_REMOTE_PHOTO_REMOVED, false)
+            .putBoolean(KEY_PHOTO_REMOVAL_PENDING, false)
             .apply()
     }
+
+    private fun isPhotoRemovalPending(): Boolean =
+        preferences.getBoolean(KEY_PHOTO_REMOVAL_PENDING, false)
 
     fun lastSyncedPhotoUrl(): String? {
         return preferences.getString(KEY_LAST_SYNCED_PHOTO_URL, null)
@@ -341,6 +367,7 @@ class ProfilePhotoStore internal constructor(
         const val TEMPORARY_GALLERY_PHOTO_NAME = "temporary_gallery_photo.jpg"
         const val KEY_SELECTED_AVATAR = "selected_avatar"
         const val KEY_REMOTE_PHOTO_REMOVED = "remote_photo_removed"
+        const val KEY_PHOTO_REMOVAL_PENDING = "photo_removal_pending"
         const val KEY_PHOTO_PENDING_UPLOAD = "photo_pending_upload"
         const val KEY_LAST_SYNCED_PHOTO_URL = "last_synced_photo_url"
         const val AVATAR_PREFIX = "avatar_"

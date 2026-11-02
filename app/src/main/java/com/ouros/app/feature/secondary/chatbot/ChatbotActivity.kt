@@ -1,5 +1,8 @@
 package com.ouros.app.feature.secondary.chatbot
 
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
@@ -19,6 +22,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import com.ouros.app.R
+import com.ouros.app.data.local.OfflineSyncRegistry
 
 internal fun composerBottomInset(systemBarBottom: Int, imeBottom: Int): Int =
     maxOf(systemBarBottom, imeBottom)
@@ -26,6 +30,19 @@ internal fun composerBottomInset(systemBarBottom: Int, imeBottom: Int): Int =
 class ChatbotActivity : AppCompatActivity() {
     private lateinit var viewModel: ChatbotViewModel
     private var renderedState: ChatState? = null
+    private lateinit var connectivityManager: ConnectivityManager
+    private var networkCallbackRegistered = false
+    private var isOnline = true
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) = refreshConnectivity()
+
+        override fun onLost(network: Network) = refreshConnectivity()
+
+        override fun onCapabilitiesChanged(
+            network: Network,
+            networkCapabilities: NetworkCapabilities
+        ) = refreshConnectivity()
+    }
 
     private val documentPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let {
@@ -39,6 +56,8 @@ class ChatbotActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_chatbot)
         viewModel = ViewModelProvider(this)[ChatbotViewModel::class.java]
+        connectivityManager = getSystemService(ConnectivityManager::class.java)
+        isOnline = OfflineSyncRegistry.isOnline()
 
         val input = findViewById<EditText>(R.id.messageInput)
         findViewById<View>(R.id.btnBack).setOnClickListener { finish() }
@@ -91,6 +110,35 @@ class ChatbotActivity : AppCompatActivity() {
         viewModel.state.observe(this) { render(it) }
     }
 
+    override fun onStart() {
+        super.onStart()
+        if (!networkCallbackRegistered) {
+            networkCallbackRegistered = runCatching {
+                connectivityManager.registerDefaultNetworkCallback(networkCallback)
+                true
+            }.getOrDefault(false)
+        }
+        refreshConnectivity()
+    }
+
+    override fun onStop() {
+        if (networkCallbackRegistered) {
+            runCatching { connectivityManager.unregisterNetworkCallback(networkCallback) }
+            networkCallbackRegistered = false
+        }
+        super.onStop()
+    }
+
+    private fun refreshConnectivity() {
+        runOnUiThread {
+            val onlineNow = OfflineSyncRegistry.isOnline()
+            if (onlineNow != isOnline) {
+                isOnline = onlineNow
+                renderedState?.let(::renderControls)
+            }
+        }
+    }
+
     private fun render(state: ChatState) {
         if (state == renderedState) return
         renderedState = state
@@ -118,24 +166,7 @@ class ChatbotActivity : AppCompatActivity() {
             messages.addView(text)
         }
         findViewById<ScrollView>(R.id.chatScroll).post { findViewById<ScrollView>(R.id.chatScroll).fullScroll(View.FOCUS_DOWN) }
-        findViewById<TextView>(R.id.chatError).apply {
-            text = state.error.orEmpty()
-            visibility = if (state.error == null) View.GONE else View.VISIBLE
-        }
-        findViewById<Button>(R.id.chatRetry).visibility =
-            if (state.error != null && state.preview == null && !state.sending && !state.importing) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
-        findViewById<Button>(R.id.chatRetry).isEnabled = !state.sending && !state.importing
-        findViewById<ImageButton>(R.id.sendMessage).apply {
-            isEnabled = !state.sending && state.preview == null
-            alpha = if (isEnabled) 1f else 0.55f
-        }
-        findViewById<ImageButton>(R.id.attachFile).isEnabled = !state.sending && state.preview == null
-        findViewById<EditText>(R.id.messageInput).isEnabled =
-            !state.sending && state.preview == null
+        renderControls(state)
         findViewById<TextView>(R.id.selectedFile).apply {
             val uri = state.selectedAttachment
             text = uri?.let { "Arquivo: ${displayName(it)} · toque para remover" }.orEmpty()
@@ -168,6 +199,40 @@ class ChatbotActivity : AppCompatActivity() {
             }
             findViewById<Button>(R.id.cancelImport).isEnabled = !state.importing
         }
+    }
+
+    private fun renderControls(state: ChatState) {
+        findViewById<View>(R.id.offlineNotice).visibility =
+            if (isOnline) View.GONE else View.VISIBLE
+        findViewById<TextView>(R.id.chatError).apply {
+            text = state.error.orEmpty()
+            visibility = if (isOnline && state.error != null) View.VISIBLE else View.GONE
+        }
+        findViewById<Button>(R.id.chatRetry).apply {
+            visibility = if (
+                isOnline &&
+                state.error != null &&
+                state.preview == null &&
+                !state.sending &&
+                !state.importing
+            ) View.VISIBLE else View.GONE
+            isEnabled = isOnline && !state.sending && !state.importing
+        }
+        val composerEnabled = isOnline && !state.sending && state.preview == null
+        findViewById<ImageButton>(R.id.sendMessage).apply {
+            isEnabled = composerEnabled
+            alpha = if (isEnabled) 1f else 0.7f
+        }
+        findViewById<ImageButton>(R.id.attachFile).apply {
+            isEnabled = composerEnabled
+            alpha = if (isEnabled) 1f else 0.45f
+        }
+        findViewById<EditText>(R.id.messageInput).apply {
+            isEnabled = composerEnabled
+            hint = if (isOnline) "Pergunte algo!" else "Conecte-se para conversar"
+        }
+        findViewById<View>(R.id.messageInputContainer).alpha =
+            if (composerEnabled) 1f else 0.55f
     }
 
     private fun displayName(uri: Uri): String = contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->

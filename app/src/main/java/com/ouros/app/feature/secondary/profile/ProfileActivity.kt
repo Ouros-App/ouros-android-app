@@ -4,6 +4,9 @@ import android.app.Dialog
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
@@ -19,6 +22,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.ouros.app.R
+import com.ouros.app.OurosApplication
 import com.ouros.app.core.util.applyImeFixedTranslation
 import com.ouros.app.core.util.dp
 import com.ouros.app.data.auth.AppSession
@@ -30,8 +34,8 @@ import com.ouros.app.data.farmowner.FarmOwnerNetwork
 import com.ouros.app.data.farmowner.FarmOwnerRepository
 import com.ouros.app.data.farmowner.FarmOwnerResponse
 import com.ouros.app.data.session.FarmSessionStore
-import java.net.HttpURLConnection
-import java.net.URL
+import com.ouros.app.data.local.OfflineStore
+import com.ouros.app.data.local.OfflineSyncRegistry
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import androidx.core.graphics.drawable.toDrawable
@@ -44,6 +48,7 @@ import com.ouros.app.data.fcm.FcmTokenStore
 import com.ouros.app.feature.onboarding.welcome.WelcomeActivity
 import com.yalantis.ucrop.UCrop
 import java.io.File
+import coil.load
 
 class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
 
@@ -64,11 +69,18 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     private lateinit var imgProfilePhoto: ImageView
     private lateinit var btnSave: Button
 
-    private val photoExecutor = Executors.newSingleThreadExecutor()
     private val photoRequestSequence = AtomicInteger(0)
     private var pendingCameraUri: Uri? = null
     private var pendingCropOutputFile: File? = null
     private var pendingPhotoChange: ProfilePhotoChange = ProfilePhotoChange.KeepCurrent
+    private lateinit var connectivityManager: ConnectivityManager
+    private var networkCallbackRegistered = false
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) = refreshConnectivityNotice()
+        override fun onLost(network: Network) = refreshConnectivityNotice()
+        override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) =
+            refreshConnectivityNotice()
+    }
 
     private val takePhotoLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) {
         wasSaved ->
@@ -137,6 +149,7 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_profile)
+        connectivityManager = getSystemService(ConnectivityManager::class.java)
 
         photoStore = farmSessionStore.ownerId()?.let {
             ProfilePhotoStore(applicationContext, it)
@@ -162,6 +175,7 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         }
 
         viewModel.loadProfile()
+        refreshConnectivityNotice()
     }
 
     private fun bindViews() {
@@ -197,12 +211,15 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
             api = FarmOwnerNetwork.api,
             sessionManager = AppSession.sessionManager,
             refreshSession = authRepository::refreshSession,
-            clearSession = authRepository::clearSession
+            clearSession = authRepository::clearSession,
+            offlineStore = OfflineStore(applicationContext),
+            farmSessionStore = farmSessionStore
         )
 
         val factory = ProfileViewModelFactory(
             farmOwnerRepository = farmOwnerRepository,
-            cloudinaryRepository = CloudinaryRepository()
+            cloudinaryRepository = CloudinaryRepository(),
+            offlineCoordinator = (application as OurosApplication).profileOfflineCoordinator
         )
 
         viewModel = ViewModelProvider(this,factory)[ProfileViewModel::class.java]
@@ -458,6 +475,17 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         Toast.makeText(this, "Perfil atualizado com sucesso.", Toast.LENGTH_SHORT).show()
     }
 
+    override fun onProfileSavedOffline(profile: FarmOwnerResponse) {
+        pendingPhotoChange = ProfilePhotoChange.KeepCurrent
+        clearPendingCrop()
+        renderProfile(profile, syncPhotoWithRemote = false)
+        Toast.makeText(
+            this,
+            "Alterações salvas neste aparelho. Vamos sincronizar quando a internet voltar.",
+            Toast.LENGTH_LONG
+        ).show()
+    }
+
     override fun onProfileErrors(
         nameMessage: String?,
         emailMessage: String?,
@@ -477,11 +505,11 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         logout()
     }
 
-    private fun renderProfile(profile: FarmOwnerResponse) {
+    private fun renderProfile(profile: FarmOwnerResponse, syncPhotoWithRemote: Boolean = true) {
         photoStore = profile.id?.let { ownerId ->
             farmSessionStore.saveAccount(ownerId, profile.farmId)
             ProfilePhotoStore(applicationContext, ownerId).apply {
-                syncWithRemote(profile.photoUrl)
+                if (syncPhotoWithRemote) syncWithRemote(profile.photoUrl)
             }
         }
         findViewById<View>(R.id.btnEditPhoto).isEnabled = photoStore != null
@@ -574,43 +602,17 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     }
 
     private fun loadRemotePhoto(photoUrl: String) {
-        val requestId = photoRequestSequence.incrementAndGet()
+        photoRequestSequence.incrementAndGet()
+        val fallbackAvatar = photoStore?.selectedAvatarResource()
+            ?: R.drawable.avatar_yellow
 
-        photoExecutor.execute {
-            var connection: HttpURLConnection? = null
-
-            try {
-                connection = URL(photoUrl).openConnection() as HttpURLConnection
-                connection.connectTimeout = PHOTO_TIMEOUT_MILLIS
-                connection.readTimeout = PHOTO_TIMEOUT_MILLIS
-                connection.instanceFollowRedirects = true
-                connection.doInput = true
-                connection.connect()
-
-                if (connection.responseCode !in 200..299) {
-                    return@execute
-                }
-
-                val bitmap = connection.inputStream.use {
-                    BitmapFactory.decodeStream(it)}
-                        ?: return@execute
-
-                runOnUiThread {
-                    if (requestId == photoRequestSequence.get() && !isFinishing && !isDestroyed) {
-                        imgProfilePhoto.setBackgroundColor(Color.TRANSPARENT)
-                        imgProfilePhoto.scaleType = ImageView.ScaleType.CENTER_CROP
-                        imgProfilePhoto.setImageBitmap(bitmap)
-                    }
-                }
-
-            } catch (_: Exception) {
-                runOnUiThread {
-                    if (requestId == photoRequestSequence.get() && !isFinishing && !isDestroyed) {
-                        showDefaultAvatar()
-                    }
-                }
-
-            } finally { connection?.disconnect() }
+        imgProfilePhoto.setBackgroundColor(Color.TRANSPARENT)
+        imgProfilePhoto.scaleType = ImageView.ScaleType.CENTER_CROP
+        imgProfilePhoto.load(photoUrl) {
+            crossfade(true)
+            placeholder(fallbackAvatar)
+            error(fallbackAvatar)
+            fallback(fallbackAvatar)
         }
     }
 
@@ -683,7 +685,6 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     override fun onDestroy() {
         viewModel.clearListener(this)
         photoRequestSequence.incrementAndGet()
-        photoExecutor.shutdownNow()
 
         if (isFinishing) {
             clearPendingCrop()
@@ -692,8 +693,33 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
         super.onDestroy()
     }
 
+    override fun onStart() {
+        super.onStart()
+        if (!networkCallbackRegistered) {
+            networkCallbackRegistered = runCatching {
+                connectivityManager.registerDefaultNetworkCallback(networkCallback)
+                true
+            }.getOrDefault(false)
+        }
+        refreshConnectivityNotice()
+    }
+
+    override fun onStop() {
+        if (networkCallbackRegistered) {
+            runCatching { connectivityManager.unregisterNetworkCallback(networkCallback) }
+            networkCallbackRegistered = false
+        }
+        super.onStop()
+    }
+
+    private fun refreshConnectivityNotice() {
+        runOnUiThread {
+            findViewById<View>(R.id.profileOfflineNotice).visibility =
+                if (OfflineSyncRegistry.isOnline()) View.GONE else View.VISIBLE
+        }
+    }
+
     private companion object {
-        const val PHOTO_TIMEOUT_MILLIS = 10_000
         const val STATE_PENDING_CAMERA_URI = "pending_camera_uri"
         const val STATE_PENDING_CROP_PATH = "pending_crop_path"
         const val STATE_PENDING_PHOTO_REMOVAL = "pending_photo_removal"

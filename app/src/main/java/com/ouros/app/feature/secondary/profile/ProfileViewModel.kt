@@ -7,6 +7,7 @@ import com.ouros.app.data.cloudinary.CloudinaryRepository
 import com.ouros.app.data.farmowner.FarmOwnerRepository
 import com.ouros.app.data.farmowner.FarmOwnerResponse
 import com.ouros.app.data.farmowner.FarmOwnerUpdateRequest
+import com.ouros.app.data.local.OfflineSyncRegistry
 import java.io.File
 import kotlinx.coroutines.launch
 
@@ -18,7 +19,9 @@ sealed class ProfilePhotoChange {
 
 class ProfileViewModel(
     private val farmOwnerRepository: FarmOwnerRepository,
-    private val cloudinaryRepository: CloudinaryRepository = CloudinaryRepository()
+    private val cloudinaryRepository: CloudinaryRepository = CloudinaryRepository(),
+    private val offlineCoordinator: OfflineProfileSaver? = null,
+    private val isOnline: () -> Boolean = OfflineSyncRegistry::isOnline
 ) : ViewModel() {
 
     interface Listener {
@@ -34,6 +37,8 @@ class ProfileViewModel(
         )
 
         fun onProfileSaved(profile: FarmOwnerResponse)
+
+        fun onProfileSavedOffline(profile: FarmOwnerResponse) = onProfileSaved(profile)
 
         fun onProfileError(message: String)
 
@@ -133,6 +138,40 @@ class ProfileViewModel(
             setLoading(true)
 
             try {
+                val request = FarmOwnerUpdateRequest(
+                    name = name.trim(),
+                    email = email.trim().lowercase(),
+                    telephone = telephone.filter(Char::isDigit),
+                    photoUrl = when (photoChange) {
+                        is ProfilePhotoChange.Remove -> ""
+                        else -> profile?.photoUrl
+                    }
+                )
+
+                if (!isOnline()) {
+                    val coordinator = offlineCoordinator
+                    if (coordinator == null) {
+                        listener?.onProfileError("Não foi possível salvar o perfil neste aparelho.")
+                        return@launch
+                    }
+                    val savedProfile = runCatching {
+                        coordinator.savePending(
+                            ownerId = farmOwnerId,
+                            currentProfile = profile!!,
+                            request = request,
+                            photoChange = photoChange
+                        )
+                    }.getOrElse { error ->
+                        listener?.onProfileError(
+                            error.message ?: "Não foi possível salvar o perfil neste aparelho."
+                        )
+                        return@launch
+                    }
+                    profile = savedProfile
+                    listener?.onProfileSavedOffline(savedProfile)
+                    return@launch
+                }
+
                 var resolvedPhotoUrl: String? = profile?.photoUrl
 
                 when (photoChange) {
@@ -157,19 +196,13 @@ class ProfileViewModel(
                     }
                 }
 
-                val request = FarmOwnerUpdateRequest(
-                    name = name.trim(),
-                    email = email.trim().lowercase(),
-                    telephone =
-                        telephone.filter(Char::isDigit),
-                    photoUrl = resolvedPhotoUrl
-                )
+                val onlineRequest = request.copy(photoUrl = resolvedPhotoUrl)
 
                 when (
                     val result =
                         farmOwnerRepository.update(
                             id = farmOwnerId,
-                            request = request
+                            request = onlineRequest
                         )
                 ) {
                     is AuthResult.Success -> {

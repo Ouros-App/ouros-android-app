@@ -163,6 +163,26 @@ class NotificationRepositoryTest {
     }
 
     @Test
+    fun getNotifications_defaultConfiguration_neverReturnsMockData() = runBlocking {
+        val fakeApi = object : NotificationApi {
+            override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<DeviceTokenResponse> = error("unused")
+            override suspend fun deleteDeviceToken(token: String): Response<Unit> = error("unused")
+            override suspend fun getNotifications(
+                page: Int,
+                size: Int,
+                unreadOnly: Boolean?
+            ): Response<NotificationPageResponse> = throw IOException("offline")
+            override suspend fun getUnreadCount(): Response<UnreadCountResponse> = error("unused")
+            override suspend fun markAsRead(id: Long): Response<NotificationItemResponse> = error("unused")
+            override suspend fun markAllAsRead(): Response<Unit> = error("unused")
+        }
+
+        val result = NotificationRepository(api = fakeApi).getNotifications()
+
+        assertTrue(result.isFailure)
+    }
+
+    @Test
     fun getUnreadCount_returnsCount() = runBlocking {
         val fakeApi = object : NotificationApi {
             override suspend fun registerDeviceToken(request: DeviceTokenRequest): Response<DeviceTokenResponse> = error("unused")

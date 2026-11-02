@@ -1,5 +1,7 @@
 package com.ouros.app.data.record
 
+import com.ouros.app.data.local.OfflineStore
+import com.ouros.app.data.local.OfflineSyncRegistry
 import java.io.IOException
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -178,6 +180,8 @@ class RecordRepositoryTest {
     fun setUp() {
         fakeApi = FakeRecordApi()
         val context = RuntimeEnvironment.getApplication()
+        context.deleteDatabase("ouros_offline.db")
+        OfflineSyncRegistry.initialize(context)
         draftStore = RecordDraftStore(context)
         draftStore.clear()
         repository = RecordRepository(fakeApi, draftStore)
@@ -551,5 +555,70 @@ class RecordRepositoryTest {
         assertNull(draft.waterRecordId)
         assertNull(draft.energyRecordId)
         assertNull(draft.chickenLeftRecordId)
+    }
+
+    @Test
+    fun offlineStore_loadCachesRemoteHubAndUsesItWhenNetworkFails() = runBlocking {
+        val store = OfflineStore(RuntimeEnvironment.getApplication())
+        val cachedRepository = RecordRepository(fakeApi, draftStore, store)
+        fakeApi.waterListResponse = Response.success(
+            listOf(WaterRegistryResponse(1L, "2026-10-25", BigDecimal.ONE, BigDecimal.TEN, 1L))
+        )
+
+        val online = cachedRepository.load(1L)
+        fakeApi.shouldThrowIoException = true
+        val offline = cachedRepository.load(1L)
+
+        assertTrue(online is RecordResult.Success)
+        assertTrue(offline is RecordResult.Success)
+        assertEquals(1L, (offline as RecordResult.Success).data.water.single().id)
+    }
+
+    @Test
+    fun offlineStore_submitQueuesOptimisticDataAndSynchronizesLater() = runBlocking {
+        val store = OfflineStore(RuntimeEnvironment.getApplication())
+        val offlineRepository = RecordRepository(fakeApi, draftStore, store)
+        store.cache(
+            "records:1",
+            RecordHubData(
+                water = emptyList(),
+                energy = emptyList(),
+                chickenLeft = emptyList(),
+                lots = listOf(LotResponse(77L, 100, null, null, null, 50.0, 1L)),
+                farm = FarmResponse(1L, 100)
+            )
+        )
+        val draft = RecordDraft(
+            lotId = "77",
+            lotCost = "120,50",
+            waterDate = "2026-10-25",
+            hydrometerStart = "10",
+            hydrometerEnd = "20",
+            energyDate = "2026-10-25",
+            energyKwh = "30",
+            chickensEntered = "100",
+            chickensLeft = "4",
+            chickensCurrent = "96"
+        )
+        draftStore.save(draft)
+        fakeApi.shouldThrowIoException = true
+
+        val queued = offlineRepository.submit(1L, draft)
+
+        assertTrue(queued is RecordResult.Success)
+        assertNull(draftStore.load())
+        assertEquals(1, store.pending("records").size)
+        val optimistic = store.cached<RecordHubData>("records:1")
+        assertEquals("2026-10-25", optimistic?.water?.single()?.registrationDate)
+        assertEquals(4, optimistic?.chickenLeft?.single()?.chickensCount)
+        assertEquals(120.5, optimistic?.lots?.single()?.cost ?: 0.0, 0.001)
+
+        fakeApi.shouldThrowIoException = false
+        offlineRepository.synchronize()
+
+        assertTrue(store.pending("records").isEmpty())
+        assertNotNull(fakeApi.lastCreatedWaterRequest)
+        assertNotNull(fakeApi.lastCreatedEnergyRequest)
+        assertNotNull(fakeApi.lastCreatedChickenLeftRequest)
     }
 }

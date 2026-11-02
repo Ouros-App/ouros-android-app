@@ -34,6 +34,7 @@ import com.ouros.app.data.goals.GoalsNetwork
 import com.ouros.app.data.goals.GoalsRepository
 import com.ouros.app.data.goals.GoalsUiState
 import com.ouros.app.data.session.FarmSessionStore
+import com.ouros.app.data.local.OfflineStore
 import com.ouros.app.feature.main.MainActivity
 
 class GoalsFragment : Fragment() {
@@ -78,7 +79,8 @@ class GoalsFragment : Fragment() {
             api = GoalsNetwork.api,
             authRepository = authRepository,
             sessionManager = AppSession.sessionManager,
-            farmSessionStore = FarmSessionStore(applicationContext)
+            farmSessionStore = FarmSessionStore(applicationContext),
+            offlineStore = OfflineStore(applicationContext)
         )
         viewModel = ViewModelProvider(
             requireActivity(),
