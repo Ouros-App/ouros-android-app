@@ -13,4 +13,20 @@
     <dimen name="main_content_horizontal_padding">48dp</dimen>
     <dimen name="simulator_kpi_max_width">620dp</dimen>
     <dimen name="simulator_kpi_card_height">104dp</dimen>
+    <dimen name="onboarding_horizontal_margin">48dp</dimen>
+    <dimen name="onboarding_form_horizontal_margin">72dp</dimen>
+    <dimen name="onboarding_top_inset">48dp</dimen>
+    <dimen name="onboarding_section_gap">24dp</dimen>
+    <dimen name="onboarding_form_gap">24dp</dimen>
+    <dimen name="onboarding_logo_top_inset">40dp</dimen>
+    <dimen name="onboarding_welcome_text_width">480dp</dimen>
+    <dimen name="onboarding_welcome_midas_size">180dp</dimen>
+    <dimen name="onboarding_welcome_midas_bottom">24dp</dimen>
+    <dimen name="onboarding_welcome_midas_start">0dp</dimen>
+    <dimen name="tutorial_top_inset">40dp</dimen>
+    <dimen name="tutorial_horizontal_margin">64dp</dimen>
+    <dimen name="onboarding_choose_card_height">390dp</dimen>
+    <dimen name="onboarding_choose_content_width">480dp</dimen>
+    <dimen name="onboarding_choose_description_width">400dp</dimen>
+    <dimen name="onboarding_choose_button_top_gap">36dp</dimen>
 </resources>

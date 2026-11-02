@@ -21,7 +21,7 @@
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/materialCardView"
         android:layout_width="0dp"
-        android:layout_height="550dp"
+        android:layout_height="@dimen/onboarding_choose_card_height"
         app:cardBackgroundColor="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -29,7 +29,7 @@
         app:shapeAppearanceOverlay="@style/TopRoundedCard">
 
         <LinearLayout
-            android:layout_width="300dp"
+            android:layout_width="@dimen/onboarding_choose_content_width"
             android:layout_height="match_parent"
             android:layout_gravity="center"
             android:gravity="center"
@@ -47,7 +47,7 @@
 
             <TextView
                 android:id="@+id/textView4"
-                android:layout_width="242dp"
+                android:layout_width="@dimen/onboarding_choose_description_width"
                 android:layout_height="wrap_content"
                 android:text="Transformando desempenho sustentável em reconhecimento."
                 android:textAlignment="center"
@@ -60,7 +60,7 @@
                 style="@style/Widget.Ouros.Button.Medium.Gold"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="80dp"
+                android:layout_marginTop="@dimen/onboarding_choose_button_top_gap"
                 android:text="Primeiro acesso" />
 
             <Button
