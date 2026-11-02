@@ -338,6 +338,6 @@ class RecordFragment : Fragment() {
     }
 
     private companion object {
-        const val INITIAL_VISIBLE_RECORDS = 1
+        const val INITIAL_VISIBLE_RECORDS = 5
     }
 }
