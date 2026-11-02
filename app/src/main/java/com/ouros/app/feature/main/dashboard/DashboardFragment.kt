@@ -1,5 +1,7 @@
 package com.ouros.app.feature.main.dashboard
 
+import java.time.LocalDate
+
 import android.annotation.SuppressLint
 import android.graphics.Color
 import android.os.Bundle
@@ -374,7 +376,15 @@ class DashboardFragment : Fragment() {
         return null
     }
 
-    private fun buildFigmaMobileChartHtml(payloadJson: String, chartSlot: ChartSlot, period: DashboardPeriod): String {
+    private fun buildFigmaMobileChartHtml(
+        payloadJson: String,
+        chartSlot: ChartSlot,
+        period: DashboardPeriod,
+        now: LocalDate = LocalDate.now()
+    ): String {
+        val currentYear = now.year
+        val previousYear = currentYear - 1
+        val currentMonthIndex = now.monthValue - 1
         return """
             <!doctype html>
             <html lang="pt-BR">
@@ -619,14 +629,10 @@ class DashboardFragment : Fragment() {
                     return;
                   }
 
-                  const latestDate = datedItems.reduce(
-                    (latest, item) => (item.date > latest ? item.date : latest),
-                    datedItems[0].date
-                  );
-                  const currentYear = latestDate.getUTCFullYear();
-                  const previousYear = currentYear - 1;
+                  const currentYear = $currentYear;
+                  const previousYear = $previousYear;
                   const maxMonths = ${period.maxMonths};
-                  const lastMonthIndex = latestDate.getUTCMonth();
+                  const lastMonthIndex = $currentMonthIndex;
                   const startMonthIndex = maxMonths <= 1
                     ? lastMonthIndex
                     : maxMonths <= 3
@@ -764,6 +770,8 @@ class DashboardFragment : Fragment() {
                     }
                   };
 
+                  const hasAnyData = currentSeries.some((v) => v !== null) || previousSeries.some((v) => v !== null);
+
                   if (slot === "CONSUMPTION") {
                     layout.yaxis.range = [0, 105];
                     layout.yaxis.tickvals = [0, 20, 40, 60, 80, 100];
@@ -773,6 +781,9 @@ class DashboardFragment : Fragment() {
                     layout.bargap = 0.36;
                     layout.bargroupgap = 0.14;
                     layout.yaxis.ticksuffix = unitSuffix;
+                    if (!hasAnyData) {
+                      layout.yaxis.range = [0, 10];
+                    }
                   }
 
                   const config = {

@@ -1,5 +1,7 @@
 package com.ouros.app.feature.main.dashboard
 
+import java.time.LocalDate
+
 import androidx.arch.core.executor.ArchTaskExecutor
 import androidx.arch.core.executor.TaskExecutor
 import com.ouros.app.data.auth.AuthApi
@@ -923,7 +925,7 @@ class DashboardViewModelTest {
             customResponse = Response.success(createValidDashboardResponse(multiMonthHtml))
         }
         val repository = createRepository(api)
-        val viewModel = DashboardViewModel(repository)
+        val viewModel = DashboardViewModel(repository, currentDateProvider = { LocalDate.of(2026, 9, 15) })
 
         // 1. Initial Load defaults to YEAR (average of all 2026 months: 6, 7, 8, 9)
         // 2026 water: (8.0 + 7.0 + 6.0 + 5.0) / 4 = 6.5 L
@@ -966,5 +968,50 @@ class DashboardViewModelTest {
         assertEquals("5.90", stateMonth.kpiConsumption)
         assertEquals("5.0", stateMonth.kpiWaterLitersPerBird)
         assertEquals("8.0", stateMonth.kpiEnergyKwhPerBird)
+    }
+
+    @Test
+    fun selectPeriod_whenCurrentMonthHasNoData_returnsZeroKpis() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
+
+        val multiMonthHtml = """
+            <script>
+            var plotData = {"rows": [
+                {"month_start": "2026-06-01", "water_m3_per_chicken": 0.008, "energy_kwh_per_chicken": 5.0},
+                {"month_start": "2026-07-01", "water_m3_per_chicken": 0.007, "energy_kwh_per_chicken": 6.0},
+                {"month_start": "2026-08-01", "water_m3_per_chicken": 0.006, "energy_kwh_per_chicken": 7.0},
+                {"month_start": "2026-09-01", "water_m3_per_chicken": 0.005, "energy_kwh_per_chicken": 8.0}
+            ]};
+            </script>
+        """.trimIndent()
+
+        val api = FakeDashboardApi().apply {
+            statusResponse = Response.success(
+                DashboardStatusResponse(
+                    status = "fresh",
+                    lastUpdatedAt = "2026-11-01T00:00:00Z",
+                    ageSeconds = 60L,
+                    staleAfterSeconds = 1800L
+                )
+            )
+            customResponse = Response.success(createValidDashboardResponse(multiMonthHtml))
+        }
+        val repository = createRepository(api)
+        // Current date is November 2026, but data only exists up to September
+        val viewModel = DashboardViewModel(repository, currentDateProvider = { LocalDate.of(2026, 11, 2) })
+
+        viewModel.loadInitialData()
+        advanceUntilIdle()
+
+        viewModel.selectPeriod(DashboardPeriod.MONTH)
+        advanceUntilIdle()
+
+        val stateMonth = viewModel.state.value
+        assertNotNull(stateMonth)
+        assertEquals(DashboardPeriod.MONTH, stateMonth!!.period)
+        assertEquals("0.00", stateMonth.kpiConsumption)
+        assertEquals("0.0", stateMonth.kpiWaterLitersPerBird)
+        assertEquals("0.0", stateMonth.kpiEnergyKwhPerBird)
     }
 }
