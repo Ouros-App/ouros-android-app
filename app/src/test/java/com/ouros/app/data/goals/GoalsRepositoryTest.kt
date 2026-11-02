@@ -455,7 +455,7 @@ class GoalsRepositoryTest {
         assertEquals("Descrição", api.lastCreateRequest?.description)
         assertEquals(10L, api.lastCreateRequest?.farmId)
         assertEquals("Outro", api.lastCreateRequest?.type)
-        assertEquals("Em andamento", api.lastCreateRequest?.status)
+        assertEquals(GoalResponse.PENDING, api.lastCreateRequest?.status)
         assertEquals(1.0, api.lastCreateRequest?.targetValue ?: 0.0, 0.001)
     }
 
@@ -467,7 +467,7 @@ class GoalsRepositoryTest {
         assertEquals("Meta de Água", api.lastCreateRequest?.title)
         assertEquals("Economia", api.lastCreateRequest?.description)
         assertEquals("Água", api.lastCreateRequest?.type)
-        assertEquals("Em andamento", api.lastCreateRequest?.status)
+        assertEquals(GoalResponse.PENDING, api.lastCreateRequest?.status)
         assertEquals(5.0, api.lastCreateRequest?.targetValue ?: 0.0, 0.001)
     }
 

@@ -60,14 +60,14 @@ class GoalsDtosTest {
             description = "Descrição",
             farmId = 10L,
             type = "Água",
-            status = "Em andamento",
+            status = GoalResponse.PENDING,
             targetValue = 5.0
         )
         assertEquals("Nova Meta", createRequest.title)
         assertEquals("Descrição", createRequest.description)
         assertEquals(10L, createRequest.farmId)
         assertEquals("Água", createRequest.type)
-        assertEquals("Em andamento", createRequest.status)
+        assertEquals(GoalResponse.PENDING, createRequest.status)
         assertEquals(5.0, createRequest.targetValue, 0.001)
 
         val defaultRequest = CreateIndividualGoalRequest(
@@ -76,7 +76,7 @@ class GoalsDtosTest {
             farmId = 20L
         )
         assertEquals("Outro", defaultRequest.type)
-        assertEquals("Em andamento", defaultRequest.status)
+        assertEquals(GoalResponse.PENDING, defaultRequest.status)
         assertEquals(1.0, defaultRequest.targetValue, 0.001)
 
         val updateRequest = UpdateIndividualGoalRequest(

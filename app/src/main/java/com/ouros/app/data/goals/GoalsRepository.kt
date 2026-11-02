@@ -192,7 +192,7 @@ class GoalsRepository(
             description = description?.trim()?.takeIf(String::isNotEmpty),
             farmId = farmId,
             type = type.trim().ifEmpty { "Outro" },
-            status = "Em andamento",
+            status = GoalResponse.PENDING,
             targetValue = if (targetValue > 0.0) targetValue else 1.0
         )
 

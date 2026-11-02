@@ -42,7 +42,7 @@ data class CreateIndividualGoalRequest(
     val description: String?,
     @SerializedName("id_farm") val farmId: Long,
     val type: String = "Outro",
-    val status: String = "Em andamento",
+    val status: String = GoalResponse.PENDING,
     @SerializedName("target_value") val targetValue: Double = 1.0
 )
 
