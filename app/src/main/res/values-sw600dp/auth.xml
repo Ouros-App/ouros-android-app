@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="auth_choose_card_height">390dp</dimen>
+    <dimen name="auth_choose_content_width">480dp</dimen>
+    <dimen name="auth_choose_description_width">400dp</dimen>
+    <dimen name="auth_choose_button_top_gap">36dp</dimen>
+    <dimen name="auth_choose_card_max_width">760dp</dimen>
+</resources>

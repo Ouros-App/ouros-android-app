@@ -24,11 +24,6 @@
     <dimen name="onboarding_welcome_midas_start">-50dp</dimen>
     <dimen name="tutorial_top_inset">130dp</dimen>
     <dimen name="tutorial_horizontal_margin">50dp</dimen>
-    <dimen name="onboarding_choose_card_height">550dp</dimen>
-    <dimen name="onboarding_choose_content_width">300dp</dimen>
-    <dimen name="onboarding_choose_description_width">242dp</dimen>
-    <dimen name="onboarding_choose_button_top_gap">80dp</dimen>
-    <dimen name="onboarding_choose_card_max_width">1000dp</dimen>
     <dimen name="tutorial_illustration_max_width">600dp</dimen>
     <dimen name="tutorial_illustration_max_height">500dp</dimen>
     <dimen name="onboarding_password_mascot_size">200dp</dimen>
