@@ -1,12 +1,14 @@
 <resources>
-    <dimen name="main_header_content_top">100dp</dimen>
+    <dimen name="main_header_content_top">73dp</dimen>
     <dimen name="main_content_top_padding">76dp</dimen>
-    <dimen name="main_content_bottom_padding">104dp</dimen>
-    <dimen name="main_footer_height">62dp</dimen>
+    <dimen name="main_content_bottom_padding">108dp</dimen>
+    <dimen name="main_footer_height">80dp</dimen>
     <dimen name="main_footer_horizontal_margin">@dimen/tablet_content_margin</dimen>
     <dimen name="main_footer_bottom_margin">12dp</dimen>
-    <dimen name="main_midas_size">58dp</dimen>
-    <dimen name="main_midas_bottom_margin">26dp</dimen>
+    <dimen name="main_midas_size">77dp</dimen>
+    <dimen name="main_midas_bottom_margin">40dp</dimen>
+    <dimen name="main_footer_max_width">370dp</dimen>
+    <dimen name="secondary_header_top_inset">100dp</dimen>
     <dimen name="tablet_content_margin">40dp</dimen>
     <dimen name="main_content_horizontal_padding">48dp</dimen>
 </resources>

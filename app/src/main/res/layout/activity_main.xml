@@ -136,7 +136,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintWidth_max="520dp"
+            app:layout_constraintWidth_max="@dimen/main_footer_max_width"
             app:layout_constrainedWidth="true"
             app:layout_constraintStart_toStartOf="parent"
             app:strokeColor="@color/black"

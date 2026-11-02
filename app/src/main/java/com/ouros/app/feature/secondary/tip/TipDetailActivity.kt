@@ -78,7 +78,7 @@ class TipDetailActivity : AppCompatActivity() {
             val statusBarInset = insets.getInsets(WindowInsetsCompat.Type.statusBars())
             view.setPadding(
                 view.paddingLeft,
-                statusBarInset.top + 16,
+                maxOf(statusBarInset.top, resources.getDimensionPixelSize(R.dimen.secondary_header_top_inset)),
                 view.paddingRight,
                 view.paddingBottom
             )

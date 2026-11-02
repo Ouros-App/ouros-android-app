@@ -1,5 +1,7 @@
 package com.ouros.app.feature.main.rank
 
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -44,6 +46,7 @@ class RankAdapter : ListAdapter<RankPodiumEntry, RankAdapter.RankViewHolder>(Dif
                 avatar.setImageDrawable(null)
                 avatar.visibility = View.INVISIBLE
                 initials.text = initialsFor(item.farmName ?: item.displayName)
+                initials.backgroundTintList = ColorStateList.valueOf(colorFor(item))
                 initials.visibility = View.VISIBLE
             }
             avatar.contentDescription = if (item.isCurrent) "Sua foto de perfil" else "Identificação de ${item.displayName}"
@@ -56,6 +59,12 @@ class RankAdapter : ListAdapter<RankPodiumEntry, RankAdapter.RankViewHolder>(Dif
             .mapNotNull { it.firstOrNull()?.uppercaseChar() }
             .joinToString("")
             .ifBlank { "?" }
+
+        private fun colorFor(item: RankPodiumEntry): Int {
+            if (item.isCurrent) return Color.parseColor("#D8A23A")
+            val avatarColors = listOf("#D85F3A", "#3AD83F", "#3A47D8", "#993AD8")
+            return Color.parseColor(avatarColors[Math.floorMod(item.farmId.hashCode(), avatarColors.size)])
+        }
     }
 
     var currentPhoto: Any? = null
