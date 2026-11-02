@@ -1,13 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
-    <exclude domain="sharedpref" path="ouros_auth.xml" />
-    <exclude domain="sharedpref" path="ouros_secure_refresh.xml" />
-    <exclude domain="sharedpref" path="ouros_farm_session.xml" />
-    <exclude domain="sharedpref" path="ouros_record_draft.xml" />
-    <exclude domain="sharedpref" path="ouros_fcm_prefs.xml" />
-    <exclude domain="sharedpref" path="ouros_profile_photo-*.xml" />
-    <exclude domain="database" path="ouros_offline.db" />
-    <exclude domain="database" path="ouros_offline.db-wal" />
-    <exclude domain="database" path="ouros_offline.db-shm" />
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="database" path="." />
     <exclude domain="file" path="profile_accounts/" />
 </full-backup-content>
