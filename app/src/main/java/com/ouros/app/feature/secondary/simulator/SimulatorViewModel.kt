@@ -146,6 +146,7 @@ class SimulatorViewModel(
     }
 
     private companion object {
+        // Média de referência do plano do simulador quando a CEA da granja não está individualizada.
         const val CURRENT_KWH_PER_BIRD_REFERENCE = 0.40
     }
 }
