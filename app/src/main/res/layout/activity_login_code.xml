@@ -13,7 +13,7 @@
         style="@style/subtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="100dp"
+        android:layout_marginTop="@dimen/secondary_header_top_inset"
         android:text="Login"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -54,9 +54,9 @@
             android:id="@+id/codeTexts"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="50dp"
+            android:layout_marginStart="@dimen/main_content_horizontal_padding"
             android:layout_marginTop="72dp"
-            android:layout_marginEnd="50dp"
+            android:layout_marginEnd="@dimen/main_content_horizontal_padding"
             android:orientation="vertical">
 
             <TextView
@@ -80,9 +80,9 @@
             android:id="@+id/codeInputContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="30dp"
+            android:layout_marginStart="@dimen/main_content_horizontal_padding"
             android:layout_marginTop="70dp"
-            android:layout_marginEnd="30dp"
+            android:layout_marginEnd="@dimen/main_content_horizontal_padding"
             android:gravity="center"
             android:orientation="horizontal">
 
@@ -148,9 +148,9 @@
             style="@style/text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="30dp"
+            android:layout_marginStart="@dimen/main_content_horizontal_padding"
             android:layout_marginTop="8dp"
-            android:layout_marginEnd="30dp"
+            android:layout_marginEnd="@dimen/main_content_horizontal_padding"
             android:textColor="@color/warning_red"
             android:visibility="gone"
             tools:text="Informe os 6 números do código."
@@ -161,9 +161,9 @@
             style="@style/Widget.Ouros.Button.Big.Blue"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="30dp"
+            android:layout_marginStart="@dimen/main_content_horizontal_padding"
             android:layout_marginTop="16dp"
-            android:layout_marginEnd="30dp"
+            android:layout_marginEnd="@dimen/main_content_horizontal_padding"
             android:text="Continuar" />
 
     </LinearLayout>
@@ -173,8 +173,8 @@
         style="@style/text"
         android:layout_width="0dp"
         android:layout_height="48dp"
-        android:layout_marginStart="30dp"
-        android:layout_marginEnd="30dp"
+        android:layout_marginStart="@dimen/main_content_horizontal_padding"
+        android:layout_marginEnd="@dimen/main_content_horizontal_padding"
         android:layout_marginBottom="24dp"
         android:clickable="true"
         android:focusable="true"
