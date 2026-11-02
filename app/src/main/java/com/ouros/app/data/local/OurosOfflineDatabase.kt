@@ -5,7 +5,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-/** SQLite storage for server snapshots and durable outbound operations. */
+/** Persiste snapshots para leitura offline, operações pendentes e IDs locais/remotos. */
 class OurosOfflineDatabase(context: Context) : SQLiteOpenHelper(
     context.applicationContext,
     DATABASE_NAME,
@@ -13,6 +13,8 @@ class OurosOfflineDatabase(context: Context) : SQLiteOpenHelper(
     DATABASE_VERSION
 ) {
     override fun onCreate(database: SQLiteDatabase) {
+        // Cada tabela cobre uma necessidade distinta: cache de leitura, fila de escrita
+        // e tradução de IDs temporários criados enquanto o dispositivo está offline.
         database.execSQL(
             """
             CREATE TABLE cache_entries (

@@ -13,10 +13,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+/** Contrato para cada área reenviar operações locais quando a conexão voltar. */
 fun interface OfflineSynchronizer {
     suspend fun synchronize()
 }
 
+/** Observa conectividade e coordena sincronizadores sem bloquear a interface. */
 object OfflineSyncRegistry {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val syncMutex = Mutex()
@@ -47,6 +49,8 @@ object OfflineSyncRegistry {
         val manager = connectivityManager ?: return true
         val network = manager.activeNetwork ?: return false
         val capabilities = manager.getNetworkCapabilities(network) ?: return false
+        // INTERNET sozinho indica apenas uma rede configurada; VALIDATED confirma
+        // que o Android conseguiu alcançar a internet pública.
         return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
             capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }

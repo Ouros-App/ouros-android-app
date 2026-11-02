@@ -16,6 +16,8 @@ Aplicativo Android nativo do Ouros, desenvolvido em Kotlin.
 
 Abra a raiz do repositório no Android Studio para executar o app em um dispositivo ou emulador.
 
+Para entender a arquitetura e preparar uma apresentação do fluxo, consulte [Guia para apresentar o código](GUIA_APRESENTACAO_CODIGO.md).
+
 ## Estrutura
 
 - `app/src/main`: código Kotlin, recursos e manifesto Android.

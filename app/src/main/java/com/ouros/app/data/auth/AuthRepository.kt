@@ -10,6 +10,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import retrofit2.Response
 
+/** Encapsula autenticação, valida respostas da API e mantém os tokens da sessão. */
 class AuthRepository(
     private val api: AuthApi,
     private val refreshTokenStore: RefreshTokenStorage,
@@ -20,6 +21,8 @@ class AuthRepository(
 
     suspend fun startLogin(email: String, password: String): AuthResult<LoginStartResponse> {
         return try {
+            // O email é normalizado antes de iniciar o desafio para manter a mesma
+            // identidade nas etapas de solicitação e verificação do código.
             val normalizedEmail = email.trim().lowercase()
 
             val response = api.startLogin(

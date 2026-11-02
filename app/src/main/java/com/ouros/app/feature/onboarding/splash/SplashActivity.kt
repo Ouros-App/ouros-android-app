@@ -36,6 +36,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/** Ponto de entrada: restaura a sessão e escolhe o próximo destino do usuário. */
 class SplashActivity : AppCompatActivity() {
 
     private val activityScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -136,6 +137,8 @@ class SplashActivity : AppCompatActivity() {
 
     private fun restoreSession() {
         activityScope.launch {
+            // A navegação aguarda a renovação do token para não abrir telas autenticadas
+            // com uma sessão vencida; sem refresh token, o fluxo segue para boas-vindas.
             val splashStartedAt = SystemClock.elapsedRealtime()
             val savedRefreshToken = refreshTokenStore.getRefreshToken()
 

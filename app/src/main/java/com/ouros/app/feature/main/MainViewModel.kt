@@ -8,6 +8,7 @@ import com.ouros.app.data.local.OfflineSyncRegistry
 import com.ouros.app.data.session.FarmSessionStore
 import kotlinx.coroutines.launch
 
+/** Mantém estado do perfil inicial e comunica eventos de apresentação à Activity. */
 class MainViewModel(
     private val farmOwnerRepository: FarmOwnerRepository,
     private val farmSessionStore: FarmSessionStore
@@ -45,6 +46,8 @@ class MainViewModel(
             return
         }
 
+        // Reutiliza o perfil durante a navegação entre abas; atualização forçada é
+        // reservada para ações que podem ter alterado os dados no servidor.
         if (!forceRefresh) {
             cachedProfile?.let {
                 listener?.onMainProfileLoaded(it)

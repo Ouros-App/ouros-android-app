@@ -11,6 +11,7 @@ sealed interface ChatbotResult<out T> {
     data class Failure(val error: Exception) : ChatbotResult<Nothing>
 }
 
+/** Reúne chamadas do chatbot e converte detalhes HTTP em resultados consumíveis pela tela. */
 class ChatbotRepository(
     context: Context,
     private val aiApi: ChatbotApi,
