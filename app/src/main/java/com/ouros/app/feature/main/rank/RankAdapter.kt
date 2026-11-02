@@ -1,7 +1,5 @@
 package com.ouros.app.feature.main.rank
 
-import android.content.res.ColorStateList
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -30,7 +28,6 @@ class RankAdapter : ListAdapter<RankPodiumEntry, RankAdapter.RankViewHolder>(Dif
     inner class RankViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val position: TextView = itemView.findViewById(R.id.textRankPosition)
         private val avatar: ImageView = itemView.findViewById(R.id.viewRankAvatar)
-        private val initials: TextView = itemView.findViewById(R.id.textRankInitials)
         private val farmName: TextView = itemView.findViewById(R.id.textFarmName)
         private val score: TextView = itemView.findViewById(R.id.textRankScore)
 
@@ -39,35 +36,31 @@ class RankAdapter : ListAdapter<RankPodiumEntry, RankAdapter.RankViewHolder>(Dif
             farmName.text = item.displayName
             score.text = scoreFormatter.format(item.score ?: 0.0)
             if (item.isCurrent && currentPhoto != null) {
-                initials.visibility = View.GONE
                 avatar.visibility = View.VISIBLE
                 avatar.load(currentPhoto)
             } else {
-                avatar.setImageDrawable(null)
-                avatar.visibility = View.INVISIBLE
-                initials.text = initialsFor(item.farmName ?: item.displayName)
-                initials.backgroundTintList = ColorStateList.valueOf(colorFor(item))
-                initials.visibility = View.VISIBLE
+                avatar.setImageResource(avatarFor(item))
+                avatar.visibility = View.VISIBLE
             }
             avatar.contentDescription = if (item.isCurrent) "Sua foto de perfil" else "Identificação de ${item.displayName}"
         }
 
-        private fun initialsFor(name: String): String = name.trim()
-            .split(Regex("\\s+"))
-            .filter(String::isNotBlank)
-            .take(2)
-            .mapNotNull { it.firstOrNull()?.uppercaseChar() }
-            .joinToString("")
-            .ifBlank { "?" }
-
-        private fun colorFor(item: RankPodiumEntry): Int {
-            if (item.isCurrent) return Color.parseColor("#D8A23A")
-            val avatarColors = listOf("#D85F3A", "#3AD83F", "#3A47D8", "#993AD8")
-            return Color.parseColor(avatarColors[Math.floorMod(item.farmId.hashCode(), avatarColors.size)])
-        }
+        private fun avatarFor(item: RankPodiumEntry): Int = AVATAR_DRAWABLES[
+            Math.floorMod(item.farmId.hashCode(), AVATAR_DRAWABLES.size)
+        ]
     }
 
     var currentPhoto: Any? = null
+
+    private companion object {
+        val AVATAR_DRAWABLES = intArrayOf(
+            R.drawable.avatar_yellow,
+            R.drawable.avatar_orange,
+            R.drawable.avatar_green,
+            R.drawable.avatar_blue,
+            R.drawable.avatar_purple
+        )
+    }
 
     override fun onBindViewHolder(holder: RankViewHolder, position: Int) {
         holder.bind(getItem(position), currentPhoto)

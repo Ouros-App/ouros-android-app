@@ -33,22 +33,6 @@
         tools:srcCompat="@drawable/avatar_blue" />
 
     <TextView
-        android:id="@+id/textRankInitials"
-        android:layout_width="46dp"
-        android:layout_height="46dp"
-        android:background="@drawable/avatar_blue"
-        android:gravity="center"
-        android:textColor="@color/white"
-        android:textSize="13sp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@id/viewRankAvatar"
-        app:layout_constraintEnd_toEndOf="@id/viewRankAvatar"
-        app:layout_constraintStart_toStartOf="@id/viewRankAvatar"
-        app:layout_constraintTop_toTopOf="@id/viewRankAvatar"
-        tools:text="GF"
-        tools:visibility="visible" />
-
-    <TextView
         android:id="@+id/textFarmName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
