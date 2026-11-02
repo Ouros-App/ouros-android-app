@@ -1,19 +1,27 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
--->
+<?xml version="1.0" encoding="utf-8"?>
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <exclude domain="sharedpref" path="ouros_auth.xml" />
+        <exclude domain="sharedpref" path="ouros_secure_refresh.xml" />
+        <exclude domain="sharedpref" path="ouros_farm_session.xml" />
+        <exclude domain="sharedpref" path="ouros_record_draft.xml" />
+        <exclude domain="sharedpref" path="ouros_fcm_prefs.xml" />
+        <exclude domain="sharedpref" path="ouros_profile_photo-*.xml" />
+        <exclude domain="database" path="ouros_offline.db" />
+        <exclude domain="database" path="ouros_offline.db-wal" />
+        <exclude domain="database" path="ouros_offline.db-shm" />
+        <exclude domain="file" path="profile_accounts/" />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <exclude domain="sharedpref" path="ouros_auth.xml" />
+        <exclude domain="sharedpref" path="ouros_secure_refresh.xml" />
+        <exclude domain="sharedpref" path="ouros_farm_session.xml" />
+        <exclude domain="sharedpref" path="ouros_record_draft.xml" />
+        <exclude domain="sharedpref" path="ouros_fcm_prefs.xml" />
+        <exclude domain="sharedpref" path="ouros_profile_photo-*.xml" />
+        <exclude domain="database" path="ouros_offline.db" />
+        <exclude domain="database" path="ouros_offline.db-wal" />
+        <exclude domain="database" path="ouros_offline.db-shm" />
+        <exclude domain="file" path="profile_accounts/" />
     </device-transfer>
-    -->
 </data-extraction-rules>
