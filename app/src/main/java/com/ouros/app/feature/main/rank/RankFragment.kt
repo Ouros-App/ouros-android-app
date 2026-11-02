@@ -29,6 +29,7 @@ import com.ouros.app.data.rank.formatRemainingTime
 import com.ouros.app.data.session.FarmSessionStore
 import com.ouros.app.data.local.OfflineStore
 import com.ouros.app.feature.main.MainActivity
+import com.ouros.app.feature.secondary.profile.ProfilePhotoStore
 import kotlin.math.max
 
 class RankFragment : Fragment() {
@@ -42,6 +43,7 @@ class RankFragment : Fragment() {
     private var currentLugarLabel: TextView? = null
     private lateinit var currentLeague: TextView
     private var medalImage: ImageView? = null
+    private var profilePhotoStore: ProfilePhotoStore? = null
     private lateinit var resetTime: TextView
     private lateinit var rankingList: RecyclerView
 
@@ -124,6 +126,11 @@ class RankFragment : Fragment() {
 
     private fun configureRankingList() {
         adapter = RankAdapter()
+        profilePhotoStore = FarmSessionStore(requireContext().applicationContext).ownerId()?.let {
+            ProfilePhotoStore(requireContext().applicationContext, it)
+        }
+        adapter.currentPhoto = profilePhotoStore?.localPhotoFile()
+            ?: (activity as? MainActivity)?.currentProfilePhotoUrl()
         rankingList.layoutManager = LinearLayoutManager(requireContext())
         rankingList.adapter = adapter
         rankingList.itemAnimator = null
@@ -151,6 +158,7 @@ class RankFragment : Fragment() {
     }
 
     private fun render(state: RankUiState) {
+        refreshProfilePhoto()
         if (state.isLoading) {
             loading.visibility = View.VISIBLE
             loading.start()
@@ -225,6 +233,16 @@ class RankFragment : Fragment() {
         adapter.submitList(ranking.rankingPodium.orEmpty())
     }
 
+    fun refreshProfilePhoto() {
+        if (!::adapter.isInitialized) return
+        val photo = profilePhotoStore?.localPhotoFile()
+            ?: (activity as? MainActivity)?.currentProfilePhotoUrl()
+        if (adapter.currentPhoto != photo) {
+            adapter.currentPhoto = photo
+            adapter.notifyDataSetChanged()
+        }
+    }
+
     override fun onStart() {
         super.onStart()
         if (!isHidden) {
@@ -284,6 +302,7 @@ class RankFragment : Fragment() {
 
     override fun onDestroyView() {
         stopCountdown()
+        profilePhotoStore = null
         if (::rankingList.isInitialized) {
             rankingList.adapter = null
         }

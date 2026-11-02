@@ -1,14 +1,14 @@
 package com.ouros.app.feature.main.rank
 
-import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import coil.load
 import com.ouros.app.R
 import com.ouros.app.data.rank.RankPodiumEntry
 import java.text.NumberFormat
@@ -25,38 +25,43 @@ class RankAdapter : ListAdapter<RankPodiumEntry, RankAdapter.RankViewHolder>(Dif
         return RankViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: RankViewHolder, position: Int) {
-        holder.bind(getItem(position))
-    }
-
     inner class RankViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val position: TextView = itemView.findViewById(R.id.textRankPosition)
-        private val avatar: View = itemView.findViewById(R.id.viewRankAvatar)
+        private val avatar: ImageView = itemView.findViewById(R.id.viewRankAvatar)
+        private val initials: TextView = itemView.findViewById(R.id.textRankInitials)
         private val farmName: TextView = itemView.findViewById(R.id.textFarmName)
         private val score: TextView = itemView.findViewById(R.id.textRankScore)
 
-        fun bind(item: RankPodiumEntry) {
+        fun bind(item: RankPodiumEntry, currentPhoto: Any?) {
             position.text = item.rankPosition.toString()
             farmName.text = item.displayName
             score.text = scoreFormatter.format(item.score ?: 0.0)
-            avatar.background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor(colorFor(item))
+            if (item.isCurrent && currentPhoto != null) {
+                initials.visibility = View.GONE
+                avatar.visibility = View.VISIBLE
+                avatar.load(currentPhoto)
+            } else {
+                avatar.setImageDrawable(null)
+                avatar.visibility = View.INVISIBLE
+                initials.text = initialsFor(item.farmName ?: item.displayName)
+                initials.visibility = View.VISIBLE
             }
-            avatar.contentDescription = "Identificação de ${item.displayName}"
+            avatar.contentDescription = if (item.isCurrent) "Sua foto de perfil" else "Identificação de ${item.displayName}"
         }
 
-        private fun colorFor(item: RankPodiumEntry): Int {
-            return when {
-                item.relation.equals(RankPodiumEntry.ABOVE, true) ->
-                    Color.parseColor("#FFD5FB")
-                item.relation.equals(RankPodiumEntry.CURRENT, true) ->
-                    Color.parseColor("#D8A23A")
-                item.relation.equals(RankPodiumEntry.BELOW, true) ->
-                    Color.parseColor("#2019A3")
-                else -> Color.parseColor("#A7ADB3")
-            }
-        }
+        private fun initialsFor(name: String): String = name.trim()
+            .split(Regex("\\s+"))
+            .filter(String::isNotBlank)
+            .take(2)
+            .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+            .joinToString("")
+            .ifBlank { "?" }
+    }
+
+    var currentPhoto: Any? = null
+
+    override fun onBindViewHolder(holder: RankViewHolder, position: Int) {
+        holder.bind(getItem(position), currentPhoto)
     }
 
     private object DiffCallback : DiffUtil.ItemCallback<RankPodiumEntry>() {

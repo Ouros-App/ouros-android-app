@@ -252,11 +252,11 @@
     </ScrollView>
 
     <!-- Loading State -->
-    <ProgressBar
+    <com.ouros.app.core.SkeletonLoaderView
         android:id="@+id/progressLoading"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:indeterminateTint="@color/gold"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/white"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

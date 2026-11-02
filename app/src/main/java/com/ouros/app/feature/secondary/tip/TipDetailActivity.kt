@@ -13,7 +13,6 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -26,6 +25,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import coil.load
 import com.ouros.app.R
+import com.ouros.app.core.SkeletonLoaderView
 import com.ouros.app.core.util.applyBottomSystemBarPadding
 import com.ouros.app.core.util.dp
 import com.ouros.app.data.tip.TipDetailResponse
@@ -62,7 +62,7 @@ class TipDetailActivity : AppCompatActivity() {
     private lateinit var txtTipBody: TextView
     private lateinit var cardReviewAction: View
     private lateinit var scrollTipContent: View
-    private lateinit var progressLoading: ProgressBar
+    private lateinit var progressLoading: SkeletonLoaderView
     private lateinit var layoutError: LinearLayout
     private lateinit var txtErrorMessage: TextView
     private lateinit var btnRetry: Button
@@ -110,6 +110,7 @@ class TipDetailActivity : AppCompatActivity() {
         scrollTipContent = findViewById(R.id.scrollTipContent)
         scrollTipContent.applyBottomSystemBarPadding(32.dp)
         progressLoading = findViewById(R.id.progressLoading)
+        progressLoading.mode = SkeletonLoaderView.Mode.TIP_DETAIL
         layoutError = findViewById(R.id.layoutError)
         txtErrorMessage = findViewById(R.id.txtErrorMessage)
         btnRetry = findViewById(R.id.btnRetry)
@@ -141,6 +142,7 @@ class TipDetailActivity : AppCompatActivity() {
 
     private fun renderUi(state: TipDetailUiState) {
         progressLoading.visibility = if (state.isLoading) View.VISIBLE else View.GONE
+        if (state.isLoading) progressLoading.start() else progressLoading.stop()
 
         if (state.errorMessage != null && state.tip == null) {
             layoutError.visibility = View.VISIBLE

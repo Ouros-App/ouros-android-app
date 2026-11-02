@@ -102,6 +102,7 @@
             android:exported="false" />
         <activity
             android:name=".feature.onboarding.splash.SplashActivity"
+            android:theme="@style/Theme.Ouros.Starting"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

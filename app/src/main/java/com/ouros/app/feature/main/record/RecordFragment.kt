@@ -18,6 +18,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.ouros.app.R
+import com.ouros.app.core.SkeletonLoaderView
 import com.ouros.app.data.record.RecordDraftStore
 import com.ouros.app.data.record.RecordNetwork
 import com.ouros.app.data.record.RecordRepository
@@ -30,6 +31,7 @@ class RecordFragment : Fragment() {
     private lateinit var viewModel: RecordViewModel
     private lateinit var draftStore: RecordDraftStore
     private lateinit var loading: View
+    private lateinit var skeleton: SkeletonLoaderView
     private lateinit var content: View
     private lateinit var error: TextView
     private lateinit var retry: View
@@ -118,6 +120,8 @@ class RecordFragment : Fragment() {
 
     private fun bind(root: View) {
         loading = root.findViewById(R.id.recordLoading)
+        skeleton = root.findViewById(R.id.recordSkeleton)
+        skeleton.mode = SkeletonLoaderView.Mode.RECORD
         content = root.findViewById(R.id.recordContent)
         error = root.findViewById(R.id.recordError)
         retry = root.findViewById(R.id.recordRetry)
@@ -147,6 +151,7 @@ class RecordFragment : Fragment() {
     private fun observe() {
         viewModel.state.observe(viewLifecycleOwner) { state ->
             loading.visibility = if (state.loading) View.VISIBLE else View.GONE
+            if (state.loading) skeleton.start() else skeleton.stop()
             content.visibility = if (state.error == null) View.VISIBLE else View.GONE
             error.visibility = if (state.error != null) View.VISIBLE else View.GONE
             retry.visibility = if (state.error != null) View.VISIBLE else View.GONE
@@ -285,6 +290,7 @@ class RecordFragment : Fragment() {
     }
 
     override fun onDestroyView() {
+        if (::skeleton.isInitialized) skeleton.stop()
         successDialog?.dismiss()
         successDialog = null
         deleteDialog?.dismiss()
