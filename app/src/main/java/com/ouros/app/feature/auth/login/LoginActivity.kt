@@ -27,6 +27,7 @@ import com.ouros.app.data.auth.SecureRefreshTokenStore
 import com.ouros.app.data.farmowner.FarmOwnerNetwork
 import com.ouros.app.data.farmowner.FarmOwnerRepository
 import com.ouros.app.data.session.FarmSessionStore
+import com.ouros.app.feature.auth.choose.ChooseActivity
 import com.ouros.app.feature.auth.firstaccess.FirstAccessActivity
 import com.ouros.app.feature.auth.forgotpassword.ForgotPasswordActivity
 import com.ouros.app.feature.error.ErrorActivity
@@ -134,7 +135,7 @@ class LoginActivity :
                     ) {
                         returnToCredentials()
                     } else {
-                        finish()
+                        returnFromCredentials()
                     }
                 }
             }
@@ -176,7 +177,7 @@ class LoginActivity :
         findViewById<View>(
             R.id.btnBack
         ).setOnClickListener {
-            finish()
+            returnFromCredentials()
         }
 
         findViewById<View>(
@@ -214,6 +215,18 @@ class LoginActivity :
         btnForgot.applyBottomSystemBarMargin()
 
         renderLoginLoading(false)
+    }
+
+    private fun returnFromCredentials() {
+        if (isTaskRoot) {
+            startActivity(
+                Intent(
+                    this,
+                    ChooseActivity::class.java
+                )
+            )
+        }
+        finish()
     }
 
     private fun showCodePage() {

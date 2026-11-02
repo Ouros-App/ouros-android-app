@@ -159,11 +159,10 @@
         <Button
             android:id="@+id/btnContinue"
             style="@style/Widget.Ouros.Button.Big.Blue"
-            android:layout_width="match_parent"
+            android:layout_width="@dimen/verification_code_group_width"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/main_content_horizontal_padding"
             android:layout_marginTop="16dp"
-            android:layout_marginEnd="@dimen/main_content_horizontal_padding"
+            android:layout_gravity="center_horizontal"
             android:text="Continuar" />
 
     </LinearLayout>
