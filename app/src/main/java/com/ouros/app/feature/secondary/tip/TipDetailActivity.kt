@@ -26,8 +26,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import coil.load
 import com.ouros.app.R
 import com.ouros.app.core.SkeletonLoaderView
-import com.ouros.app.core.util.applyBottomSystemBarPadding
-import com.ouros.app.core.util.dp
+import com.ouros.app.core.applyBottomSystemBarPadding
+import com.ouros.app.core.dp
 import com.ouros.app.data.tip.TipDetailResponse
 import com.ouros.app.data.tip.TipRepository
 import com.ouros.app.data.local.OfflineStore

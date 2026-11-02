@@ -5,6 +5,11 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ScrollView
 import androidx.core.widget.NestedScrollView
+import com.ouros.app.core.applyBottomSystemBarMargin
+import com.ouros.app.core.applyBottomSystemBarPadding
+import com.ouros.app.core.applyImeAndNavigationPadding
+import com.ouros.app.core.applyImeFixedTranslation
+import com.ouros.app.core.dp
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue

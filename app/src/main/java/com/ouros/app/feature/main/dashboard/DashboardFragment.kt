@@ -14,7 +14,7 @@ import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.ouros.app.R
-import com.ouros.app.core.util.applyBottomSystemBarPadding
+import com.ouros.app.core.applyBottomSystemBarPadding
 import com.ouros.app.core.SkeletonLoaderView
 import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.AuthNetwork

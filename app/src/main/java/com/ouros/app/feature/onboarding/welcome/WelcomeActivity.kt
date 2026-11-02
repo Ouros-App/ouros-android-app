@@ -7,7 +7,7 @@ import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.ouros.app.R
-import com.ouros.app.core.util.applyBottomSystemBarMargin
+import com.ouros.app.core.applyBottomSystemBarMargin
 import com.ouros.app.feature.onboarding.tutorial.TutorialActivity
 
 class WelcomeActivity : AppCompatActivity() {

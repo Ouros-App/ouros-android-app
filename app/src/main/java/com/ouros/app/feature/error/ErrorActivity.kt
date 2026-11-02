@@ -6,7 +6,7 @@ import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.ouros.app.R
-import com.ouros.app.core.util.applyBottomSystemBarMargin
+import com.ouros.app.core.applyBottomSystemBarMargin
 
 class ErrorActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

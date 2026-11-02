@@ -23,7 +23,7 @@ import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.ouros.app.R
 import com.ouros.app.core.SkeletonLoaderView
-import com.ouros.app.core.util.applyBottomSystemBarPadding
+import com.ouros.app.core.applyBottomSystemBarPadding
 import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository

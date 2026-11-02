@@ -19,7 +19,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.ouros.app.R
 import com.ouros.app.core.SkeletonLoaderView
-import com.ouros.app.core.util.applyBottomSystemBarPadding
+import com.ouros.app.core.applyBottomSystemBarPadding
 import com.ouros.app.data.record.RecordDraftStore
 import com.ouros.app.data.record.RecordHistoryItem
 import com.ouros.app.data.record.RecordNetwork

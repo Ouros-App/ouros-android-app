@@ -24,7 +24,7 @@ import androidx.lifecycle.lifecycleScope
 import coil.load
 import com.google.firebase.messaging.FirebaseMessaging
 import com.ouros.app.R
-import com.ouros.app.core.util.applyBottomSystemBarMargin
+import com.ouros.app.core.applyBottomSystemBarMargin
 import com.ouros.app.data.fcm.FcmTokenStore
 import com.ouros.app.data.fcm.OurosFirebaseMessagingService
 import com.ouros.app.data.auth.AppSession

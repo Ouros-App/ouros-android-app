@@ -16,8 +16,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.ouros.app.R
-import com.ouros.app.core.util.applyBottomSystemBarMargin
-import com.ouros.app.core.util.applyImeFixedTranslation
+import com.ouros.app.core.applyBottomSystemBarMargin
+import com.ouros.app.core.applyImeFixedTranslation
 import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository
 import com.ouros.app.data.auth.SecureRefreshTokenStore

@@ -8,7 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.widget.ViewPager2
 import com.ouros.app.R
-import com.ouros.app.core.util.applyBottomSystemBarMargin
+import com.ouros.app.core.applyBottomSystemBarMargin
 import com.ouros.app.feature.auth.choose.ChooseActivity
 import com.ouros.app.feature.onboarding.tutorial.view.TutorialPagerAdapter
 

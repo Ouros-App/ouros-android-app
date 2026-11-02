@@ -1,4 +1,4 @@
-package com.ouros.app.core.util
+package com.ouros.app.core
 
 import android.content.res.Resources
 import android.graphics.Rect
@@ -11,6 +11,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import androidx.core.widget.NestedScrollView
+import com.ouros.app.R
 
 /**
  * Converte valor inteiro de dp para pixels (px) usando as métricas do sistema.
@@ -331,9 +332,9 @@ fun View.applyImeAndNavigationPadding(extraPaddingPx: Int = 0) {
                         container.getDrawingRect(focusedRect)
                         viewGroup.offsetDescendantRectToMyCoords(container, focusedRect)
 
-                        val continueBtn = findViewById<View>(com.ouros.app.R.id.btnContinue)
-                            ?: findViewById<View>(com.ouros.app.R.id.btnFinish)
-                            ?: findViewById<View>(com.ouros.app.R.id.recordPrimary)
+                        val continueBtn = findViewById<View>(R.id.btnContinue)
+                            ?: findViewById<View>(R.id.btnFinish)
+                            ?: findViewById<View>(R.id.recordPrimary)
 
                         val bottomToClear = if (continueBtn != null && continueBtn.isShown) {
                             val btnRect = Rect()

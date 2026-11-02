@@ -20,8 +20,8 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.ouros.app.R
 import com.ouros.app.core.SkeletonLoaderView
-import com.ouros.app.core.util.applyBottomSystemBarPadding
-import com.ouros.app.core.util.dp
+import com.ouros.app.core.applyBottomSystemBarPadding
+import com.ouros.app.core.dp
 import com.ouros.app.data.fcm.OurosFirebaseMessagingService
 import com.ouros.app.data.notification.NotificationItemResponse
 import com.ouros.app.data.notification.NotificationRepository

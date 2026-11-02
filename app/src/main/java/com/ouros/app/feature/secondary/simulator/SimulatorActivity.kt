@@ -11,8 +11,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.ouros.app.R
-import com.ouros.app.core.util.applyImeFixedTranslation
-import com.ouros.app.core.util.dp
+import com.ouros.app.core.applyImeFixedTranslation
+import com.ouros.app.core.dp
 import com.ouros.app.core.BrazilianMoney
 import com.ouros.app.core.BrazilianMoneyTextWatcher
 import com.ouros.app.data.auth.AppSession

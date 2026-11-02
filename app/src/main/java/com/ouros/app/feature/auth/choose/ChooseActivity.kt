@@ -6,7 +6,7 @@ import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.ouros.app.R
-import com.ouros.app.core.util.applyBottomSystemBarPadding
+import com.ouros.app.core.applyBottomSystemBarPadding
 import com.ouros.app.feature.auth.firstaccess.FirstAccessActivity
 import com.ouros.app.feature.auth.login.LoginActivity
 

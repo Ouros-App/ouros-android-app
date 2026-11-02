@@ -11,9 +11,9 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import com.ouros.app.R
-import com.ouros.app.core.util.applyBottomSystemBarMargin
-import com.ouros.app.core.util.applyImeFixedTranslation
-import com.ouros.app.core.util.dp
+import com.ouros.app.core.applyBottomSystemBarMargin
+import com.ouros.app.core.applyImeFixedTranslation
+import com.ouros.app.core.dp
 import com.ouros.app.data.record.RecordDraft
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
