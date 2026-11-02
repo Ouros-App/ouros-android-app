@@ -166,12 +166,18 @@ class SimulatorActivity : AppCompatActivity() {
         }
         if (!valid) return
 
+        val validatedTargetCgi = targetCgi ?: return
+        val validatedWaterPrice = waterPrice ?: return
+        val validatedEnergyPrice = energyPrice ?: return
+        val validatedChickens = chickens ?: return
+        val validatedTargetEnergy = targetEnergy ?: return
+
         viewModel.simulate(
-            targetCgi = targetCgi!!,
-            waterPricePerM3 = waterPrice!!,
-            energyPricePerKwh = energyPrice!!,
-            chickens = chickens!!,
-            targetKwhPerBird = targetEnergy!!
+            targetCgi = validatedTargetCgi,
+            waterPricePerM3 = validatedWaterPrice,
+            energyPricePerKwh = validatedEnergyPrice,
+            chickens = validatedChickens,
+            targetKwhPerBird = validatedTargetEnergy
         )
     }
 

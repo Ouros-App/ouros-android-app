@@ -144,11 +144,21 @@ class ChatbotViewModel internal constructor(
             try {
                 val request = MeasurementImportRequest(
                     waterRegistries = preview.records.filter { it.kind.equals("water", true) }
-                        .filter { !it.startHydrometer.isNullOrBlank() && !it.endHydrometer.isNullOrBlank() }
-                        .map { WaterRegistry(it.registrationDate, it.startHydrometer!!, it.endHydrometer!!) },
+                        .mapNotNull { record ->
+                            val start = record.startHydrometer?.takeIf(String::isNotBlank)
+                            val end = record.endHydrometer?.takeIf(String::isNotBlank)
+                            if (start != null && end != null) {
+                                WaterRegistry(record.registrationDate, start, end)
+                            } else {
+                                null
+                            }
+                        },
                     energyRegistries = preview.records.filter { it.kind.equals("energy", true) }
-                        .filter { !it.energyConsumption.isNullOrBlank() }
-                        .map { EnergyRegistry(it.registrationDate, it.energyConsumption!!) }
+                        .mapNotNull { record ->
+                            record.energyConsumption?.takeIf(String::isNotBlank)?.let {
+                                EnergyRegistry(record.registrationDate, it)
+                            }
+                        }
                 )
                 if (request.waterRegistries.isEmpty() && request.energyRegistries.isEmpty()) {
                     throw IllegalStateException("Não há registros válidos para importar.")

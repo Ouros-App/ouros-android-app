@@ -36,7 +36,6 @@ import com.ouros.app.data.farmowner.FarmOwnerResponse
 import com.ouros.app.data.session.FarmSessionStore
 import com.ouros.app.data.local.OfflineStore
 import com.ouros.app.data.local.OfflineSyncRegistry
-import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.graphics.toColorInt
@@ -49,8 +48,14 @@ import com.ouros.app.feature.onboarding.welcome.WelcomeActivity
 import com.yalantis.ucrop.UCrop
 import java.io.File
 import coil.load
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
+
+    private val logoutScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private lateinit var viewModel: ProfileViewModel
     private var photoStore: ProfilePhotoStore? = null
@@ -625,8 +630,8 @@ class ProfileActivity : AppCompatActivity(), ProfileViewModel.Listener {
     private fun logout() {
         val fcmToken = FcmTokenStore(applicationContext).getToken()
         if (!fcmToken.isNullOrBlank()) {
-            Executors.newSingleThreadExecutor().execute {
-                kotlinx.coroutines.runBlocking {
+            logoutScope.launch {
+                runCatching {
                     com.ouros.app.data.notification.NotificationRepository().deleteDeviceToken(fcmToken)
                 }
             }

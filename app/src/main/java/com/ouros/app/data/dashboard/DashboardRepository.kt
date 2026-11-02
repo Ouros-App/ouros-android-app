@@ -229,10 +229,14 @@ class DashboardRepository(
                 )
             }
 
-            response.isSuccessful &&
-                    response.body() != null -> {
-                val dashboard =
-                    response.body()!!
+            response.isSuccessful -> {
+                val dashboard = response.body()
+                if (dashboard == null) {
+                    return DashboardResult.Error(
+                        message = "A API não retornou os gráficos.",
+                        canRetry = true
+                    )
+                }
 
                 if (
                     !hasRequiredCharts(
