@@ -46,29 +46,41 @@ class ChatbotStateTest {
     private class FakeChatbotApi : ChatbotApi {
         var chatCalls = 0
         var importCalls = 0
-        var authorization: String? = null
+        var chatRequest: ChatRequest? = null
         var importedRequest: MeasurementImportRequest? = null
         var chatResponse: Response<ChatResponse> = Response.success(ChatResponse(message = "answer"))
         var importResponse: Response<MeasurementImportResponse> =
             Response.success(MeasurementImportResponse())
 
-        override suspend fun chat(
-            authorization: String,
+        override suspend fun sendMessage(request: ChatRequest): Response<ChatResponse> {
+            chatCalls++
+            chatRequest = request
+            return chatResponse
+        }
+
+        override suspend fun getHistory(
+            threadId: String,
+            userId: String?,
+            limit: Int,
+            before: String?
+        ): Response<HistoryResponse> = Response.success(HistoryResponse(threadId, emptyList()))
+
+        override suspend fun healthCheck(): Response<HealthResponse> =
+            Response.success(HealthResponse("ok"))
+
+        override suspend fun chatWithAttachment(
             message: RequestBody,
             threadId: RequestBody,
-            attachment: MultipartBody.Part?
+            attachment: MultipartBody.Part
         ): Response<ChatResponse> {
             chatCalls++
-            this.authorization = authorization
             return chatResponse
         }
 
         override suspend fun importMeasurements(
-            authorization: String,
             request: MeasurementImportRequest
         ): Response<MeasurementImportResponse> {
             importCalls++
-            this.authorization = authorization
             importedRequest = request
             return importResponse
         }
@@ -109,7 +121,7 @@ class ChatbotStateTest {
         viewModel.send("follow-up", attachment = null)
 
         assertEquals(2, api.chatCalls)
-        assertEquals("Bearer test-token", api.authorization)
+        assertEquals("hello", api.chatRequest?.message)
         assertFalse(viewModel.state.value!!.sending)
         assertEquals(
             listOf(

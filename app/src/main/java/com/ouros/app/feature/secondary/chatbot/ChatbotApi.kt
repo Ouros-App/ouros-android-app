@@ -5,55 +5,100 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.Retrofit
-import okhttp3.OkHttpClient
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
-import retrofit2.http.Header
+import retrofit2.http.GET
 import retrofit2.http.Multipart
-import retrofit2.http.Part
 import retrofit2.http.POST
-import java.util.concurrent.TimeUnit
+import retrofit2.http.Part
+import retrofit2.http.Path
+import retrofit2.http.Query
+import com.ouros.app.BuildConfig
+import com.ouros.app.data.auth.AuthenticatedNetwork
 
 interface ChatbotApi {
+    @POST("v1/chat")
+    suspend fun sendMessage(@Body request: ChatRequest): Response<ChatResponse>
+
+    @GET("v1/chat/{thread_id}/history")
+    suspend fun getHistory(
+        @Path("thread_id") threadId: String,
+        @Query("user_id") userId: String? = null,
+        @Query("limit") limit: Int = 20,
+        @Query("before") before: String? = null
+    ): Response<HistoryResponse>
+
+    @GET("health")
+    suspend fun healthCheck(): Response<HealthResponse>
+
+    // Attachments keep using the existing multipart contract; text-only chat follows the JSON API.
     @Multipart
     @POST("v1/chat")
-    suspend fun chat(
-        @Header("Authorization") authorization: String,
+    suspend fun chatWithAttachment(
         @Part("message") message: RequestBody,
         @Part("thread_id") threadId: RequestBody,
-        @Part attachment: MultipartBody.Part?
+        @Part attachment: MultipartBody.Part
     ): Response<ChatResponse>
 
     @POST("measurement-imports")
-    suspend fun importMeasurements(
-        @Header("Authorization") authorization: String,
-        @Body request: MeasurementImportRequest
-    ): Response<MeasurementImportResponse>
+    suspend fun importMeasurements(@Body request: MeasurementImportRequest): Response<MeasurementImportResponse>
 }
 
 object ChatbotNetwork {
-    val aiApi: ChatbotApi by lazy { api("https://ms-ai-server.discloud.app/") }
-    val springApi: ChatbotApi by lazy { api("https://ms-spring-api.discloud.app/") }
-
     private fun api(baseUrl: String): ChatbotApi = Retrofit.Builder()
         .baseUrl(baseUrl)
-        .client(
-            OkHttpClient.Builder()
-                .callTimeout(90, TimeUnit.SECONDS)
-                .readTimeout(90, TimeUnit.SECONDS)
-                .build()
-        )
+        .client(AuthenticatedNetwork.client)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(ChatbotApi::class.java)
+
+    val aiApi: ChatbotApi by lazy { api(BuildConfig.AI_API_BASE_URL) }
+    val springApi: ChatbotApi by lazy { api(BuildConfig.OUROS_API_BASE_URL) }
 }
 
-data class ChatResponse(
-    val response: String? = null,
-    val message: String? = null,
+data class ChatRequest(
+    val message: String,
     @SerializedName("thread_id") val threadId: String? = null,
+    @SerializedName("user_id") val userId: String? = null
+)
+
+data class ChatResponse(
+    @SerializedName("thread_id") val threadId: String? = null,
+    val message: String? = null,
+    val response: String? = null,
+    val agents: List<String> = emptyList(),
+    val tools: List<String> = emptyList(),
+    val visualizations: List<ChatVisualization>? = null,
     @SerializedName("measurement_import_preview") val preview: MeasurementImportPreview? = null
 )
+
+data class HistoryResponse(
+    @SerializedName("thread_id") val threadId: String,
+    val messages: List<HistoryMessage>,
+    @SerializedName("next_cursor") val nextCursor: String? = null
+)
+
+data class HistoryMessage(
+    val role: String,
+    val content: String,
+    val visualizations: List<ChatVisualization>? = null,
+    @SerializedName("created_at") val createdAt: String? = null
+)
+
+data class ChatVisualization(
+    val type: String,
+    val title: String,
+    val charts: List<ChatVisualizationChart> = emptyList()
+)
+
+data class ChatVisualizationChart(
+    val id: String,
+    val title: String,
+    @SerializedName("render_as") val renderAs: String,
+    val html: String
+)
+
+data class HealthResponse(val status: String)
 
 data class MeasurementImportPreview(
     val filename: String,

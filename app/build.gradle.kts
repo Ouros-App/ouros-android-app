@@ -48,6 +48,7 @@ android {
         buildConfigField("String", "OUROS_API_BASE_URL", "\"${resolveConfig("OUROS_API_BASE_URL", "https://ms-spring-api.discloud.app/")}\"")
         buildConfigField("String", "AUTH_API_BASE_URL", "\"${resolveConfig("AUTH_API_BASE_URL", "https://ms-auth-service.discloud.app/")}\"")
         buildConfigField("String", "DASHBOARD_BASE_URL", "\"${resolveConfig("DASHBOARD_BASE_URL", "https://ouros-dashboard.discloud.app/")}\"")
+        buildConfigField("String", "AI_API_BASE_URL", "\"${resolveConfig("AI_API_BASE_URL", "https://ms-ai-server.discloud.app/")}\"")
     }
 
     buildFeatures {

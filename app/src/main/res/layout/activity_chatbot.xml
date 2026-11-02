@@ -77,6 +77,7 @@
         tools:visibility="visible">
 
         <TextView
+            android:id="@+id/offlineTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="@font/poppins_semibold"
@@ -85,6 +86,7 @@
             android:textSize="17sp" />
 
         <TextView
+            android:id="@+id/offlineBody"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"

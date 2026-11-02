@@ -15,6 +15,8 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -23,6 +25,10 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import com.ouros.app.R
 import com.ouros.app.data.local.OfflineSyncRegistry
+import io.noties.markwon.Markwon
+import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 
 internal fun composerBottomInset(systemBarBottom: Int, imeBottom: Int): Int =
     maxOf(systemBarBottom, imeBottom)
@@ -33,6 +39,7 @@ class ChatbotActivity : AppCompatActivity() {
     private lateinit var connectivityManager: ConnectivityManager
     private var networkCallbackRegistered = false
     private var isOnline = true
+    private val markwon by lazy { Markwon.create(this) }
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) = refreshConnectivity()
 
@@ -108,6 +115,7 @@ class ChatbotActivity : AppCompatActivity() {
             insets
         }
         viewModel.state.observe(this) { render(it) }
+        viewModel.loadConversation()
     }
 
     override fun onStart() {
@@ -134,6 +142,7 @@ class ChatbotActivity : AppCompatActivity() {
             val onlineNow = OfflineSyncRegistry.isOnline()
             if (onlineNow != isOnline) {
                 isOnline = onlineNow
+                if (onlineNow) viewModel.loadConversation(force = true)
                 renderedState?.let(::renderControls)
             }
         }
@@ -143,10 +152,27 @@ class ChatbotActivity : AppCompatActivity() {
         if (state == renderedState) return
         renderedState = state
         val messages = findViewById<LinearLayout>(R.id.chatMessages)
+        for (index in 0 until messages.childCount) destroyWebViews(messages.getChildAt(index))
         messages.removeAllViews()
+        var previousDate: String? = null
         state.messages.forEach { line ->
+            val dateLabel = dateLabel(line.createdAt)
+            if (dateLabel != null && dateLabel != previousDate) {
+                messages.addView(TextView(this).apply {
+                    text = dateLabel
+                    textSize = 12f
+                    gravity = Gravity.CENTER
+                    setTextColor(getColor(android.R.color.darker_gray))
+                    setPadding(dp(12), dp(6), dp(12), dp(6))
+                    setBackgroundResource(R.drawable.bg_chat_date_pill)
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply { gravity = Gravity.CENTER; topMargin = dp(8); bottomMargin = dp(4) }
+                })
+                previousDate = dateLabel
+            }
             val text = TextView(this).apply {
-                this.text = line.text
                 textSize = 14f
                 setTextColor(getColor(android.R.color.white))
                 setPadding(dp(14), dp(10), dp(14), dp(10))
@@ -163,7 +189,61 @@ class ChatbotActivity : AppCompatActivity() {
                     gravity = if (line.user) Gravity.END else Gravity.START
                 }
             }
+            if (line.user) text.text = line.text else markwon.setMarkdown(text, line.text)
             messages.addView(text)
+            line.visualizations.forEach { visualization ->
+                visualization.charts.filter { it.renderAs.equals("html", true) }.forEach { chart ->
+                    val card = LinearLayout(this).apply {
+                        orientation = LinearLayout.VERTICAL
+                        setPadding(dp(12), dp(10), dp(12), dp(10))
+                        setBackgroundResource(R.drawable.bg_chat_balloon_assistant)
+                        layoutParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            dp(280)
+                        ).apply { topMargin = dp(8); bottomMargin = dp(6) }
+                    }
+                    if (chart.title.isNotBlank()) {
+                        card.addView(TextView(this).apply {
+                            text = chart.title
+                            textSize = 14f
+                            setTextColor(getColor(android.R.color.white))
+                        })
+                    }
+                    val webView = WebView(this).apply {
+                        settings.javaScriptEnabled = true
+                        settings.allowFileAccess = false
+                        settings.allowContentAccess = false
+                        settings.domStorageEnabled = false
+                        webViewClient = object : WebViewClient() {
+                            override fun shouldOverrideUrlLoading(
+                                view: WebView?,
+                                request: android.webkit.WebResourceRequest?
+                            ) = true
+                        }
+                        loadDataWithBaseURL(
+                            "https://ms-ai-server.discloud.app/",
+                            chart.html,
+                            "text/html",
+                            "UTF-8",
+                            null
+                        )
+                    }
+                    card.addView(webView, LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        0,
+                        1f
+                    ))
+                    messages.addView(card)
+                }
+            }
+        }
+        if (state.sending) {
+            messages.addView(TextView(this).apply {
+                text = "Midas está pensando…"
+                textSize = 14f
+                setTextColor(getColor(android.R.color.darker_gray))
+                setPadding(dp(14), dp(10), dp(14), dp(10))
+            })
         }
         findViewById<ScrollView>(R.id.chatScroll).post { findViewById<ScrollView>(R.id.chatScroll).fullScroll(View.FOCUS_DOWN) }
         renderControls(state)
@@ -203,7 +283,15 @@ class ChatbotActivity : AppCompatActivity() {
 
     private fun renderControls(state: ChatState) {
         findViewById<View>(R.id.offlineNotice).visibility =
-            if (isOnline) View.GONE else View.VISIBLE
+            if (isOnline && state.serviceAvailable) View.GONE else View.VISIBLE
+        val serviceUnavailable = isOnline && !state.serviceAvailable
+        findViewById<TextView>(R.id.offlineTitle).text =
+            if (isOnline) "Midas temporariamente indisponível" else "Midas está offline"
+        findViewById<TextView>(R.id.offlineBody).text = if (serviceUnavailable) {
+            "Não foi possível conectar ao assistente. Respostas de orientação básica estarão disponíveis enquanto o serviço se recupera."
+        } else {
+            "O assistente precisa de internet para responder. A conversa será liberada assim que a conexão voltar."
+        }
         findViewById<TextView>(R.id.chatError).apply {
             text = state.error.orEmpty()
             visibility = if (isOnline && state.error != null) View.VISIBLE else View.GONE
@@ -238,6 +326,29 @@ class ChatbotActivity : AppCompatActivity() {
     private fun displayName(uri: Uri): String = contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
         if (cursor.moveToFirst()) cursor.getString(0) else null
     } ?: uri.lastPathSegment.orEmpty()
+
+    private fun dateLabel(value: String?): String? {
+        if (value.isNullOrBlank()) return null
+        val date = runCatching { OffsetDateTime.parse(value).toLocalDate() }
+            .getOrElse { runCatching { LocalDate.parse(value.take(10)) }.getOrNull() }
+            ?: return null
+        val today = LocalDate.now()
+        return when (date) {
+            today -> "Hoje"
+            today.minusDays(1) -> "Ontem"
+            else -> date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+        }
+    }
+
+    private fun destroyWebViews(view: View) {
+        if (view is WebView) {
+            view.stopLoading()
+            view.loadUrl("about:blank")
+            view.destroy()
+        } else if (view is android.view.ViewGroup) {
+            for (index in 0 until view.childCount) destroyWebViews(view.getChildAt(index))
+        }
+    }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
 }
