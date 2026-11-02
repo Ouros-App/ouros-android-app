@@ -37,4 +37,8 @@
     <dimen name="onboarding_password_note_height">40dp</dimen>
     <dimen name="onboarding_welcome_illustration_max_width">420dp</dimen>
     <dimen name="onboarding_welcome_illustration_max_height">260dp</dimen>
+    <dimen name="tutorial_pager_bottom_gap">24dp</dimen>
+    <dimen name="tutorial_nav_bottom_margin">24dp</dimen>
+    <dimen name="onboarding_landscape_illustration_width">420dp</dimen>
+    <dimen name="onboarding_landscape_illustration_height">320dp</dimen>
 </resources>
