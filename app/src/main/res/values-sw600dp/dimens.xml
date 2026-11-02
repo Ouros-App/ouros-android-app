@@ -11,4 +11,6 @@
     <dimen name="secondary_header_top_inset">100dp</dimen>
     <dimen name="tablet_content_margin">40dp</dimen>
     <dimen name="main_content_horizontal_padding">48dp</dimen>
+    <dimen name="simulator_kpi_max_width">620dp</dimen>
+    <dimen name="simulator_kpi_card_height">104dp</dimen>
 </resources>

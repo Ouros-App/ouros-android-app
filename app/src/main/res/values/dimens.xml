@@ -10,4 +10,6 @@
     <dimen name="main_footer_max_width">520dp</dimen>
     <dimen name="secondary_header_top_inset">100dp</dimen>
     <dimen name="main_content_horizontal_padding">24dp</dimen>
+    <dimen name="simulator_kpi_max_width">720dp</dimen>
+    <dimen name="simulator_kpi_card_height">92dp</dimen>
 </resources>

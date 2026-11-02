@@ -189,8 +189,8 @@
         android:layout_gravity="center"
         android:gravity="center"
         android:orientation="vertical"
-        android:paddingStart="32dp"
-        android:paddingEnd="32dp">
+        android:paddingStart="@dimen/main_content_horizontal_padding"
+        android:paddingEnd="@dimen/main_content_horizontal_padding">
 
         <TextView
             android:id="@+id/goalsError"

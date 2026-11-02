@@ -47,23 +47,32 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingStart="30dp"
+        android:paddingStart="@dimen/main_content_horizontal_padding"
         android:paddingTop="40dp"
-        android:paddingEnd="30dp"
+        android:paddingEnd="@dimen/main_content_horizontal_padding"
         android:paddingBottom="32dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/header">
 
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
         <LinearLayout
             android:id="@+id/simulatorKpiContainer"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintWidth_max="@dimen/simulator_kpi_max_width"
+            app:layout_constraintTop_toTopOf="parent">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="92dp"
+                android:layout_height="@dimen/simulator_kpi_card_height"
                 android:baselineAligned="false"
                 android:orientation="horizontal">
 
@@ -158,7 +167,7 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="92dp"
+                android:layout_height="@dimen/simulator_kpi_card_height"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="32dp"
                 android:baselineAligned="false"
@@ -256,6 +265,8 @@
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
         </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <LinearLayout
             android:id="@+id/simulatorFormContainer"
@@ -379,8 +390,8 @@
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"
+        android:layout_marginStart="@dimen/main_content_horizontal_padding"
+        android:layout_marginEnd="@dimen/main_content_horizontal_padding"
         android:gravity="center"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
