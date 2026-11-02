@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.ouros.app.R
 import com.ouros.app.core.SkeletonLoaderView
+import com.ouros.app.core.util.applyBottomSystemBarPadding
 import com.ouros.app.data.record.RecordDraftStore
 import com.ouros.app.data.record.RecordNetwork
 import com.ouros.app.data.record.RecordRepository
@@ -123,6 +124,7 @@ class RecordFragment : Fragment() {
         skeleton = root.findViewById(R.id.recordSkeleton)
         skeleton.mode = SkeletonLoaderView.Mode.RECORD
         content = root.findViewById(R.id.recordContent)
+        content.applyBottomSystemBarPadding()
         error = root.findViewById(R.id.recordError)
         retry = root.findViewById(R.id.recordRetry)
         draftTitle = root.findViewById(R.id.recordDraftTitle)

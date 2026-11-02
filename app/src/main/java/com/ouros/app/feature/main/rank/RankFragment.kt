@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.ouros.app.R
 import com.ouros.app.core.SkeletonLoaderView
+import com.ouros.app.core.util.applyBottomSystemBarPadding
 import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository
@@ -46,6 +47,7 @@ class RankFragment : Fragment() {
     private var profilePhotoStore: ProfilePhotoStore? = null
     private lateinit var resetTime: TextView
     private lateinit var rankingList: RecyclerView
+    private lateinit var bottomSection: View
 
     private var targetResetElapsedRealtime: Long? = null
     private val countdownHandler = Handler(Looper.getMainLooper())
@@ -118,6 +120,8 @@ class RankFragment : Fragment() {
         medalImage = root.findViewById(R.id.imgRankMedal)
         resetTime = root.findViewById(R.id.textResetTime)
         rankingList = root.findViewById(R.id.recyclerRanking)
+        bottomSection = root.findViewById(R.id.rankBottomSection)
+        bottomSection.applyBottomSystemBarPadding()
 
         val formulaView = root.findViewById<TextView>(R.id.textCgiFormula)
         val cgiHtml = "(CAA × 0.7) + (CEA × 0.3) = <font color='#110B95'><b>CGI</b></font>"

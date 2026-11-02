@@ -227,6 +227,7 @@
 
             <!-- Seção Inferior: Fundo Azul e Conteúdo Completo -->
             <LinearLayout
+                android:id="@+id/rankBottomSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="-52dp"

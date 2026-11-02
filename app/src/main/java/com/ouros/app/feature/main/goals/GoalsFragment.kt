@@ -23,6 +23,7 @@ import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.ouros.app.R
 import com.ouros.app.core.SkeletonLoaderView
+import com.ouros.app.core.util.applyBottomSystemBarPadding
 import com.ouros.app.data.auth.AppSession
 import com.ouros.app.data.auth.AuthNetwork
 import com.ouros.app.data.auth.AuthRepository
@@ -95,6 +96,7 @@ class GoalsFragment : Fragment() {
         linearProgressGoals = root.findViewById(R.id.linearProgressGoals)
         loading = root.findViewById(R.id.goalsLoading)
         content = root.findViewById(R.id.goalsContent)
+        content.applyBottomSystemBarPadding()
         error = root.findViewById(R.id.goalsError)
         retry = root.findViewById(R.id.goalsRetry)
         addGoal = root.findViewById(R.id.buttonAddGoal)
