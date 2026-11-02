@@ -10,8 +10,8 @@
 
     <ImageView
         android:id="@+id/ouros_logo"
-        android:layout_width="240dp"
-        android:layout_height="110dp"
+        android:layout_width="280dp"
+        android:layout_height="125dp"
         android:contentDescription="Ouros"
         android:scaleType="fitCenter"
         app:layout_constraintBottom_toTopOf="@+id/materialCardView"
@@ -41,8 +41,8 @@
 
             <ImageView
                 android:id="@+id/imageView4"
-                android:layout_width="240dp"
-                android:layout_height="80dp"
+                android:layout_width="260dp"
+                android:layout_height="90dp"
                 android:contentDescription="Ouros"
                 android:scaleType="fitCenter"
                 app:srcCompat="@drawable/ouros_name" />

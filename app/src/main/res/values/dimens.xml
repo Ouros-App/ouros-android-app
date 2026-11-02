@@ -35,4 +35,6 @@
     <dimen name="onboarding_password_mascot_end_margin">-50dp</dimen>
     <dimen name="onboarding_password_note_width">204dp</dimen>
     <dimen name="onboarding_password_note_height">40dp</dimen>
+    <dimen name="onboarding_welcome_illustration_max_width">420dp</dimen>
+    <dimen name="onboarding_welcome_illustration_max_height">260dp</dimen>
 </resources>
