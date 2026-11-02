@@ -139,19 +139,27 @@ class RecordLotFragment : RecordStepFragment(R.layout.fragment_record_lot) {
             }
         )
 
-        watch(lotCost) { current, value ->
-            current.copy(lotCost = value)
+        watch(lotId) { current, value ->
+            current.copy(lotId = value)
         }
 
         view.findViewById<Button>(R.id.recordPrimary).setOnClickListener {
+            val idText = lotId.text.toString().trim()
+            val costText = lotCost.text.toString().trim()
+
             when {
-                lotId.text.toString().toLongOrNull()?.takeIf { it > 0 } == null ->
+                idText.toLongOrNull()?.takeIf { it > 0 } == null ->
                     invalid(lotId, "Informe um ID de lote válido.")
 
                 lotCost.moneyOrNull()?.takeIf { it >= 0.0 } == null ->
                     invalid(lotCost, "Informe um custo válido.")
 
-                else -> host.nextStep(2)
+                else -> {
+                    wizard.update { current ->
+                        current.copy(lotId = idText, lotCost = costText)
+                    }
+                    host.nextStep(2)
+                }
             }
         }
     }

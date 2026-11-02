@@ -10,13 +10,17 @@ import com.ouros.app.data.dashboard.DashboardRepository
 import com.ouros.app.data.dashboard.DashboardResult
 import com.ouros.app.data.dashboard.DashboardUiState
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.util.Locale
 
 sealed interface DashboardEvent {
     data object AuthenticationRequired : DashboardEvent
 }
 
-class DashboardViewModel(private val dashboardRepository: DashboardRepository) : ViewModel() {
+class DashboardViewModel(
+    private val dashboardRepository: DashboardRepository,
+    private val currentDateProvider: () -> LocalDate = { LocalDate.now() }
+) : ViewModel() {
 
     private val _state = MutableLiveData(DashboardUiState())
     val state: LiveData<DashboardUiState> = _state
@@ -139,6 +143,7 @@ class DashboardViewModel(private val dashboardRepository: DashboardRepository) :
 
     private data class ParsedMetricRow(
         val year: Int?,
+        val month: Int?,
         val waterM3: Double,
         val energyKwh: Double
     )
@@ -168,6 +173,9 @@ class DashboardViewModel(private val dashboardRepository: DashboardRepository) :
                             else -> null
                         }
                         val year = dateStr?.take(4)?.toIntOrNull()
+                        val month = if (dateStr != null && dateStr.length >= 7) {
+                            dateStr.substring(5, 7).toIntOrNull()
+                        } else null
 
                         val waterM3 = when {
                             rowObj.has("water_m3_per_chicken") && !rowObj.get("water_m3_per_chicken").isJsonNull ->
@@ -185,17 +193,39 @@ class DashboardViewModel(private val dashboardRepository: DashboardRepository) :
                             else -> 0.0
                         }
 
-                        ParsedMetricRow(year = year, waterM3 = waterM3, energyKwh = energyKwh)
+                        ParsedMetricRow(year = year, month = month, waterM3 = waterM3, energyKwh = energyKwh)
                     }
 
-                    val latestYear = parsedRows.mapNotNull { it.year }.maxOrNull()
-                    val currentYearRows = if (latestYear != null) {
-                        parsedRows.filter { it.year == latestYear }
+                    val hasDates = parsedRows.any { it.year != null }
+                    val targetRows = if (!hasDates) {
+                        parsedRows.takeLast(period.maxMonths)
                     } else {
-                        parsedRows
+                        val now = currentDateProvider()
+                        val currentYear = now.year
+                        val currentMonth = now.monthValue
+
+                        when (period) {
+                            DashboardPeriod.MONTH -> {
+                                parsedRows.filter { it.year == currentYear && it.month == currentMonth }
+                            }
+                            DashboardPeriod.QUARTER -> {
+                                val targetMonths = (0..2).map { offset ->
+                                    now.minusMonths(offset.toLong())
+                                }
+                                parsedRows.filter { row ->
+                                    targetMonths.any { target ->
+                                        row.year == target.year && row.month == target.monthValue
+                                    }
+                                }
+                            }
+                            DashboardPeriod.YEAR -> {
+                                parsedRows.filter { row ->
+                                    row.year == currentYear && (row.month == null || row.month <= currentMonth)
+                                }
+                            }
+                        }
                     }
 
-                    val targetRows = currentYearRows.takeLast(period.maxMonths)
                     if (targetRows.isNotEmpty()) {
                         val avgWaterM3 = targetRows.map { it.waterM3 }.average()
                         val avgEnergyKwh = targetRows.map { it.energyKwh }.average()
@@ -210,7 +240,11 @@ class DashboardViewModel(private val dashboardRepository: DashboardRepository) :
                             val energyFormatted = String.format(Locale.US, "%.1f", energyKwh)
 
                             return Triple(cgiFormatted, waterFormatted, energyFormatted)
+                        } else if (hasDates) {
+                            return Triple("0.00", "0.0", "0.0")
                         }
+                    } else if (hasDates) {
+                        return Triple("0.00", "0.0", "0.0")
                     }
                 }
             }
