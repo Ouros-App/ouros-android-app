@@ -139,7 +139,7 @@ class SimulatorViewModel(
         String.format(Locale.US, "%.${decimals}f", value)
 
     private fun formatCurrency(value: Double): String {
-        return NumberFormat.getCurrencyInstance(Locale("pt", "BR")).apply {
+        return NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")).apply {
             minimumFractionDigits = 0
             maximumFractionDigits = 0
         }.format(value)

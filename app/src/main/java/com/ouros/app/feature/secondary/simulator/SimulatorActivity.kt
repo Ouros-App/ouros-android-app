@@ -8,10 +8,13 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.ouros.app.R
-import com.ouros.app.core.util.applyImeFixedTranslation
+import com.ouros.app.core.util.applyImeAndNavigationPadding
 import com.ouros.app.core.util.dp
 import com.ouros.app.core.BrazilianMoney
 import com.ouros.app.core.BrazilianMoneyTextWatcher
@@ -42,6 +45,7 @@ class SimulatorActivity : AppCompatActivity() {
     private lateinit var targetEnergyInput: TextInputEditText
     private lateinit var simulateButton: Button
     private var populateInitialFields = true
+    private var wasSimulating = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,8 +72,6 @@ class SimulatorActivity : AppCompatActivity() {
 
     private fun bindViews() {
         content = findViewById(R.id.simulatorContent)
-        val kpiContainer = findViewById<View>(R.id.simulatorKpiContainer)
-        val formContainer = findViewById<View>(R.id.simulatorFormContainer)
 
         loading = findViewById(R.id.simulatorLoading)
         error = findViewById(R.id.simulatorError)
@@ -86,10 +88,9 @@ class SimulatorActivity : AppCompatActivity() {
         targetEnergyInput = findViewById(R.id.inputTargetEnergy)
         simulateButton = findViewById(R.id.buttonSimulator)
 
-        formContainer.applyImeFixedTranslation(
-            bottomAnchorView = simulateButton,
-            extraMarginPx = 16.dp,
-            viewsToFadeOut = listOf(kpiContainer)
+        content.applyImeAndNavigationPadding(
+            extraPaddingPx = 16.dp,
+            resetScrollOnClose = false
         )
 
         waterPriceInput.addTextChangedListener(BrazilianMoneyTextWatcher(waterPriceInput) {})
@@ -133,6 +134,11 @@ class SimulatorActivity : AppCompatActivity() {
             chickensInput.setText(state.currentChickens.toString())
             populateInitialFields = false
         }
+
+        if (wasSimulating && !state.simulating && state.errorMessage == null) {
+            (content as? NestedScrollView)?.smoothScrollTo(0, 0)
+        }
+        wasSimulating = state.simulating
     }
 
     private fun submitSimulation() {
@@ -165,6 +171,11 @@ class SimulatorActivity : AppCompatActivity() {
             valid = false
         }
         if (!valid) return
+
+        currentFocus?.let { view ->
+            WindowInsetsControllerCompat(window, view).hide(WindowInsetsCompat.Type.ime())
+            view.clearFocus()
+        }
 
         viewModel.simulate(
             targetCgi = targetCgi!!,

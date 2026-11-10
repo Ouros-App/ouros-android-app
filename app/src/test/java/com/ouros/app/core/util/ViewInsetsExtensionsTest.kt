@@ -142,4 +142,13 @@ class ViewInsetsExtensionsTest {
         nestedScrollView.applyImeAndNavigationPadding(extraPaddingPx = 8)
         assertNotNull(nestedScrollView)
     }
+
+    @Test
+    fun applyImeAndNavigationPadding_withResetScrollOnCloseFalse_attachesCallbacksOnNestedScrollView() {
+        val context = RuntimeEnvironment.getApplication()
+        val nestedScrollView = NestedScrollView(context)
+
+        nestedScrollView.applyImeAndNavigationPadding(extraPaddingPx = 8, resetScrollOnClose = false)
+        assertNotNull(nestedScrollView)
+    }
 }
