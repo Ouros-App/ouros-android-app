@@ -11,7 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import com.ouros.app.R
-import com.ouros.app.core.util.applyImeFixedTranslation
+import com.ouros.app.core.util.applyImeAndNavigationPadding
 import com.ouros.app.core.util.dp
 import com.ouros.app.core.BrazilianMoney
 import com.ouros.app.core.BrazilianMoneyTextWatcher
@@ -68,8 +68,6 @@ class SimulatorActivity : AppCompatActivity() {
 
     private fun bindViews() {
         content = findViewById(R.id.simulatorContent)
-        val kpiContainer = findViewById<View>(R.id.simulatorKpiContainer)
-        val formContainer = findViewById<View>(R.id.simulatorFormContainer)
 
         loading = findViewById(R.id.simulatorLoading)
         error = findViewById(R.id.simulatorError)
@@ -86,10 +84,9 @@ class SimulatorActivity : AppCompatActivity() {
         targetEnergyInput = findViewById(R.id.inputTargetEnergy)
         simulateButton = findViewById(R.id.buttonSimulator)
 
-        formContainer.applyImeFixedTranslation(
-            bottomAnchorView = simulateButton,
-            extraMarginPx = 16.dp,
-            viewsToFadeOut = listOf(kpiContainer)
+        content.applyImeAndNavigationPadding(
+            extraPaddingPx = 16.dp,
+            resetScrollOnClose = false
         )
 
         waterPriceInput.addTextChangedListener(BrazilianMoneyTextWatcher(waterPriceInput) {})

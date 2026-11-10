@@ -269,7 +269,10 @@ fun View.applyImeFixedTranslation(
  *   fazendo com que os campos de entrada e botões de ação se levantem suavemente junto com o teclado.
  * - Quando o teclado fecha, retorna a tela suavemente para a posição inicial de descanso.
  */
-fun View.applyImeAndNavigationPadding(extraPaddingPx: Int = 0) {
+fun View.applyImeAndNavigationPadding(
+    extraPaddingPx: Int = 0,
+    resetScrollOnClose: Boolean = true
+) {
     val initialPaddingBottom = paddingBottom
 
     ViewCompat.setOnApplyWindowInsetsListener(this) { view, insets ->
@@ -290,7 +293,7 @@ fun View.applyImeAndNavigationPadding(extraPaddingPx: Int = 0) {
                     view.requestRectangleOnScreen(rect, false)
                 }
             }
-        } else {
+        } else if (resetScrollOnClose) {
             // Teclado fechado: retorna suavemente para a posição inicial
             if (view is NestedScrollView) {
                 view.smoothScrollTo(0, 0)
@@ -334,6 +337,7 @@ fun View.applyImeAndNavigationPadding(extraPaddingPx: Int = 0) {
                         val continueBtn = findViewById<View>(com.ouros.app.R.id.btnContinue)
                             ?: findViewById<View>(com.ouros.app.R.id.btnFinish)
                             ?: findViewById<View>(com.ouros.app.R.id.recordPrimary)
+                            ?: findViewById<View>(com.ouros.app.R.id.buttonSimulator)
 
                         val bottomToClear = if (continueBtn != null && continueBtn.isShown) {
                             val btnRect = Rect()
@@ -386,7 +390,7 @@ fun View.applyImeAndNavigationPadding(extraPaddingPx: Int = 0) {
                 if (animation.typeMask and WindowInsetsCompat.Type.ime() != 0) {
                     val insets = ViewCompat.getRootWindowInsets(this@applyImeAndNavigationPadding)
                     val imeBottom = insets?.getInsets(WindowInsetsCompat.Type.ime())?.bottom ?: 0
-                    if (imeBottom == 0) {
+                    if (imeBottom == 0 && resetScrollOnClose) {
                         if (this@applyImeAndNavigationPadding is NestedScrollView) {
                             smoothScrollTo(0, 0)
                         } else if (this@applyImeAndNavigationPadding is ScrollView) {
